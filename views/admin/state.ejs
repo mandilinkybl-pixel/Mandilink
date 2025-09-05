@@ -1,0 +1,217 @@
+<%- include('common/header') %>
+<div class="main-content" id="mainContent">
+<div class="container mt-4">
+  <h3>State List</h3>
+
+  <!-- Toast Messages -->
+  
+  <!-- Search -->
+  <div class="mb-3">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search states or districts...">
+  </div>
+ <div class="card mb-4">
+    <div class="card-header bg-success text-white">Add New State</div>
+    <div class="card-body">
+      <form action="/admin/state/create" method="POST">
+        <div class="mb-3">
+          <label class="form-label">State Name</label>
+          <input type="text" class="form-control" name="name" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Districts (comma separated)</label>
+          <textarea class="form-control" name="districts" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Add State</button>
+      </form>
+    </div>
+  </div>
+  <!-- Add State Button -->
+  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addStateModal">
+    Add State
+  </button>
+
+  <!-- States Table -->
+  <table class="table table-bordered" id="stateTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>State</th>
+        <th>Districts</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% states.forEach((state, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td class="state-name"><%= state.name %></td>
+          <td class="district-list">
+            <ul>
+              <% state.districts.forEach(d => { %>
+                <li><%= d %></li>
+              <% }) %>
+            </ul>
+          </td>
+          <td>
+            <button class="btn btn-primary btn-sm editBtn"
+              data-id="<%= state._id %>"
+              data-name="<%= state.name %>"
+              data-districts='<%= JSON.stringify(state.districts) %>'
+              data-bs-toggle="modal" data-bs-target="#editStateModal">
+              <i class="fas fa-edit"></i>
+            </button>
+
+            <form action="/admin/state/delete/<%= state._id %>" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this state?')">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Add State Modal -->
+<div class="modal fade" id="addStateModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/admin/state/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Add State</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>State Name</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Districts (comma separated)</label>
+            <textarea name="districts" class="form-control" rows="3" placeholder="Enter districts separated by comma"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit State Modal -->
+<div class="modal fade" id="editStateModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editStateForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit State</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>State Name</label>
+            <input type="text" id="editName" name="name" class="form-control" required>
+          </div>
+          <label>Districts</label>
+          <div id="districtInputs"></div>
+          <button type="button" class="btn btn-sm btn-secondary mt-2" id="addDistrictBtn">+ Add District</button>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toast auto-show
+  window.addEventListener("DOMContentLoaded", () => {
+    const successToastEl = document.getElementById("successToast");
+    if (successToastEl) new bootstrap.Toast(successToastEl).show();
+
+    const errorToastEl = document.getElementById("errorToast");
+    if (errorToastEl) new bootstrap.Toast(errorToastEl).show();
+  });
+
+  // Search filter
+  document.getElementById("searchInput").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#stateTable tbody tr");
+
+    rows.forEach(row => {
+      const stateName = row.querySelector(".state-name").textContent.toLowerCase();
+      const districtText = row.querySelector(".district-list").textContent.toLowerCase();
+      row.style.display = stateName.includes(filter) || districtText.includes(filter) ? "" : "none";
+    });
+  });
+
+  // Edit Modal Handler
+  document.querySelectorAll(".editBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+      const districts = JSON.parse(btn.dataset.districts);
+
+      document.getElementById("editName").value = name;
+      document.getElementById("editStateForm").action = `/admin/state/update/${id}`;
+
+      const container = document.getElementById("districtInputs");
+      container.innerHTML = "";
+
+      districts.forEach(d => {
+        container.appendChild(createDistrictInput(d));
+      });
+
+      if (districts.length === 0) {
+        container.appendChild(createDistrictInput(""));
+      }
+    });
+  });
+
+  // Create district input row with remove button
+  function createDistrictInput(value = "") {
+    const div = document.createElement("div");
+    div.classList.add("input-group", "mb-2");
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = "districts";
+    input.value = value;
+    input.classList.add("form-control");
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.classList.add("btn", "btn-danger");
+    btn.textContent = "×";
+    btn.onclick = () => div.remove();
+
+    div.appendChild(input);
+    div.appendChild(btn);
+
+    return div;
+  }
+
+  // Add empty district input
+  document.getElementById("addDistrictBtn").addEventListener("click", () => {
+    document.getElementById("districtInputs").appendChild(createDistrictInput(""));
+  });
+</script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <!-- Custom JS for sidebar -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

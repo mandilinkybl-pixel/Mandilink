@@ -1,0 +1,319 @@
+<%- include('common/header') %>
+
+<div class="main-content" id="mainContent">
+
+
+<div class="container mt-4">
+  <h2 class="mb-4">Mandi List</h2>
+
+
+
+  <!-- Filters -->
+  <div class="row mb-3 align-items-end">
+    <div class="col-md-2">
+      <input type="text" id="searchSerial" class="form-control" placeholder="S.No">
+    </div>
+    <div class="col-md-2">
+      <input type="text" id="searchName" class="form-control" placeholder="Mandi Name">
+    </div>
+    <div class="col-md-3">
+      <select id="filterState" class="form-select">
+        <option value="">All States</option>
+        <% states.forEach(state => { %>
+          <option value="<%= state._id %>"><%= state.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="filterDistrict" class="form-select">
+        <option value="">All Districts</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addMandiModal">
+        <i class="bi bi-plus-circle"></i> Add Mandis
+      </button>
+    </div>
+  </div>
+
+  <form id="bulkDeleteForm" action="/admin/mandis/delete-many" method="POST">
+    <table class="table table-bordered table-hover" id="mandiTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll"></th>
+          <th>S.No</th>
+          <th>Name</th>
+          <th>District</th>
+          <th>State</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% mandis.sort((a,b)=>a.name.localeCompare(b.name)).forEach((mandi,index)=>{ %>
+          <tr data-id="<%= mandi._id %>" data-state="<%= mandi.state._id %>" data-district="<%= mandi.district %>">
+            <td><input type="checkbox" name="ids" value="<%= mandi._id %>"></td>
+            <td class="sno"><%= index+1 %></td>
+            <td><%= mandi.name %></td>
+            <td><%= mandi.district %></td>
+            <td><%= mandi.state.name %></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-primary editBtn"
+                data-id="<%= mandi._id %>"
+                data-name="<%= mandi.name %>"
+                data-state="<%= mandi.state._id %>"
+                data-district="<%= mandi.district %>"
+                title="Edit"
+                data-bs-toggle="modal" data-bs-target="#editMandiModal">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <form action="/admin/mandis/delete/<%= mandi._id %>" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-danger mt-2">
+      <i class="bi bi-trash"></i> Delete Selected
+    </button>
+  </form>
+
+  <!-- Add Mandis Modal (Multiple) -->
+  <div class="modal fade" id="addMandiModal" tabindex="-1" aria-labelledby="addMandiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addMandiForm" method="POST" action="/admin/mandis/add">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Multiple Mandis</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label>State</label>
+              <select name="state" id="addState" class="form-select" required>
+                <option value="">Select State</option>
+                <% states.forEach(state => { %>
+                  <option value="<%= state._id %>"><%= state.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label>District</label>
+              <select name="district" id="addDistrict" class="form-select" required>
+                <option value="">Select District</option>
+              </select>
+            </div>
+            <div id="mandiNamesWrapper">
+              <div class="mb-3 mandiNameRow">
+                <label>Mandi Name</label>
+                <div class="input-group">
+                  <input type="text" name="names[]" class="form-control" required>
+                  <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="addMoreBtn">
+              <i class="bi bi-plus"></i> Add More Mandi
+            </button>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Save Mandis</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Mandi Modal -->
+  <div class="modal fade" id="editMandiModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editMandiForm" method="POST">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Mandi</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editMandiId" name="id">
+            <div class="mb-3">
+              <label>State</label>
+              <select name="state" id="editState" class="form-select" required>
+                <option value="">Select State</option>
+                <% states.forEach(state => { %>
+                  <option value="<%= state._id %>"><%= state.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label>District</label>
+              <select name="district" id="editDistrict" class="form-select" required>
+                <option value="">Select District</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label>Mandi Name</label>
+              <input type="text" name="name" id="editName" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Update</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Filters and Search
+  const searchSerial = document.getElementById("searchSerial");
+  const searchName = document.getElementById("searchName");
+  const filterState = document.getElementById("filterState");
+  const filterDistrict = document.getElementById("filterDistrict");
+
+  filterState.addEventListener("change", async function(){
+    const stateId=this.value;
+    filterDistrict.innerHTML='<option value="">All Districts</option>';
+    if(!stateId) return;
+    const res=await fetch(`/admin/mandis/districts/${stateId}`);
+    const districts=await res.json();
+    districts.forEach(d=>{
+      const opt=document.createElement("option");
+      opt.value=d; opt.textContent=d;
+      filterDistrict.appendChild(opt);
+    });
+    filterTable();
+  });
+
+  [searchSerial,searchName,filterState,filterDistrict].forEach(el=>{
+    el.addEventListener("input",filterTable);
+    el.addEventListener("change",filterTable);
+  });
+
+  function filterTable(){
+    const snoFilter=searchSerial.value.toLowerCase();
+    const nameFilter=searchName.value.toLowerCase();
+    const stateFilter=filterState.value;
+    const districtFilter=filterDistrict.value;
+
+    document.querySelectorAll("#mandiTable tbody tr").forEach((row,index)=>{
+      const sno=(index+1).toString();
+      const name=row.children[2].textContent.toLowerCase();
+      const state=row.dataset.state;
+      const district=row.dataset.district;
+
+      if(
+        sno.includes(snoFilter) &&
+        name.includes(nameFilter) &&
+        (!stateFilter || state===stateFilter) &&
+        (!districtFilter || district===districtFilter)
+      ){ row.style.display=""; } else { row.style.display="none"; }
+    });
+    // Update S.No after filter
+    let visibleIndex=1;
+    document.querySelectorAll("#mandiTable tbody tr").forEach((row)=>{
+      if(row.style.display !== "none"){
+        row.querySelector(".sno").textContent=visibleIndex++;
+      }
+    });
+  }
+
+  // Edit Button Modal
+  document.querySelectorAll(".editBtn").forEach(btn=>{
+    btn.addEventListener("click",async function(){
+      const id=this.dataset.id;
+      const name=this.dataset.name;
+      const state=this.dataset.state;
+      const district=this.dataset.district;
+
+      document.getElementById("editMandiId").value=id;
+      document.getElementById("editName").value=name;
+      document.getElementById("editState").value=state;
+
+      // Load districts for selected state
+      const res=await fetch(`/admin/mandis/districts/${state}`);
+      const districts=await res.json();
+      const districtSelect=document.getElementById("editDistrict");
+      districtSelect.innerHTML='<option value="">Select District</option>';
+      districts.forEach(d=>{
+        const opt=document.createElement("option");
+        opt.value=d; opt.textContent=d;
+        if(d===district) opt.selected=true;
+        districtSelect.appendChild(opt);
+      });
+
+      document.getElementById("editMandiForm").action=`/admin/mandis/edit/${id}`;
+    });
+  });
+
+  // Add Multiple Mandis Modal
+  const addState=document.getElementById("addState");
+  const addDistrict=document.getElementById("addDistrict");
+  const addMoreBtn=document.getElementById("addMoreBtn");
+  const mandiNamesWrapper=document.getElementById("mandiNamesWrapper");
+
+  addState.addEventListener("change",async function(){
+    const stateId=this.value;
+    addDistrict.innerHTML='<option value="">Select District</option>';
+    if(!stateId) return;
+    const res=await fetch(`/admin/mandis/districts/${stateId}`);
+    const districts=await res.json();
+    districts.forEach(d=>{
+      const opt=document.createElement("option"); opt.value=d; opt.textContent=d;
+      addDistrict.appendChild(opt);
+    });
+  });
+
+  addMoreBtn.addEventListener("click",()=>{
+    const row=document.createElement("div");
+    row.classList.add("mb-3","mandiNameRow");
+    row.innerHTML=`
+      <label>Mandi Name</label>
+      <div class="input-group">
+        <input type="text" name="names[]" class="form-control" required>
+        <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
+      </div>
+    `;
+    mandiNamesWrapper.appendChild(row);
+    row.querySelector(".removeRow").addEventListener("click",()=>row.remove());
+  });
+
+  document.querySelectorAll(".removeRow").forEach(btn=>{
+    btn.addEventListener("click",e=>e.target.closest(".mandiNameRow").remove());
+  });
+
+  // Select all checkboxes
+  document.getElementById("selectAll").addEventListener("change",function(){
+    document.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=this.checked);
+  });
+});
+</script>
+
+
+<!-- Bootstrap JS -->
+ </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <!-- Custom JS for sidebar -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

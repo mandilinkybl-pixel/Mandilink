@@ -1,241 +1,140 @@
 <%- include('common/header') %>
     <!-- Main Content -->
-    <div class="main-content" id="mainContent">
+
+
+<div class="main-content" id="mainContent">
+  <div class="container-fluid mt-4">
+    <h2>Commodity Management</h2>
+
+    <!-- ✅ Toasts -->
    
 
-<div class="container mt-5">
-  <h2>Commodity List</h2>
+    <!-- Add Commodity -->
+    <form action="/admin/commodities/create" method="POST" class="row g-3 mb-4">
+      <div class="col-md-5">
+        <input type="text" name="name" class="form-control" placeholder="Commodity Name" required>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-control">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-success w-100">
+          <i class="fas fa-plus"></i> Add
+        </button>
+      </div>
+    </form>
 
-  <!-- Add Commodity Button -->
-  <button class="btn btn-success mb-3" id="addCommodityBtn" data-bs-toggle="modal" data-bs-target="#commodityModal">
-    Add New Commodity
-  </button>
+    <!-- Search -->
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search commodities...">
+    </div>
 
-  <!-- Search Input -->
-  <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search by commodity name...">
-
-  <!-- Commodities Table -->
-  <table class="table table-bordered table-hover" id="commoditiesTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Image</th>
-        <th>Commodity Name</th>
-        <th>Category</th>
-        <th>Subcategory</th>
-        <th>Unit</th>
-        <th>HSN Code</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% commodities.forEach((commodity, index) => { %>
+    <!-- Table -->
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
         <tr>
-          <td><%= index + 1 %></td>
-          <td>
-            <% if (commodity.image) { %>
-              <img src="<%= commodity.image %>" alt="<%= commodity.commodityName %>" width="50" height="50" style="object-fit:cover;">
-            <% } else { %>
-              <img src="/images/default.png" alt="No Image" width="50" height="50" style="object-fit:cover;">
-            <% } %>
-          </td>
-          <td class="commodityName"><%= commodity.commodityName %></td>
-          <td><%= commodity.category %></td>
-          <td><%= commodity.subCategory || '-' %></td>
-          <td><%= commodity.unit %></td>
-          <td><%= commodity.hsnCode || '-' %></td>
-          <td><%= commodity.description || '-' %></td>
-          <td>
-            <span class="badge <%= commodity.status === 'active' ? 'bg-success' : 'bg-danger' %>">
-              <%= commodity.status.charAt(0).toUpperCase() + commodity.status.slice(1) %>
-            </span>
-          </td>
-          <td>
-            <button class="btn btn-primary btn-sm editBtn" data-bs-toggle="modal" data-bs-target="#commodityModal"
-                    data-id="<%= commodity._id %>"
-                    data-name="<%= commodity.commodityName %>"
-                    data-category="<%= commodity.category %>"
-                    data-subcategory="<%= commodity.subCategory %>"
-                    data-unit="<%= commodity.unit %>"
-                    data-hsn="<%= commodity.hsnCode %>"
-                    data-description="<%= commodity.description %>"
-                    data-status="<%= commodity.status %>"
-                    data-image="<%= commodity.image %>">
-              Edit
-            </button>
-          </td>
+          <th>#</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th style="width:120px;">Actions</th>
         </tr>
-      <% }) %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody id="commodityTable">
+        <% commodities.forEach((c, index) => { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= c.name %></td>
+            <td>
+              <span class="badge <%= c.status === 'active' ? 'bg-success' : 'bg-secondary' %>">
+                <%= c.status %>
+              </span>
+            </td>
+            <td>
+              <!-- Edit -->
+              <button type="button" class="btn btn-sm btn-primary editBtn"
+                data-id="<%= c._id %>" data-name="<%= c.name %>" data-status="<%= c.status %>">
+                <i class="fas fa-edit"></i>
+              </button>
+              <!-- Delete -->
+              <form action="/admin/commodities/delete/<%= c._id %>" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this commodity?')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- Single Modal for Create & Update -->
-<div class="modal fade" id="commodityModal" tabindex="-1" aria-hidden="true" style="padding-top: 50px;">
-  <div class="modal-dialog modal-lg">
-    <form id="commodityForm" enctype="multipart/form-data" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalTitle">Add Commodity</h5>
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="editForm" method="POST" class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Edit Commodity</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="commodityId" name="id">
-
-        <!-- Image Upload -->
+        <input type="hidden" id="editId">
         <div class="mb-3">
-          <label>Image</label>
-          <input type="file" name="image" class="form-control" id="commodityImage">
-          <img id="currentImage" src="/images/default.png" width="100" height="100" class="mt-2" style="object-fit:cover;">
+          <label>Name</label>
+          <input type="text" id="editName" name="name" class="form-control" required>
         </div>
-
-        <!-- Commodity Name -->
-        <div class="mb-3">
-          <label>Commodity Name</label>
-          <input type="text" name="commodityName" class="form-control" id="commodityName" required>
-        </div>
-
-        <!-- Category -->
-        <div class="mb-3">
-          <label>Category</label>
-          <select name="category" class="form-select" id="commodityCategory" required>
-            <option value="Grains">Grains</option>
-            <option value="Pulses">Pulses</option>
-            <option value="Vegetables">Vegetables</option>
-            <option value="Fruits">Fruits</option>
-            <option value="Spices">Spices</option>
-            <option value="Oilseeds">Oilseeds</option>
-            <option value="Fibers">Fibers</option>
-            <option value="Others">Others</option>
-          </select>
-        </div>
-
-        <!-- Subcategory -->
-        <div class="mb-3">
-          <label>Subcategory</label>
-          <input type="text" name="subCategory" class="form-control" id="commoditySubcategory">
-        </div>
-
-        <!-- Unit -->
-        <div class="mb-3">
-          <label>Unit</label>
-          <select name="unit" class="form-select" id="commodityUnit">
-            <option value="₹/quintal">₹/quintal</option>
-            <option value="₹/kg">₹/kg</option>
-            <option value="₹/ton">₹/ton</option>
-          </select>
-        </div>
-
-        <!-- HSN Code -->
-        <div class="mb-3">
-          <label>HSN Code</label>
-          <input type="text" name="hsnCode" class="form-control" id="commodityHSN">
-        </div>
-
-        <!-- Description -->
-        <div class="mb-3">
-          <label>Description</label>
-          <textarea name="description" class="form-control" id="commodityDescription"></textarea>
-        </div>
-
-        <!-- Status -->
         <div class="mb-3">
           <label>Status</label>
-          <select name="status" class="form-select" id="commodityStatus">
+          <select id="editStatus" name="status" class="form-control">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
-
-        <div id="responseMessage" class="mt-2"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Save</button>
+        <button type="submit" class="btn btn-success">Update</button>
       </div>
     </form>
   </div>
 </div>
 
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+
 <script>
-  // Search Table
-  const searchInput = document.getElementById('searchInput');
-  const table = document.getElementById('commoditiesTable');
-  const rows = table.getElementsByTagName('tr');
+  // ✅ Toast auto-show
 
-  searchInput.addEventListener('keyup', function() {
-    const filter = searchInput.value.toLowerCase();
-    for (let i = 1; i < rows.length; i++) {
-      const td = rows[i].getElementsByClassName('commodityName')[0];
-      if(td) {
-        rows[i].style.display = td.innerText.toLowerCase().includes(filter) ? '' : 'none';
-      }
-    }
-  });
 
-  // Open Modal for Add
-  document.getElementById('addCommodityBtn').addEventListener('click', function() {
-    document.getElementById('modalTitle').innerText = 'Add Commodity';
-    document.getElementById('modalSubmitBtn').innerText = 'Create';
-    document.getElementById('commodityForm').reset();
-    document.getElementById('commodityId').value = '';
-    document.getElementById('currentImage').src = '/images/default.png';
-  });
-
-  // Open Modal for Edit
-  document.querySelectorAll('.editBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('modalTitle').innerText = 'Update Commodity';
-      document.getElementById('modalSubmitBtn').innerText = 'Update';
-
-      document.getElementById('commodityId').value = btn.dataset.id;
-      document.getElementById('commodityName').value = btn.dataset.name;
-      document.getElementById('commodityCategory').value = btn.dataset.category;
-      document.getElementById('commoditySubcategory').value = btn.dataset.subcategory || '';
-      document.getElementById('commodityUnit').value = btn.dataset.unit;
-      document.getElementById('commodityHSN').value = btn.dataset.hsn || '';
-      document.getElementById('commodityDescription').value = btn.dataset.description || '';
-      document.getElementById('commodityStatus').value = btn.dataset.status;
-      document.getElementById('currentImage').src = btn.dataset.image || '/images/default.png';
+  // ✅ Search filter
+  document.getElementById("searchInput").addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    document.querySelectorAll("#commodityTable tr").forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
     });
   });
 
-  // Submit Form (Create or Update)
-  document.getElementById('commodityForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = document.getElementById('commodityForm');
-    const formData = new FormData(form);
-    const id = document.getElementById('commodityId').value;
-    const messageDiv = document.getElementById('responseMessage');
+  // ✅ Edit Modal
+  document.querySelectorAll(".editBtn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      let id = this.dataset.id;
+      let name = this.dataset.name;
+      let status = this.dataset.status;
 
-    let url = '/admin/commodities';
-    let method = 'POST';
+      document.getElementById("editId").value = id;
+      document.getElementById("editName").value = name;
+      document.getElementById("editStatus").value = status;
 
-    if(id) { // Update
-      url = `/admin/commodities/update/${id}`;
-      method = 'POST';
-    }
+      // Set form action dynamically
+      document.getElementById("editForm").action = "/admin/commodities/update/" + id;
 
-    try {
-      const response = await fetch(url, { method, body: formData });
-      const result = await response.json();
-
-      if(result.success) {
-        messageDiv.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
-        form.reset();
-        setTimeout(() => location.reload(), 1000);
-      } else {
-        messageDiv.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
-      }
-    } catch (error) {
-      messageDiv.innerHTML = `<div class="alert alert-danger">Something went wrong. Try again!</div>`;
-    }
+      new bootstrap.Modal(document.getElementById("editModal")).show();
+    });
   });
 </script>
-
-
-
 
     </div>
 

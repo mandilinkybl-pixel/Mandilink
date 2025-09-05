@@ -65,7 +65,7 @@ class secureEmployeecontroller  {
             if (user.isBlocked) return res.status(403).json({ message: "User is blocked" });
 
             const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+            if (!isMatch) return res.redirect("/admin/employees");
 
             const token = jwt.sign(
                 { id: user._id, role: user.role, access: user.access },
@@ -73,9 +73,11 @@ class secureEmployeecontroller  {
                 { expiresIn: "1d" }
             );
 
-            res.status(200).json({ message: "Login successful", token, user });
+            req.session.token = token;
+            req.session.user = { id: user._id, name: user.name, role: user.role, access: user.access };
+            res.redirect("/admin/dashboard");
         } catch (err) {
-            res.status(500).json({ error: err.message });
+           res.redirect("/admin/employees");
         }
     }
 
@@ -109,15 +111,15 @@ class secureEmployeecontroller  {
 
     // If no employee found → handle gracefully
     if (!updatedEmployee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+        req.flash("error_msg", "Employee not found");
     }
 
     // ✅ Only ONE response (no duplicate headers)
     return res.redirect("/admin/employees");
 
   } catch (err) {
-    console.error("Error updating employee:", err);
-    return res.status(500).json({ success: false, message: err.message });
+ 
+    return res.redirect("/admin/employees");
   }
 };
 
@@ -128,9 +130,9 @@ class secureEmployeecontroller  {
             const deleted = await Sechueemploueeschema.findByIdAndDelete(id);
             if (!deleted) return res.status(404).json({ message: "Employee not found" });
 
-            res.status(200).json({ message: "Employee deleted successfully" });
+            res.redirect("/admin/employees");
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.redirect("/admin/employees");
         }
     }
 
@@ -142,7 +144,8 @@ class secureEmployeecontroller  {
             const admins = await Sechueemploueeschema.find({ role: "admin" });
             res.status(200).json({ admins });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+           
+            res.redirect("/admin/employees");
         }
     }
 
@@ -161,11 +164,10 @@ class secureEmployeecontroller  {
                 { new: true }
             );
 
-            if (!updated) return res.status(404).json({ message: "Employee not found" });
-
-            res.status(200).json({ message: "Password updated successfully" });
+            if (!updated) return res.redirect("/admin/employees");
+            res.redirect("/admin/employees");
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.redirect("/admin/employees");
         }
     }
 
@@ -182,7 +184,7 @@ class secureEmployeecontroller  {
 
             res.redirect("/admin/employees");
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            res.redirect("/admin/employees");
         }
     }
 }

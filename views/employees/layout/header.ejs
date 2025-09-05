@@ -268,79 +268,87 @@
     </nav>
 
     <!-- Sidebar with Access-Controlled Buttons -->
-    <% const access = employee.access; %>
-<div class="sidebar" id="sidebar">
-    <a href="/employees/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
-  <% if (access.includes("Manage_Users")) { %>
-    <a href="#"><i class="fas fa-users nav-icon"></i><span class="nav-text">Manage Users</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Roles")) { %>
-    <a href="#"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">Manage Roles</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Admin")) { %>
-    <a href="#"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Manage Admin</span></a>
-  <% } %>
-  <% if (access.includes("Manage_CallLogs")) { %>
-    <a href="#"><i class="fas fa-phone nav-icon"></i><span class="nav-text">Manage Call Logs</span></a>
-  <% } %>
-  <% if (access.includes("Manage_SupportTickets")) { %>
-    <a href="#"><i class="fas fa-headset nav-icon"></i><span class="nav-text">Manage Support Tickets</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Reports")) { %>
-    <a href="#"><i class="fas fa-file-alt nav-icon"></i><span class="nav-text">Manage Reports</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Settings")) { %>
-    <a href="#"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Manage Settings</span></a>
-  <% } %>
-  <% if (
-        access.includes("Manage_Ads_Top") ||
-        access.includes("Manage_Ads_Bottom") ||
-        access.includes("Manage_Ads_Side") ||
-        access.includes("Manage_Ads_Sponsored")
-    ) { %>
-    <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
-      <i class="fas fa-ad nav-icon"></i>
-      <span class="nav-text flex-grow-1">Manage Ads</span>
-    </a>
-
-    <div class="collapse ms-2" id="adsMenu">
-        <a href="/employees/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add new Ads</span></a>
-      <% if (access.includes("Manage_Ads_Top")) { %>
-        <a href="/employees/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
+<% const access = employee.access; %>
+    <div class="sidebar" id="sidebar">
+        <a href="/employees/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
+      <% if (access.includes("Manage_Users")) { %>
+        <a href="#"><i class="fas fa-users nav-icon"></i><span class="nav-text">Manage Users</span></a>
       <% } %>
-      <% if (access.includes("Manage_Ads_Bottom")) { %>
-        <a href="/employees/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottom Ads</span></a>
+      <% if (access.includes("Manage_Roles")) { %>
+        <a href="#"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">Manage Roles</span></a>
       <% } %>
-      <% if (access.includes("Manage_Ads_Side")) { %>
-        <a href="/employees/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ads</span></a>
+      <% if (access.includes("Manage_Admin")) { %>
+        <a href="#"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Manage Admin</span></a>
       <% } %>
-      <% if (access.includes("Manage_Ads_Sponsored")) { %>
-        <a href="/employees/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ads</span></a>
+      <% if (access.includes("Manage_CallLogs")) { %>
+        <a href="#"><i class="fas fa-phone nav-icon"></i><span class="nav-text">Manage Call Logs</span></a>
       <% } %>
+      <% if (access.includes("Manage_SupportTickets")) { %>
+        <a href="#"><i class="fas fa-headset nav-icon"></i><span class="nav-text">Manage Support Tickets</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Reports")) { %>
+        <a href="#"><i class="fas fa-file-alt nav-icon"></i><span class="nav-text">Manage Reports</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Settings")) { %>
+        <a href="#"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Manage Settings</span></a>
+      <% } %>
+      <% if (
+            access.includes("Manage_Ads_Top") ||
+            access.includes("Manage_Ads_Bottom") ||
+            access.includes("Manage_Ads_Side") ||
+            access.includes("Manage_Ads_Sponsored")
+        ) { %>
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
+          <i class="fas fa-ad nav-icon"></i>
+          <span class="nav-text flex-grow-1">Manage Ads</span>
+        </a>
+        <div class="collapse ms-2" id="adsMenu">
+            <a href="/employees/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add new Ads</span></a>
+          <% if (access.includes("Manage_Ads_Top")) { %>
+            <a href="/employees/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
+          <% } %>
+          <% if (access.includes("Manage_Ads_Bottom")) { %>
+            <a href="/employees/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottom Ads</span></a>
+          <% } %>
+          <% if (access.includes("Manage_Ads_Side")) { %>
+            <a href="/employees/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ads</span></a>
+          <% } %>
+          <% if (access.includes("Manage_Ads_Sponsored")) { %>
+            <a href="/employees/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ads</span></a>
+          <% } %>
+        </div>
+      <% } %>
+      <% if (access.includes("Manage_Jobs")) { %>
+        <a href="/employees/jobs" class="d-flex align-items-center"><i class="fas fa-briefcase nav-icon"></i><span class="nav-text">Manage Jobs</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Blogs")) { %>
+        <a href="/employees/blogs" class="d-flex align-items-center"><i class="fas fa-blog nav-icon"></i><span class="nav-text">Manage Blogs</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Analytics")) { %>
+        <a href="#" class="d-flex align-items-center"><i class="fas fa-chart-bar nav-icon"></i><span class="nav-text">Manage Analytics</span></a>
+      <% } %>
+      <% if (access.includes("Manage_MandiRates")) { %>
+        <a href="/employees/mandirate"><i class="fas fa-balance-scale nav-icon"></i><span class="nav-text">Manage Mandi Rates</span></a>
+        <a href="/employees/commodities"><i class="fas fa-boxes nav-icon"></i><span class="nav-text">Manage Commodities</span></a>
+      <% } %>
+      <% if (access.includes("Manage_PushNotifications")) { %>
+        <a href="#"><i class="fas fa-bell nav-icon"></i><span class="nav-text">Manage Push Notifications</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Plans")) { %>
+        <a href="/employees/plans"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Manage Plans</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Payments")) { %>
+        <a href="#"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Manage Payments</span></a>
+      <% } %>
+        <% if (access.includes("Manage_CompanyList")) { %>
+            <a href="/employees/companylist"><i class="fas fa-building nav-icon"></i><span class="nav-text">Manage Company List</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Mandis")) { %>
+            <a href="/employees/mandis"><i class="fas fa-box nav-icon"></i><span class="nav-text">Manage Mandis</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Categories")) { %>
+            <a href="/employees/category"><i class="fas fa-th-list nav-icon"></i><span class="nav-text">Manage Categories</span></a>
+        <% } %>
+      <a href="/employees/auth/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
     </div>
-  <% } %>
-  <% if (access.includes("Manage_Jobs")) { %>
-    <a href="/employees/jobs" class="d-flex align-items-center"><i class="fas fa-briefcase nav-icon"></i><span class="nav-text">Manage Jobs</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Blogs")) { %>
-    <a href="/employees/blogs" class="d-flex align-items-center"><i class="fas fa-blog nav-icon"></i><span class="nav-text">Manage Blogs</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Analytics")) { %>
-    <a href="#" class="d-flex align-items-center"><i class="fas fa-chart-bar nav-icon"></i><span class="nav-text">Manage Analytics</span></a>
-  <% } %>
-  <% if (access.includes("Manage_MandiRates")) { %>
-    <a href="/employees/mandis"><i class="fas fa-balance-scale nav-icon"></i><span class="nav-text">Manage Mandi Rates</span></a>
-    <a href="/employees/commodities"><i class="fas fa-boxes nav-icon"></i><span class="nav-text">Manage Commodities</span></a>
-  <% } %>
-  <% if (access.includes("Manage_PushNotifications")) { %>
-    <a href="#"><i class="fas fa-bell nav-icon"></i><span class="nav-text">Manage Push Notifications</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Plans")) { %>
-    <a href="/employees/plans"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Manage Plans</span></a>
-  <% } %>
-  <% if (access.includes("Manage_Payments")) { %>
-    <a href="#"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Manage Payments</span></a>
-  <% } %>
-  <a href="/employees/auth/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
-</div>
 

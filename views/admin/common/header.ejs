@@ -264,7 +264,26 @@
     <div class="sidebar" id="sidebar">
 
         <a href="/admin/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
+   <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#mandiMenu" role="button" aria-expanded="false" aria-controls="mandiMenu" style="cursor:pointer">
+            <i class="fas fa-balance-scale nav-icon"></i>
+            <span class="nav-text flex-grow-1">Mandi</span>
+        </a>
+        <div class="collapse ms-2" id="mandiMenu">
+            <a href="/admin/mandirate" class="d-flex align-items-center"><i class="fas fa-rupee-sign nav-icon"></i><span class="nav-text">Mandi Rate</span></a>
+            <a href="/admin/companylist" class="d-flex align-items-center"><i class="fas fa-building nav-icon"></i><span class="nav-text">Company List</span></a>
+            <a href="/admin/commidities" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Commodity List</span></a>
+            
+            <a href="/admin/mandis" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">City/Mandi List</span></a>
 
+            <a href="/admin/category" class="d-flex align-items-center"><i class="fas fa-balance-scale"></i><span class="nav-text">Category</span></a>
+
+           
+                <a href="/admin/state" class="d-flex align-items-center"><i class="fas fa-map nav-icon"> </i><span class="nav-text">State/District</span></a>
+
+            <!-- commodity -->
+           
+            
+        </div>
         <!-- User Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button" aria-expanded="false" aria-controls="userMenu" style="cursor:pointer">
             <i class="fas fa-users nav-icon"></i>
@@ -328,18 +347,7 @@
         </a>
 
         <!-- Mandiprices / Mandi Daily Bid -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#mandiMenu" role="button" aria-expanded="false" aria-controls="mandiMenu" style="cursor:pointer">
-            <i class="fas fa-balance-scale nav-icon"></i>
-            <span class="nav-text flex-grow-1">Mandi</span>
-        </a>
-        <div class="collapse ms-2" id="mandiMenu">
-            <a href="/admin/mandis" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Mandi List</span></a>
-            
-            <a href="#" class="d-flex align-items-center"><i class="fas fa-rupee-sign nav-icon"></i><span class="nav-text">Mandiprices</span></a>
-            <!-- commodity -->
-           
-            <a href="/admin/commidities" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Commodity List</span></a>
-        </div>
+     
 
         <!-- Push Notification Button -->
         <a href="#" class="d-flex align-items-center collapsible-btn">

@@ -1,4 +1,4 @@
-// controllers/admin/commodities.controller.js
+// controllers/employees/commodities.controller.js
 const SecureEmployee = require("../../models/adminEmployee");
 const Commodity = require("../../models/commodityname");
 
@@ -9,11 +9,12 @@ class CommodityController {
       const user = req.user;
       const userdetails = await SecureEmployee.findById(user.id);
       const commodities = await Commodity.find().sort({ createdAt: -1 });
-
-      res.render("admin/comidities", {
+      const employee = await SecureEmployee.findById(user.id);
+      res.render("employees/comidities", {
         commodities,
         userdetails,
         user,
+        employee,
         success_msg: req.flash("success_msg"),
         error_msg: req.flash("error_msg"),
       });
@@ -21,7 +22,7 @@ class CommodityController {
     } catch (err) {
       console.error(err);
       req.flash("error_msg", "Error fetching commodities");
-      res.redirect("/admin/commodities");
+      res.redirect("/employees/commodities");
     }
   };
 
@@ -37,18 +38,18 @@ class CommodityController {
 
     if (existing) {
       req.flash("error_msg", "Commodity already exists");
-      return res.redirect("/admin/commodities"); // ensure route matches
+      return res.redirect("/employees/commodities"); // ensure route matches
     }
 
     const commodity = new Commodity({ name: name.trim(), status });
     await commodity.save();
 
     req.flash("success_msg", "Commodity added successfully");
-    res.redirect("/admin/commodities");
+    res.redirect("/employees/commodities");
   } catch (err) {
     console.error("Add Commodity Error:", err);
     req.flash("error_msg", "Error adding commodity");
-    res.redirect("/admin/commodities");
+    res.redirect("/employees/commodities");
   }
 };
 
@@ -67,14 +68,14 @@ class CommodityController {
 
       if (!commodity) {
         req.flash("error_msg", "Commodity not found");
-        return res.redirect("/admin/commodities");
+        return res.redirect("/employees/commodities");
       }
 
       req.flash("success_msg", "Commodity updated successfully");
-      res.redirect("/admin/commodities");
+      res.redirect("/employees/commodities");
     } catch (err) {
       req.flash("error_msg", "Error updating commodity");
-      res.redirect("/admin/commodities");
+      res.redirect("/employees/commodities");
     }
   };
 
@@ -86,14 +87,14 @@ class CommodityController {
       const commodity = await Commodity.findByIdAndDelete(id);
       if (!commodity) {
         req.flash("error_msg", "Commodity not found");
-        return res.redirect("/admin/commodities");
+        return res.redirect("/employees/commodities");
       }
 
       req.flash("success_msg", "Commodity deleted successfully");
-      res.redirect("/admin/commodities");
+      res.redirect("/employees/commodities");
     } catch (err) {
       req.flash("error_msg", "Error deleting commodity");
-      res.redirect("/admin/commodities");
+      res.redirect("/employees/commodities");
     }
   };
 }

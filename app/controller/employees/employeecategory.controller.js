@@ -13,18 +13,18 @@ class CategoryController {
 
       if (existing) {
         req.flash("error_msg", "Category already exists");
-        return res.redirect("/admin/category");
+        return res.redirect("/employees/category");
       }
 
       const category = new Category({ name: name.trim(), status });
       await category.save();
 
       req.flash("success_msg", "Category added successfully");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     } catch (err) {
       console.error("Add Category Error:", err);
       req.flash("error_msg", "Error adding category");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     }
   };
 
@@ -42,7 +42,7 @@ class CategoryController {
 
       if (existing) {
         req.flash("error_msg", "Category name already exists");
-        return res.redirect("/admin/category");
+        return res.redirect("/employees/category");
       }
 
       const category = await Category.findByIdAndUpdate(
@@ -53,15 +53,15 @@ class CategoryController {
 
       if (!category) {
         req.flash("error_msg", "Category not found");
-        return res.redirect("/admin/category");
+        return res.redirect("/employees/category");
       }
 
       req.flash("success_msg", "Category updated successfully");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     } catch (err) {
       console.error("Update Category Error:", err);
       req.flash("error_msg", "Error updating category");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     }
   };
 
@@ -74,15 +74,15 @@ class CategoryController {
 
       if (!category) {
         req.flash("error_msg", "Category not found");
-        return res.redirect("/admin/category");
+        return res.redirect("/employees/category");
       }
 
       req.flash("success_msg", "Category deleted successfully");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     } catch (err) {
       console.error("Delete Category Error:", err);
       req.flash("error_msg", "Error deleting category");
-      res.redirect("/admin/category");
+      res.redirect("/employees/category");
     }
   };
 }

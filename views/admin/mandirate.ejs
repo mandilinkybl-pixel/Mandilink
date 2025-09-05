@@ -1,0 +1,333 @@
+<%- include('common/header') %>
+
+    <div class="main-content" id="mainContent">
+<div class="container mt-4">
+  <h2>Mandi Rates</h2>
+
+
+  <!-- FILTERS: OnSelect-wise, instant search -->
+  <div class="row g-2 mb-3">
+    <div class="col-md-3">
+      <select id="filterState" class="form-select">
+        <option value="">Select State</option>
+        <% states.forEach(state => { %>
+          <option value="<%= state._id %>"><%= state.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="filterDistrict" class="form-select">
+        <option value="">Select District</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="filterMandi" class="form-select">
+        <option value="">Select Mandi</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+    </div>
+  </div>
+
+  <form id="mandiRateForm" action="/admin/mandirate/add" method="POST">
+    <input type="hidden" name="state" id="formState">
+    <input type="hidden" name="district" id="formDistrict">
+    <input type="hidden" name="mandi" id="formMandi">
+    <table class="table table-bordered" id="mandiRateTable">
+      <thead>
+        <tr>
+          <th>Sl No</th>
+          <th>Mandi Name</th>
+          <th>Address (State/District/Mandi)</th>
+          <th>Commodity</th>
+          <th>Min Price</th>
+          <th>Max Price</th>
+          <th>Est. Qty</th>
+          <th>Last Updated</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="mandiRateRows">
+        <% let sno = 1; %>
+        <% rates.forEach((rate) => { %>
+          <% rate.rates.forEach((item) => { %>
+            <tr class="dataRow"
+                data-state="<%= rate.state?._id %>"
+                data-district="<%= rate.district %>"
+                data-mandi="<%= rate.mandi?._id %>"
+                data-mandirateid="<%= rate._id %>"
+                data-commodityid="<%= item.commodity?._id %>">
+              <td class="sno"><%= sno++ %></td>
+              <td><%= rate.mandi?.name %></td>
+              <td>
+                <span><%= rate.state?.name %></span> /
+                <span><%= rate.district %></span> /
+                <span><%= rate.mandi?.name %></span>
+              </td>
+              <td>
+                <span class="cell-text"><%= item.commodity?.name %></span>
+              </td>
+              <td>
+                <span class="cell-text"><%= item.minimum %></span>
+                <input type="number" class="form-control cell-input" min="0" step="0.01" value="<%= item.minimum %>" style="display:none;" required>
+              </td>
+              <td>
+                <span class="cell-text"><%= item.maximum %></span>
+                <input type="number" class="form-control cell-input" min="0" step="0.01" value="<%= item.maximum %>" style="display:none;" required>
+              </td>
+              <td>
+                <span class="cell-text"><%= item.estimatedArrival ?? "" %></span>
+                <input type="number" class="form-control cell-input" min="0" step="0.01" value="<%= item.estimatedArrival ?? "" %>" style="display:none;">
+              </td>
+              <td>
+                <span class="last-updated">
+                  <% 
+                    let updatedAt = item.updatedAt || rate.updatedAt;
+                    function formatDate(dateStr) {
+                      if (!dateStr) return "";
+                      const dateObj = new Date(dateStr);
+                      return dateObj.toLocaleString('en-IN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      });
+                    }
+                  %>
+                  <%= formatDate(updatedAt) %>
+                </span>
+              </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-primary editRowBtn" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                <button type="button" class="btn btn-sm btn-success saveRowBtn" style="display:none;" title="Update"><i class="bi bi-check2"></i></button>
+                <button type="button" class="btn btn-sm btn-secondary cancelRowBtn" style="display:none;" title="Cancel"><i class="bi bi-x"></i></button>
+                <form action="/admin/mandirate/delete-commodity/<%= rate._id %>/<%= item.commodity?._id %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this rate?')" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% }) %>
+        <!-- ADD ROW (always at bottom, can add more with plus icon, and Save All) -->
+        <tr class="addRow">
+          <td class="sno"></td>
+          <td>
+            <input type="text" class="form-control" id="addMandiName" value="" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control" id="addAddress" value="" readonly>
+          </td>
+          <td>
+            <select name="commodity_ids[]" class="form-select" required>
+              <option value="">Select Commodity</option>
+              <% commodities.forEach(com => { %>
+                <option value="<%= com._id %>"><%= com.name %></option>
+              <% }) %>
+            </select>
+          </td>
+          <td><input type="number" name="minimums[]" class="form-control" min="0" step="0.01" required></td>
+          <td><input type="number" name="maximums[]" class="form-control" min="0" step="0.01" required></td>
+          <td><input type="number" name="arrivals[]" class="form-control" min="0" step="0.01"></td>
+          <td>-</td>
+          <td>
+            <button type="button" class="btn btn-success addRowBtn"><i class="bi bi-plus-circle"></i></button>
+            <button type="button" class="btn btn-danger removeRowBtn" style="display:none;"><i class="bi bi-x-circle"></i></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button type="submit" class="btn btn-success" id="saveAllBtn">Save All</button>
+  </form>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // State, District, Mandi filters and instant search
+  const filterState = document.getElementById("filterState");
+  const filterDistrict = document.getElementById("filterDistrict");
+  const filterMandi = document.getElementById("filterMandi");
+  const searchInput = document.getElementById("searchInput");
+  const mandiRateRows = document.getElementById("mandiRateRows");
+  let mandis = [];
+
+  filterState.addEventListener("change", async function() {
+    filterDistrict.innerHTML = '<option value="">Select District</option>';
+    filterMandi.innerHTML = '<option value="">Select Mandi</option>';
+    document.getElementById("formState").value = this.value;
+    if (!this.value) return;
+    const res = await fetch(`/admin/mandirate/districts/${this.value}`);
+    const districts = await res.json();
+    districts.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d; opt.textContent = d;
+      filterDistrict.appendChild(opt);
+    });
+    filterTable();
+    updateAddRowFields();
+  });
+  filterDistrict.addEventListener("change", async function() {
+    filterMandi.innerHTML = '<option value="">Select Mandi</option>';
+    document.getElementById("formDistrict").value = this.value;
+    if (!this.value) return;
+    const res = await fetch(`/admin/mandirate/mandis/${this.value}`);
+    mandis = await res.json();
+    mandis.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m.id; opt.textContent = m.name;
+      filterMandi.appendChild(opt);
+    });
+    filterTable();
+    updateAddRowFields();
+  });
+  filterMandi.addEventListener("change", function() {
+    document.getElementById("formMandi").value = this.value;
+    filterTable();
+    updateAddRowFields();
+  });
+  searchInput.addEventListener("input", filterTable);
+
+  function filterTable() {
+    const state = filterState.value;
+    const district = filterDistrict.value;
+    const mandi = filterMandi.value;
+    const searchVal = searchInput.value.toLowerCase();
+    let sno = 1;
+    document.querySelectorAll("#mandiRateRows .dataRow").forEach(row => {
+      let match = true;
+      if(state && row.dataset.state !== state) match = false;
+      if(district && row.dataset.district !== district) match = false;
+      if(mandi && row.dataset.mandi !== mandi) match = false;
+      if(searchVal && !row.textContent.toLowerCase().includes(searchVal)) match = false;
+      row.style.display = match ? "" : "none";
+      if(match) row.querySelector(".sno").textContent = sno++;
+    });
+    // Show/hide add row based on filter
+    const addRows = document.querySelectorAll("#mandiRateRows .addRow");
+    addRows.forEach(row => {
+      row.style.display = (state && district && mandi) ? "" : "none";
+      row.querySelector(".sno").textContent = sno;
+    });
+  }
+  filterTable();
+
+  function updateAddRowFields() {
+    // Set mandi name and address fields based on filters
+    const state = filterState.value;
+    const district = filterDistrict.value;
+    const mandi = filterMandi.value;
+    const stateName = state ? filterState.options[filterState.selectedIndex].text : '';
+    const mandiObj = mandis.find(m => m.id === mandi);
+    document.querySelectorAll("#addMandiName").forEach(el => el.value = mandiObj ? mandiObj.name : '');
+    document.querySelectorAll("#addAddress").forEach(el =>
+      el.value = [stateName, district, mandiObj ? mandiObj.name : ''].filter(Boolean).join(' / ')
+    );
+  }
+
+  // Add/remove dynamic rows in add form
+  mandiRateRows.addEventListener("click", function(e) {
+    // Add row
+    if(e.target.closest(".addRowBtn")) {
+      const tbody = mandiRateRows;
+      const addRow = e.target.closest(".addRow");
+      const newRow = addRow.cloneNode(true);
+      newRow.querySelectorAll("input, select").forEach(el => el.value = "");
+      newRow.querySelector(".addRowBtn").style.display = "none";
+      newRow.querySelector(".removeRowBtn").style.display = "";
+      updateAddRowFields();
+      tbody.insertBefore(newRow, addRow.nextSibling);
+      updateAddRowSerials();
+    }
+    // Remove row
+    if(e.target.closest(".removeRowBtn")) {
+      e.target.closest("tr").remove();
+      updateAddRowSerials();
+    }
+  });
+
+  function updateAddRowSerials() {
+    let idx = document.querySelectorAll("#mandiRateRows .dataRow:not([style*='display: none'])").length + 1;
+    document.querySelectorAll("#mandiRateRows .addRow").forEach((row, i) => {
+      row.querySelector(".sno").textContent = idx + i;
+    });
+  }
+
+  // Enter in add row submits
+  mandiRateRows.addEventListener("keydown", function(e) {
+    if(e.key === "Enter" && e.target.closest(".addRow")) {
+      e.preventDefault();
+      document.getElementById("mandiRateForm").submit();
+    }
+  });
+
+  // Inline edit: only one row editable at a time
+  mandiRateRows.addEventListener("click", function(e) {
+    // Edit button
+    if(e.target.closest(".editRowBtn")) {
+      // Reset all rows
+      document.querySelectorAll("#mandiRateRows .dataRow").forEach(row => {
+        row.querySelectorAll(".cell-text").forEach(t => t.style.display = "");
+        row.querySelectorAll(".cell-input").forEach(i => i.style.display = "none");
+        row.querySelector(".editRowBtn").style.display = "inline-block";
+        row.querySelector(".saveRowBtn").style.display = "none";
+        row.querySelector(".cancelRowBtn").style.display = "none";
+      });
+      // Now enable the clicked row
+      const tr = e.target.closest("tr.dataRow");
+      tr.querySelectorAll(".cell-text").forEach(t => t.style.display = "none");
+      tr.querySelectorAll(".cell-input").forEach(i => i.style.display = "block");
+      tr.querySelector(".editRowBtn").style.display = "none";
+      tr.querySelector(".saveRowBtn").style.display = "inline-block";
+      tr.querySelector(".cancelRowBtn").style.display = "inline-block";
+    }
+    // Cancel button
+    if(e.target.closest(".cancelRowBtn")) {
+      const tr = e.target.closest("tr.dataRow");
+      tr.querySelectorAll(".cell-text").forEach(t => t.style.display = "");
+      tr.querySelectorAll(".cell-input").forEach(i => i.style.display = "none");
+      tr.querySelector(".editRowBtn").style.display = "inline-block";
+      tr.querySelector(".saveRowBtn").style.display = "none";
+      tr.querySelector(".cancelRowBtn").style.display = "none";
+    }
+    // Save (update) button
+    if(e.target.closest(".saveRowBtn")) {
+      const tr = e.target.closest("tr.dataRow");
+      const mandiRateId = tr.dataset.mandirateid;
+      const commodityId = tr.dataset.commodityid;
+      const minimum = tr.querySelectorAll(".cell-input")[0].value;
+      const maximum = tr.querySelectorAll(".cell-input")[1].value;
+      const estimatedArrival = tr.querySelectorAll(".cell-input")[2].value;
+      fetch(`/admin/mandirate/edit-commodity/${mandiRateId}/${commodityId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minimum, maximum, estimatedArrival })
+      }).then(() => window.location.reload());
+    }
+  });
+
+  // Update add row fields on page load and filter change
+  updateAddRowFields();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  </div>
+
+    <!-- Bootstrap JS -->
+    
+   
+    <!-- Custom JS for sidebar -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

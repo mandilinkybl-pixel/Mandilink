@@ -10,7 +10,7 @@ router.post("/login", UserController.login);
 router.post("/create-employee", adminAuth, UserController.createEmployee);
 router.post("/create-admin", adminAuth, UserController.createAdmin);
 router.post("/update-employee/:id", adminAuth, UserController.updateEmployee);
-router.delete("/delete-employee/:id", adminAuth, UserController.deleteEmployee);
+router.get("/delete/:id", adminAuth, UserController.deleteEmployee);
 // router.get("/employees", UserController.getAllEmployees);
 router.get("/block-employee/:id", adminAuth, UserController.blockEmployee);
 
