@@ -3,7 +3,7 @@ name: Auto Deploy to VPS
 on:
   push:
     branches:
-      - main   # Change if your deployment branch is different
+      - main
 
 jobs:
   deploy:
@@ -18,10 +18,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          # Optional: pass port if your SSH is not default 22
-          # port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /home/youruser/mindilinkadmin
+            cd /home/root/mandilink || git clone https://github.com/mandilinkybl-pixel/Mandilink.git /home/root/mandilink
+            cd /home/root/mandilink
             git pull origin main
             docker-compose build
             docker-compose up -d
