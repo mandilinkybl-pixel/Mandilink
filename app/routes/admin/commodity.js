@@ -6,10 +6,10 @@ const commodityController = require("../../controller/admin/comidity.controller"
 
 const {adminAuth} = require("../../middleware/authadmin");
 
-// List page
+
 router.get("/", adminAuth, commodityController.getAllCommodities);
 
-// Create
+
 router.post("/create", adminAuth, commodityController.addCommodity);
 
 // Update
