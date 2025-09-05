@@ -1,0 +1,419 @@
+<%- include('layout/header') %>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+       
+      <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+      <h2>Mandi List</h2>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">Create Mandi</button>
+    </div>
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search Mandi...">
+
+    <table class="table table-bordered table-hover" id="mandiTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Address</th>
+          <th>Contact Details</th>
+          <th>Status</th>
+          <th>Commodities</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% mandis.forEach(mandi => { %>
+        <tr>
+          <!-- Mandi Name -->
+          <td><%= mandi.mandiName %></td>
+          <!-- Address: State, District, Full Address, Pincode, Location -->
+          <td>
+            <strong>State:</strong> <%= mandi.state %><br>
+            <strong>District:</strong> <%= mandi.district %><br>
+            <strong>Pincode:</strong> <%= mandi.pincode %><br>
+            <strong>Full Address:</strong> <%= mandi.address %><br>
+            <strong>Lat/Lng:</strong> <%= mandi.location?.lat %>, <%= mandi.location?.lng %>
+          </td>
+          <!-- Contact Details -->
+          <td>
+            <strong>Person:</strong> <%= mandi.contactPerson %><br>
+            <strong>Number:</strong> <%= mandi.contactNumber %><br>
+            <strong>Phone:</strong> <%= mandi.phone %><br>
+            <strong>Email:</strong> <%= mandi.email %>
+          </td>
+          <!-- Status -->
+          <td>
+            <strong>Status:</strong> <%= mandi.status %><br>
+            <strong>Type:</strong> <%= mandi.type %><br>
+            <strong>eNAM:</strong> <%= mandi.connectedWithENAM ? "Yes" : "No" %>
+          </td>
+          <!-- Commodities Nested Table -->
+          <td>
+            <table class="table table-sm table-striped table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Unit</th>
+                  <th>Weight</th>
+                  <th>Last Update</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% mandi.commodityPrices.forEach(cp => { %>
+                  <tr>
+                    <td><%= cp.commodity?.commodityName %></td>
+                    <td><%= cp.price %></td>
+                    <td><%= cp.unit %></td>
+                    <td><%= cp.weight ? cp.weight + ' kg' : '-' %></td>
+                     <td>
+          <%= mandi.updatedAt
+                ? new Date(mandi.updatedAt).toLocaleDateString() + " " + new Date(mandi.updatedAt).toLocaleTimeString()
+                : "Never" %>
+        </td>
+                  </tr>
+                <% }) %>
+                
+              </tbody>
+            </table>
+            <button class="btn btn-sm btn-primary mt-1" data-bs-toggle="modal" data-bs-target="#priceModal<%= mandi._id %>">Update Prices</button>
+          </td>
+          <!-- Actions -->
+          <td>
+            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editModal<%= mandi._id %>">Edit</button>
+            <form method="POST" action="/employees/mandis/delete/<%= mandi._id %>" style="display:inline;">
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this mandi?')">Delete</button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Edit Modal (identical to Create Modal but pre-filled) -->
+        <div class="modal fade" id="editModal<%= mandi._id %>" tabindex="-1" style="padding-top: 100px;">
+          <div class="modal-dialog modal-lg">
+            <form method="POST" action="/employees/mandis/update/<%= mandi._id %>">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Mandi</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="text" name="mandiName" class="form-control mb-2" value="<%= mandi.mandiName %>" required>
+                  <input type="text" name="phone" class="form-control mb-2" value="<%= mandi.phone %>" required>
+                  <input type="text" name="state" class="form-control mb-2" id="state_edit_<%= mandi._id %>" value="<%= mandi.state %>" required>
+                  <input type="text" name="district" class="form-control mb-2" id="district_edit_<%= mandi._id %>" value="<%= mandi.district %>" required>
+                  <input type="text" name="pincode" class="form-control mb-2" id="pincode_edit_<%= mandi._id %>" value="<%= mandi.pincode %>">
+                  <label class="form-label">Full Address</label>
+                  <input type="text" name="address" class="form-control mb-2" id="address_edit_<%= mandi._id %>" value="<%= mandi.address %>">
+                  <input type="text" name="contactPerson" class="form-control mb-2" value="<%= mandi.contactPerson %>">
+                  <input type="text" name="contactNumber" class="form-control mb-2" value="<%= mandi.contactNumber %>">
+                  <input type="email" name="email" class="form-control mb-2" value="<%= mandi.email %>">
+                  <select name="type" class="form-control mb-2">
+                    <option value="APMC" <%= mandi.type=="APMC"?"selected":"" %>>APMC</option>
+                    <option value="Private" <%= mandi.type=="Private"?"selected":"" %>>Private</option>
+                    <option value="eNAM" <%= mandi.type=="eNAM"?"selected":"" %>>eNAM</option>
+                    <option value="Cooperative" <%= mandi.type=="Cooperative"?"selected":"" %>>Cooperative</option>
+                  </select>
+                  <select name="status" class="form-control mb-2">
+                    <option value="active" <%= mandi.status=="active"?"selected":"" %>>Active</option>
+                    <option value="inactive" <%= mandi.status=="inactive"?"selected":"" %>>Inactive</option>
+                  </select>
+                  <label class="form-label mt-2">Location (Latitude, Longitude)</label>
+                  <div id="map_edit_<%= mandi._id %>" style="height:300px;"></div>
+                  <div class="row mt-2">
+                    <div class="col-md-6"><input class="form-control" name="lat" id="lat_edit_<%= mandi._id %>" value="<%= mandi.location?.lat %>" placeholder="Latitude" required></div>
+                    <div class="col-md-6"><input class="form-control" name="lng" id="lng_edit_<%= mandi._id %>" value="<%= mandi.location?.lng %>" placeholder="Longitude" required></div>
+                  </div>
+                  <button type="button" class="btn btn-outline-primary mt-2" onclick="getLocationEdit('<%= mandi._id %>')">📍 Use My Location</button>
+                  <hr>
+                  <h5>Edit Commodities & Prices</h5>
+                  <% commodities.forEach((c, idx) => {
+                    let existing = mandi.commodityPrices.find(cp => cp.commodity?._id?.toString() === c._id.toString());
+                  %>
+                    <div class="row mb-1">
+                      <div class="col-md-3">
+                        <input type="checkbox" name="commodity" value="<%= c._id %>" id="c_edit_<%= mandi._id %>_<%= c._id %>" <%= existing ? "checked" : "" %>>
+                        <label for="c_edit_<%= mandi._id %>_<%= c._id %>"><%= c.commodityName %></label>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" step="0.01" name="price" id="price_edit_<%= mandi._id %>_<%= c._id %>" class="form-control" placeholder="Price"
+                          value="<%= existing ? existing.price : "" %>">
+                      </div>
+                      <div class="col-md-3">
+                        <select name="unit" id="unit_edit_<%= mandi._id %>_<%= c._id %>" class="form-control">
+                          <option value="₹/quintal" <%= existing && existing.unit=="₹/quintal" ? "selected":"" %>>₹/quintal</option>
+                          <option value="₹/kg" <%= existing && existing.unit=="₹/kg" ? "selected":"" %>>₹/kg</option>
+                          <option value="₹/ton" <%= existing && existing.unit=="₹/ton" ? "selected":"" %>>₹/ton</option>
+                          <option value="₹/bag" <%= existing && existing.unit=="₹/bag" ? "selected":"" %>>₹/bag</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" step="0.01" name="weight" id="weight_edit_<%= mandi._id %>_<%= c._id %>" class="form-control" placeholder="Weight (optional)"
+                          value="<%= existing ? existing.weight : "" %>">
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-success">Update Mandi</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Price Update Modal (only for updating prices) -->
+        <div class="modal fade" id="priceModal<%= mandi._id %>" tabindex="-1" style="padding-top: 100px;">
+          <div class="modal-dialog modal-lg">
+            <form method="POST" action="/employees/mandis/prices/<%= mandi._id %>">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Update Commodity Prices (<%= mandi.mandiName %>)</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <% commodities.forEach((commodity, idx) => { 
+                    let existing = mandi.commodityPrices.find(cp => cp.commodity?._id?.toString() === commodity._id.toString());
+                  %>
+                    <div class="row mb-2">
+                      <div class="col-md-3">
+                        <input type="checkbox" name="commodity" value="<%= commodity._id %>" id="pcheck<%= commodity._id %>" <%= existing ? "checked" : "" %>>
+                        <label for="pcheck<%= commodity._id %>"><%= commodity.commodityName %></label>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" step="0.01" name="price" id="pprice<%= commodity._id %>" class="form-control" placeholder="Price" value="<%= existing ? existing.price : "" %>">
+                      </div>
+                      <div class="col-md-3">
+                        <select name="unit" id="punit<%= commodity._id %>" class="form-control">
+                          <option value="₹/quintal" <%= existing && existing.unit=="₹/quintal" ? "selected":"" %>>₹/quintal</option>
+                          <option value="₹/kg" <%= existing && existing.unit=="₹/kg" ? "selected":"" %>>₹/kg</option>
+                          <option value="₹/ton" <%= existing && existing.unit=="₹/ton" ? "selected":"" %>>₹/ton</option>
+                          <option value="₹/bag" <%= existing && existing.unit=="₹/bag" ? "selected":"" %>>₹/bag</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" step="0.01" name="weight" id="pweight<%= commodity._id %>" class="form-control" placeholder="Weight (optional)" value="<%= existing ? existing.weight : "" %>">
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-success">Update Prices</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" style="padding-top: 100px;">
+  <div class="modal-dialog modal-lg">
+    <form method="POST" action="/employees/mandis/create">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create Mandi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="mandiName" class="form-control mb-2" placeholder="Mandi Name" required>
+          <input type="text" name="phone" class="form-control mb-2" placeholder="Phone" required>
+          <input type="text" name="state" class="form-control mb-2" id="state" placeholder="State" required>
+          <input type="text" name="district" class="form-control mb-2" id="district" placeholder="District" required>
+          <input type="text" name="pincode" class="form-control mb-2" id="pincode" placeholder="Pincode">
+          <label class="form-label">Full Address</label>
+          <input type="text" name="address" class="form-control mb-2" id="address" placeholder="Address">
+          <input type="text" name="contactPerson" class="form-control mb-2" placeholder="Contact Person">
+          <input type="text" name="contactNumber" class="form-control mb-2" placeholder="Contact Number">
+          <input type="email" name="email" class="form-control mb-2" placeholder="Email">
+          <select name="type" class="form-control mb-2">
+            <option value="APMC">APMC</option>
+            <option value="Private">Private</option>
+            <option value="eNAM">eNAM</option>
+            <option value="Cooperative">Cooperative</option>
+          </select>
+          <select name="status" class="form-control mb-2">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <label class="form-label mt-2">Location (Latitude, Longitude)</label>
+          <div id="map" style="height:300px;"></div>
+          <div class="row mt-2">
+            <div class="col-md-6"><input class="form-control" name="lat" id="lat" placeholder="Latitude" required></div>
+            <div class="col-md-6"><input class="form-control" name="lng" id="lng" placeholder="Longitude" required></div>
+          </div>
+          <button type="button" class="btn btn-outline-primary mt-2" onclick="getLocation()">📍 Use My Location</button>
+          <hr>
+          <h5>Select Commodities & Enter Today's Prices</h5>
+          <% commodities.forEach((c, idx) => { %>
+            <div class="row mb-1">
+              <div class="col-md-3">
+                <input type="checkbox" name="commodity" value="<%= c._id %>" id="c<%= c._id %>">
+                <label for="c<%= c._id %>"><%= c.commodityName %></label>
+              </div>
+              <div class="col-md-3">
+                <input type="number" step="0.01" name="price" id="price<%= c._id %>" class="form-control" placeholder="Price">
+              </div>
+              <div class="col-md-3">
+                <select name="unit" id="unit<%= c._id %>" class="form-control">
+                  <option value="₹/quintal">₹/quintal</option>
+                  <option value="₹/kg">₹/kg</option>
+                  <option value="₹/ton">₹/ton</option>
+                  <option value="₹/bag">₹/bag</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <input type="number" step="0.01" name="weight" id="weight<%= c._id %>" class="form-control" placeholder="Weight (optional)">
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create Mandi</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+// Create Modal Map
+var map = L.map('map').setView([23.5937, 80.9629], 5); // India center
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+var marker;
+function setMarker(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], { draggable:true }).addTo(map);
+  marker.on('dragend', function(e) {
+    var pos = marker.getLatLng();
+    document.getElementById('lat').value = pos.lat;
+    document.getElementById('lng').value = pos.lng;
+    fetchAddress(pos.lat, pos.lng);
+  });
+  document.getElementById('lat').value = lat;
+  document.getElementById('lng').value = lng;
+  fetchAddress(lat, lng);
+}
+map.on('click', function(e) {
+  setMarker(e.latlng.lat, e.latlng.lng);
+});
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      setMarker(pos.coords.latitude, pos.coords.longitude);
+      map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+    });
+  } else {
+    alert("Geolocation is not supported.");
+  }
+}
+function fetchAddress(lat, lng) {
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+    .then(response => response.json())
+    .then(data => {
+      if(data && data.address) {
+        document.getElementById('address').value = data.display_name || '';
+        document.getElementById('state').value = data.address.state || '';
+        document.getElementById('district').value = data.address.county || data.address.state_district || data.address.city || '';
+        document.getElementById('pincode').value = data.address.postcode || '';
+      }
+    });
+}
+document.getElementById('lat').addEventListener('change', function() {
+  var lat = parseFloat(this.value);
+  var lng = parseFloat(document.getElementById('lng').value);
+  if(!isNaN(lat) && !isNaN(lng)) setMarker(lat, lng);
+});
+document.getElementById('lng').addEventListener('change', function() {
+  var lat = parseFloat(document.getElementById('lat').value);
+  var lng = parseFloat(this.value);
+  if(!isNaN(lat) && !isNaN(lng)) setMarker(lat, lng);
+});
+
+// Edit Modal Maps
+<% mandis.forEach(mandi => { %>
+  var map_edit_<%= mandi._id %> = L.map('map_edit_<%= mandi._id %>').setView([<%= mandi.location?.lat %> || 23.5937, <%= mandi.location?.lng %> || 80.9629], <%= mandi.location?.lat && mandi.location?.lng ? 13 : 5 %>);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map_edit_<%= mandi._id %>);
+  var marker_edit_<%= mandi._id %>;
+  function setMarkerEdit_<%= mandi._id %>(lat, lng) {
+    if (marker_edit_<%= mandi._id %>) map_edit_<%= mandi._id %>.removeLayer(marker_edit_<%= mandi._id %>);
+    marker_edit_<%= mandi._id %> = L.marker([lat, lng], { draggable:true }).addTo(map_edit_<%= mandi._id %>);
+    marker_edit_<%= mandi._id %>.on('dragend', function(e) {
+      var pos = marker_edit_<%= mandi._id %>.getLatLng();
+      document.getElementById('lat_edit_<%= mandi._id %>').value = pos.lat;
+      document.getElementById('lng_edit_<%= mandi._id %>').value = pos.lng;
+      fetchAddressEdit_<%= mandi._id %>(pos.lat, pos.lng);
+    });
+    document.getElementById('lat_edit_<%= mandi._id %>').value = lat;
+    document.getElementById('lng_edit_<%= mandi._id %>').value = lng;
+    fetchAddressEdit_<%= mandi._id %>(lat, lng);
+  }
+  map_edit_<%= mandi._id %>.on('click', function(e) {
+    setMarkerEdit_<%= mandi._id %>(e.latlng.lat, e.latlng.lng);
+  });
+  if (<%= mandi.location?.lat %> && <%= mandi.location?.lng %>) {
+    setMarkerEdit_<%= mandi._id %>(<%= mandi.location?.lat %>, <%= mandi.location?.lng %>);
+  }
+  document.getElementById('lat_edit_<%= mandi._id %>').addEventListener('change', function() {
+    var lat = parseFloat(this.value);
+    var lng = parseFloat(document.getElementById('lng_edit_<%= mandi._id %>').value);
+    if(!isNaN(lat) && !isNaN(lng)) setMarkerEdit_<%= mandi._id %>(lat, lng);
+  });
+  document.getElementById('lng_edit_<%= mandi._id %>').addEventListener('change', function() {
+    var lat = parseFloat(document.getElementById('lat_edit_<%= mandi._id %>').value);
+    var lng = parseFloat(this.value);
+    if(!isNaN(lat) && !isNaN(lng)) setMarkerEdit_<%= mandi._id %>(lat, lng);
+  });
+  function getLocationEdit(id) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        setMarkerEdit_<%= mandi._id %>(pos.coords.latitude, pos.coords.longitude);
+        map_edit_<%= mandi._id %>.setView([pos.coords.latitude, pos.coords.longitude], 14);
+      });
+    } else {
+      alert("Geolocation is not supported.");
+    }
+  }
+  function fetchAddressEdit_<%= mandi._id %>(lat, lng) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+      .then(response => response.json())
+      .then(data => {
+        if(data && data.address) {
+          document.getElementById('address_edit_<%= mandi._id %>').value = data.display_name || '';
+          document.getElementById('state_edit_<%= mandi._id %>').value = data.address.state || '';
+          document.getElementById('district_edit_<%= mandi._id %>').value = data.address.county || data.address.state_district || data.address.city || '';
+          document.getElementById('pincode_edit_<%= mandi._id %>').value = data.address.postcode || '';
+        }
+      });
+  }
+<% }) %>
+
+// Client-side search
+document.getElementById("searchInput").addEventListener("input", function() {
+  const val = this.value.toLowerCase();
+  document.querySelectorAll("#mandiTable tbody tr").forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(val) ? "" : "none";
+  });
+});
+</script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Sidebar Toggle JS -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

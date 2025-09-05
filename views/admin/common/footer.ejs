@@ -1,0 +1,56 @@
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebarToggle').onclick = function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('mainContent').classList.toggle('collapsed');
+        };
+
+        // Theme Switch functionality
+        document.getElementById('themeSwitch').onclick = function() {
+            var body = document.body;
+            var sidebar = document.getElementById('sidebar');
+            var navbar = document.getElementById('navbar');
+            var mainContent = document.getElementById('mainContent');
+            var themeSwitch = document.getElementById('themeSwitch');
+            var cards = document.querySelectorAll('.card');
+            // Toggle body class
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                sidebar.classList.remove('light');
+                sidebar.classList.add('dark');
+                navbar.classList.remove('light');
+                navbar.classList.add('dark');
+                mainContent.classList.remove('light');
+                mainContent.classList.add('dark');
+                themeSwitch.classList.remove('light');
+                themeSwitch.classList.add('dark');
+                themeSwitch.title = "Switch to light mode";
+                themeSwitch.innerHTML = '<i class="fas fa-sun"></i>';
+                cards.forEach(card => {
+                    card.classList.remove('light');
+                    card.classList.add('dark');
+                });
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                sidebar.classList.remove('dark');
+                sidebar.classList.add('light');
+                navbar.classList.remove('dark');
+                navbar.classList.add('light');
+                mainContent.classList.remove('dark');
+                mainContent.classList.add('light');
+                themeSwitch.classList.remove('dark');
+                themeSwitch.classList.add('light');
+                themeSwitch.title = "Switch to dark mode";
+                themeSwitch.innerHTML = '<i class="fas fa-moon"></i>';
+                cards.forEach(card => {
+                    card.classList.remove('dark');
+                    card.classList.add('light');
+                });
+            }
+        };
+    </script>
+</body>
+</html>

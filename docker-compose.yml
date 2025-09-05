@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saas-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./app/.env  # Make sure this exists and has all needed env vars for production/dev
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+      # node_modules should be managed by Docker, not host! (commented out below)
+      # - /app/node_modules
+
+  mongo:
+    image: mongo:7.0
+    container_name: saas-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: saas-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mongo-data:
+  redis-data:

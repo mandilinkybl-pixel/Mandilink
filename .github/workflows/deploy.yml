@@ -1,0 +1,27 @@
+name: Auto Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main   # Change if your deployment branch is different
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH and restart Docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # Optional: pass port if your SSH is not default 22
+          # port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /home/youruser/mindilinkadmin
+            git pull origin main
+            docker-compose build
+            docker-compose up -d

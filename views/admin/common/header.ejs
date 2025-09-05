@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandilink Admin Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(120deg, #ffffff 0%, #ffffff 100%);
+            --sidebar-gradient: linear-gradient(180deg, #d9fca1 0%, #004916 100%);
+            --sidebar-btn-gradient: linear-gradient(90deg, #00910c 0%, #86ff86 100%);
+            --sidebar-btn-hover: linear-gradient(90deg, #3dce7c 0%, #7fcbfa 100%);
+            --sidebar-bg: #f7fafd;
+            --accent: #4a25f0;
+            --text-dark: #202a34;
+            --text-light: #fff;
+            --card-gradient: linear-gradient(135deg, #e3f6f5 0%, #fff 100%);
+            --shadow: 0 4px 16px rgba(63,130,255,0.08);
+        }
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: var(--primary-gradient);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-size: 200% 200%;
+            animation: bgmove 16s cubic-bezier(0.4,0.3,0.2,1) infinite alternate;
+        }
+        @keyframes bgmove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .navbar {
+            background: var(--card-gradient);
+            box-shadow: var(--shadow);
+            z-index: 1100;
+        }
+        .navbar-brand {
+            color: var(--accent) !important;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand img {
+            height: 36px;
+            margin-right: 8px;
+            background: rgb(1, 73, 1) ;
+            border-radius: 6px;
+        }
+        .toggle-btn {
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--accent);
+            background: #f7fafd;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-left: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .toggle-btn:hover {
+            background: var(--accent);
+            color: var(--text-light);
+        }
+        .sidebar {
+            height: 100vh;
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: var(--sidebar-gradient);
+            padding-top: 56px;
+            transition: width 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            overflow-x: hidden;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 16px rgba(63,130,255,0.10);
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+            background: #e3f6f5;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 8px;
+        }
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) #e3f6f5;
+        }
+        .sidebar.collapsed {
+            width: 72px;
+        }
+        .sidebar a,
+        .sidebar .collapsible-btn {
+            padding: 14px 22px;
+            text-decoration: none;
+            font-size: 17px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            border-left: 5px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border-radius: 8px;
+            margin: 2px 10px;
+            background: none;
+        }
+        .sidebar a:hover,
+        .sidebar .collapsible-btn:hover {
+            background: var(--sidebar-btn-hover);
+            color: var(--text-light);
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 2px 8px rgba(63,130,255,0.09);
+            transform: scale(1.04);
+        }
+        .sidebar .collapsible-btn {
+            background: var(--sidebar-btn-gradient);
+            color: var(--text-light);
+            border-left: 5px solid var(--accent);
+            font-weight: 600;
+            margin-bottom: 2px;
+            box-shadow: 0 2px 8px rgba(63,130,255,0.07);
+        }
+        .sidebar .nav-icon {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 23px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .sidebar a:hover .nav-icon,
+        .sidebar .collapsible-btn:hover .nav-icon {
+            transform: scale(1.18);
+            color: var(--accent);
+        }
+        .sidebar.collapsed a .nav-text,
+        .sidebar.collapsed .collapsible-btn .nav-text {
+            display: none;
+        }
+        .sidebar.collapsed a,
+        .sidebar.collapsed .collapsible-btn {
+            justify-content: center;
+            padding: 14px 0;
+        }
+        /* Submenu style */
+        .sidebar .collapse {
+            background: var(--sidebar-bg) !important;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 2px 10px rgba(63,130,255,0.05);
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+        .sidebar .collapse .nav-text {
+            font-size: 15px;
+            color: var(--accent) !important;
+        }
+        .sidebar .collapse a {
+            padding-left: 35px;
+            font-size: 15px;
+            color: var(--accent) !important;
+            border-radius: 7px;
+        }
+        .sidebar .collapse a .nav-icon {
+            font-size: 15px;
+            margin-right: 8px;
+        }
+        .sidebar .collapse a:hover {
+            background: #e3f6f5 !important;
+            color: #3dce7c !important;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 80px 24px 24px 24px;
+            transition: margin-left 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            min-height: 100vh;
+        }
+        .main-content.collapsed {
+            margin-left: 72px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            background: var(--card-gradient);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(63,130,255,0.12);
+        }
+        .card-title {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .chart-container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 991.98px) {
+            .sidebar, .sidebar.collapsed {
+                width: 0;
+            }
+            .main-content,
+            .main-content.collapsed {
+                margin-left: 0;
+                padding-top: 80px;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .main-content,
+            .main-content.collapsed {
+                padding: 100px 6px 24px 6px;
+            }
+            .card-title,
+            .card-text {
+                font-size: 1rem;
+            }
+        }
+        /* Pagination style */
+        .pagination {
+            margin: 15px 0 0 0;
+            justify-content: center;
+        }
+        .pagination .page-link {
+            color: var(--accent);
+            background: #e3f6f5;
+            border: 1px solid #7fcbfa;
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="/logo/logo.png" alt="">
+                Mandilink Admin Dashboard
+            </a>
+            <h4 style="color: var(--accent); margin-bottom: 0;">Welcome, Admin <span style="color:#202a34"><%= userdetails.name %></span></h4>
+            <span class="toggle-btn ms-3" id="sidebarToggle"><i class="fas fa-bars"></i></span>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+        <a href="/admin/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
+
+        <!-- User Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button" aria-expanded="false" aria-controls="userMenu" style="cursor:pointer">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-text flex-grow-1">User</span>
+        </a>
+        <div class="collapse ms-2" id="userMenu">
+            <a href="/admin/subroles" class="d-flex align-items-center"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Subrole</span></a>
+            <a href="/admin/plans" class="d-flex align-items-center"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Plans</span></a>
+            <!-- <a href="/admin/addusers" class="d-flex align-items-center"><i class="fas fa-user-plus nav-icon"></i><span class="nav-text">Add users</span></a>
+            <a href="/admin/total-users" class="d-flex align-items-center"><i class="fas fa-users-cog nav-icon"></i><span class="nav-text">Total User</span></a>
+            <a href="#" class="d-flex align-items-center"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Payments</span></a> -->
+        </div>
+
+        <!-- Employee Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#employeeMenu" role="button" aria-expanded="false" aria-controls="employeeMenu" style="cursor:pointer">
+            <i class="fas fa-user-tie nav-icon"></i>
+            <span class="nav-text flex-grow-1">Employee</span>
+        </a>
+        <div class="collapse ms-2" id="employeeMenu">
+            <a href="/admin/employees" class="d-flex align-items-center"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">SEE EMPLOYEES</span></a>
+        </div>
+
+        <!-- Blog Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#blogMenu" role="button" aria-expanded="false" aria-controls="blogMenu" style="cursor:pointer">
+            <i class="fas fa-blog nav-icon"></i>
+            <span class="nav-text flex-grow-1">Blog</span>
+        </a>
+        <div class="collapse ms-2" id="blogMenu">
+            <a href="/admin/blogs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Posts</span></a>
+            <a href="/admin/create-blog" class="d-flex align-items-center"><i class="fas fa-plus nav-icon"></i><span class="nav-text">Add Post</span></a>
+        
+        </div>
+
+        <!-- Job Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#jobMenu" role="button" aria-expanded="false" aria-controls="jobMenu" style="cursor:pointer">
+            <i class="fas fa-briefcase nav-icon"></i>
+            <span class="nav-text flex-grow-1">Job</span>
+        </a>
+        <div class="collapse ms-2" id="jobMenu">
+            <a href="/admin/jobs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Jobs</span></a>
+            <a href="/admin/create-job" class="d-flex align-items-center"><i class="fas fa-plus nav-icon"></i><span class="nav-text">Add Job</span></a>
+        </div>
+
+        <!-- Ads Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
+            <i class="fas fa-ad nav-icon"></i>
+            <span class="nav-text flex-grow-1">Ads</span>
+        </a>
+        <div class="collapse ms-2" id="adsMenu">
+            <a href="/admin/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add New Ads</span></a>
+            <a href="/admin/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
+            <a href="/admin/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ad</span></a>
+            <a href="/admin/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottoms Ad</span></a>
+            <a href="/admin/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ad</span></a>
+        </div>
+
+        <!-- AI Button -->
+        <a href="#" class="d-flex align-items-center collapsible-btn">
+            <i class="fas fa-robot nav-icon"></i>
+            <span class="nav-text">AI</span>
+        </a>
+
+        <!-- Mandiprices / Mandi Daily Bid -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#mandiMenu" role="button" aria-expanded="false" aria-controls="mandiMenu" style="cursor:pointer">
+            <i class="fas fa-balance-scale nav-icon"></i>
+            <span class="nav-text flex-grow-1">Mandi</span>
+        </a>
+        <div class="collapse ms-2" id="mandiMenu">
+            <a href="/admin/mandis" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Mandi List</span></a>
+            
+            <a href="#" class="d-flex align-items-center"><i class="fas fa-rupee-sign nav-icon"></i><span class="nav-text">Mandiprices</span></a>
+            <!-- commodity -->
+           
+            <a href="/admin/commidities" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Commodity List</span></a>
+        </div>
+
+        <!-- Push Notification Button -->
+        <a href="#" class="d-flex align-items-center collapsible-btn">
+            <i class="fas fa-bell nav-icon"></i>
+            <span class="nav-text">Push Notification</span>
+        </a>
+
+        <!-- Settings Tab -->
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#settingsMenu" role="button" aria-expanded="false" aria-controls="settingsMenu" style="cursor:pointer">
+            <i class="fas fa-cog nav-icon"></i>
+            <span class="nav-text flex-grow-1">Settings</span>
+        </a>
+        <div class="collapse ms-2" id="settingsMenu">
+            <a href="#" class="d-flex align-items-center"><i class="fas fa-plug nav-icon"></i><span class="nav-text">APIs</span></a>
+            <a href="/admin/logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Password Update</span></a>
+        </div>
+
+        <!-- Other Static Buttons -->
+        <a href="/admin/auth/admin-logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
+    </div>
+
+ 

@@ -1,0 +1,144 @@
+<%- include('common/header') %>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+       <div class="container py-4">
+  <h2 class="mb-4">Manage Subroles</h2>
+
+  <!-- Search -->
+  <form method="get" action="/admin/subroles" class="mb-3 d-flex">
+    <input 
+      type="text" 
+      name="search" 
+      value="<%= search %>" 
+      class="form-control me-2" 
+      placeholder="Search subrole..." 
+    />
+    <button class="btn btn-primary">Search</button>
+  </form>
+
+  <!-- Create New -->
+  <form method="post" action="/admin/subroles/create" class="mb-4">
+    <div class="row g-2">
+      <div class="col-md-4">
+        <input type="text" name="name" placeholder="Subrole Name" class="form-control" required />
+      </div>
+      <div class="col-md-6" id="categories-container">
+        <input type="text" name="categories" placeholder="Category" class="form-control mb-2" required />
+      </div>
+      <div class="col-md-2 d-flex">
+        <button type="button" class="btn btn-secondary me-2" onclick="addCategoryInput()">+ Add</button>
+        <button class="btn btn-success">Save</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Name</th>
+        <th>Categories</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (subroles.length === 0) { %>
+        <tr>
+          <td colspan="3" class="text-center">No subroles found.</td>
+        </tr>
+      <% } %>
+      <% subroles.forEach(subrole => { %>
+        <tr>
+          <td><%= subrole.name %></td>
+          <td><%= subrole.categories.join(", ") %></td>
+          <td>
+            <!-- Edit Modal Trigger -->
+            <button 
+              class="btn btn-warning btn-sm" 
+              data-bs-toggle="modal" 
+              data-bs-target="#editModal-<%= subrole._id %>">
+              Edit
+            </button>
+            <a href="/admin/subroles/delete/<%= subrole._id %>" class="btn btn-danger btn-sm"
+               onclick="return confirm('Are you sure you want to delete this subrole?')">
+              Delete
+            </a>
+          </td>
+        </tr>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-<%= subrole._id %>" tabindex="-1">
+          <div class="modal-dialog">
+            <form method="post" action="/admin/subroles/update/<%= subrole._id %>">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Subrole</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label>Name</label>
+                    <input type="text" name="name" value="<%= subrole.name %>" class="form-control" required />
+                  </div>
+                  <div class="mb-3" id="edit-categories-<%= subrole._id %>">
+                    <label>Categories</label>
+                    <% subrole.categories.forEach(cat => { %>
+                      <input type="text" name="categories" value="<%= cat %>" class="form-control mb-2" required />
+                    <% }) %>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="addEditCategoryInput('<%= subrole._id %>')">+ Add Category</button>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function addCategoryInput() {
+    const container = document.getElementById("categories-container");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = "categories";
+    input.placeholder = "Category";
+    input.className = "form-control mb-2";
+    input.required = true;
+    container.appendChild(input);
+  }
+
+  function addEditCategoryInput(id) {
+    const container = document.getElementById("edit-categories-" + id);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = "categories";
+    input.placeholder = "Category";
+    input.className = "form-control mb-2";
+    input.required = true;
+    container.appendChild(input);
+  }
+</script>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <!-- Custom JS for sidebar -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandilink Admin Login</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(120deg, #abffb2 0%, #a9d7ff 100%);
+            min-height: 100vh;
+            margin: 0;
+            animation: agribgmove 14s ease-in-out infinite alternate;
+            background-size: 200% 200%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        @keyframes agribgmove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .login-container {
+            background: linear-gradient(135deg, #ffffff 0%, #e3f9e5 100%);
+            padding: 42px 32px 32px 32px;
+            border-radius: 20px;
+            box-shadow: 0 10px 32px rgba(52,152,106,0.15), 0 1.5px 6px rgba(189,224,254,0.10);
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+        .login-logo {
+            width: 72px;
+            height: 72px;
+            background: #043619;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px auto;
+            box-shadow: 0 4px 16px rgba(125,200,80,0.07);
+        }
+        .login-logo img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        .login-title {
+            text-align: center;
+            color: #377a53;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+        .login-subtitle {
+            text-align: center;
+            color: #6dc850;
+            margin-bottom: 26px;
+            font-size: 1.05rem;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 1px solid #bde0fe;
+            background: #f8fafc;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 2px #bde0fe;
+            border-color: #377a53;
+            background: #f3fff7;
+        }
+        .btn-login {
+            background: linear-gradient(120deg, #8ed1c6 0%, #bde0fe 100%);
+            color: #377a53;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 0;
+            font-weight: bold;
+            font-size: 1.08rem;
+            width: 100%;
+            transition: box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 2px 8px rgba(125,200,80,0.09);
+            letter-spacing: 1px;
+        }
+        .btn-login:hover, .btn-login:focus {
+            background: linear-gradient(120deg, #bde0fe 0%, #8ed1c6 100%);
+            color: #2c5d44;
+            box-shadow: 0 4px 16px rgba(125,200,80,0.17);
+        }
+        .input-group-text {
+            background: #bde0fe;
+            border: none;
+            color: #377a53;
+            border-radius: 10px 0 0 10px;
+        }
+        .forgot-link {
+            display: block;
+            text-align: right;
+            margin-top: 10px;
+            color: #377a53;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover {
+            color: #6dc850;
+            text-decoration: underline;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.93rem;
+            color: #8bb29c;
+        }
+        @media (max-width: 575.98px) {
+            .login-container {
+                padding: 24px 6px 16px 6px;
+            }
+            .login-title { font-size: 1.4rem; }
+            .login-logo { width: 52px; height: 52px; }
+            .login-logo img { width: 36px; height: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <img src="/logo/logo.png" alt="Mandilink Logo"  style="background-color: #003a22;  border-radius: 8px;">
+        </div>
+        <div class="login-title">Mandilink Admin Login</div>
+        <div class="login-subtitle">Sign in to manage your Mandilink dashboard</div>
+        <form action="/admin/auth/admin-login" method="POST">
+            <div class="mb-3">
+                <label for="adminEmail" class="form-label">Email address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="adminEmail" name="email" placeholder="admin@example.com" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="adminPassword" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="adminPassword" name="password" placeholder="Password" required>
+                </div>
+            </div>
+           
+            <button type="submit" class="btn btn-login mt-3">Login</button>
+        </form>
+        <div class="login-footer">
+            &copy; 2025 Mandilink. All Rights Reserved.
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandilink Employee Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(120deg, #f6fdff 0%, #dbe6fd 100%);
+            --sidebar-gradient: linear-gradient(180deg, #7fc7ff 0%, #dbe6fd 100%);
+            --sidebar-hover: #eaf2fb;
+            --sidebar-active: #7fc7ff;
+            --sidebar-text: #2e4766;
+            --accent: #3a81e8;
+            --card-gradient: linear-gradient(135deg, #fafdff 0%, #eaf6f6 100%);
+            --card-title: #3a81e8;
+            --shadow: 0 4px 16px rgba(63,130,255,0.08);
+            --button-bg: #5d7fa3;
+            --button-bg-hover: #3a81e8;
+            --button-text: #fff;
+        }
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: var(--primary-gradient);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-size: 200% 200%;
+            animation: empbgmove 16s cubic-bezier(0.4,0.3,0.2,1) infinite alternate;
+        }
+        @keyframes empbgmove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .navbar {
+            background: var(--card-gradient);
+            box-shadow: var(--shadow);
+            z-index: 1100;
+        }
+        .navbar-brand {
+            color: var(--accent) !important;
+            font-weight: bold;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand img {
+            height: 36px;
+            margin-right: 8px;
+            background: var(--accent);
+            border-radius: 6px;
+        }
+        .toggle-btn {
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--accent);
+            background: #fafdff;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-left: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .toggle-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .sidebar {
+            height: 100vh;
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: var(--sidebar-gradient);
+            padding-top: 56px;
+            transition: width 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            overflow-x: hidden;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 16px rgba(63,130,255,0.10);
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+            background: #e3f6f5;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 8px;
+        }
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) #e3f6f5;
+        }
+        .sidebar.collapsed {
+            width: 72px;
+        }
+        .sidebar a,
+        .sidebar .collapsible-btn {
+            padding: 14px 22px;
+            text-decoration: none;
+            font-size: 17px;
+            color: var(--sidebar-text);
+            display: flex;
+            align-items: center;
+            border-left: 5px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border-radius: 8px;
+            margin: 2px 10px;
+            background: none;
+        }
+        .sidebar a:hover,
+        .sidebar .collapsible-btn:hover {
+            background: var(--sidebar-hover);
+            color: var(--accent);
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 2px 8px rgba(63,130,255,0.09);
+            transform: scale(1.04);
+        }
+        .sidebar .collapsible-btn {
+            background: linear-gradient(90deg, #c7eaff 0%, #7fc7ff 100%);
+            color: var(--sidebar-text);
+            border-left: 5px solid var(--accent);
+            font-weight: 600;
+            margin-bottom: 2px;
+            box-shadow: 0 2px 8px rgba(63,130,255,0.07);
+        }
+        .sidebar .nav-icon {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 23px;
+            text-align: center;
+            transition: transform 0.2s;
+            color: var(--accent);
+        }
+        .sidebar a:hover .nav-icon,
+        .sidebar .collapsible-btn:hover .nav-icon {
+            transform: scale(1.18);
+            color: var(--accent);
+        }
+        .sidebar.collapsed a .nav-text,
+        .sidebar.collapsed .collapsible-btn .nav-text {
+            display: none;
+        }
+        .sidebar.collapsed a,
+        .sidebar.collapsed .collapsible-btn {
+            justify-content: center;
+            padding: 14px 0;
+        }
+        /* Submenu style */
+        .sidebar .collapse {
+            background: #fafdff !important;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 2px 10px rgba(63,130,255,0.05);
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+        .sidebar .collapse .nav-text {
+            font-size: 15px;
+            color: var(--accent) !important;
+        }
+        .sidebar .collapse a {
+            padding-left: 35px;
+            font-size: 15px;
+            color: var(--accent) !important;
+            border-radius: 7px;
+        }
+        .sidebar .collapse a .nav-icon {
+            font-size: 15px;
+            margin-right: 8px;
+        }
+        .sidebar .collapse a:hover {
+            background: #e3f6f5 !important;
+            color: #3a81e8 !important;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 80px 24px 24px 24px;
+            transition: margin-left 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            min-height: 100vh;
+        }
+        .main-content.collapsed {
+            margin-left: 72px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            background: var(--card-gradient);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(63,130,255,0.12);
+        }
+        .card-title {
+            color: var(--card-title);
+            font-weight: 600;
+        }
+        .chart-container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        .btn-soft {
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-weight: 600;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 4px rgba(180,198,224,0.10);
+        }
+        .btn-soft:hover, .btn-soft:active {
+            background: var(--button-bg-hover);
+            color: #fafdff;
+            box-shadow: 0 4px 8px rgba(180,198,224,0.14);
+        }
+        @media (max-width: 991.98px) {
+            .sidebar, .sidebar.collapsed {
+                width: 0;
+            }
+            .main-content,
+            .main-content.collapsed {
+                margin-left: 0;
+                padding-top: 80px;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .main-content,
+            .main-content.collapsed {
+                padding: 100px 6px 24px 6px;
+            }
+            .card-title,
+            .card-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="/logo/logo.png" alt="">
+                Employee Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+               
+            </div>
+            <span class="toggle-btn ms-3" id="sidebarToggle"><i class="fas fa-bars"></i></span>
+        </div>
+    </nav>
+
+    <!-- Sidebar with Access-Controlled Buttons -->
+    <% const access = employee.access; %>
+<div class="sidebar" id="sidebar">
+    <a href="/employees/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
+  <% if (access.includes("Manage_Users")) { %>
+    <a href="#"><i class="fas fa-users nav-icon"></i><span class="nav-text">Manage Users</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Roles")) { %>
+    <a href="#"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">Manage Roles</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Admin")) { %>
+    <a href="#"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Manage Admin</span></a>
+  <% } %>
+  <% if (access.includes("Manage_CallLogs")) { %>
+    <a href="#"><i class="fas fa-phone nav-icon"></i><span class="nav-text">Manage Call Logs</span></a>
+  <% } %>
+  <% if (access.includes("Manage_SupportTickets")) { %>
+    <a href="#"><i class="fas fa-headset nav-icon"></i><span class="nav-text">Manage Support Tickets</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Reports")) { %>
+    <a href="#"><i class="fas fa-file-alt nav-icon"></i><span class="nav-text">Manage Reports</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Settings")) { %>
+    <a href="#"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Manage Settings</span></a>
+  <% } %>
+  <% if (
+        access.includes("Manage_Ads_Top") ||
+        access.includes("Manage_Ads_Bottom") ||
+        access.includes("Manage_Ads_Side") ||
+        access.includes("Manage_Ads_Sponsored")
+    ) { %>
+    <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
+      <i class="fas fa-ad nav-icon"></i>
+      <span class="nav-text flex-grow-1">Manage Ads</span>
+    </a>
+
+    <div class="collapse ms-2" id="adsMenu">
+        <a href="/employees/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add new Ads</span></a>
+      <% if (access.includes("Manage_Ads_Top")) { %>
+        <a href="/employees/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Ads_Bottom")) { %>
+        <a href="/employees/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottom Ads</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Ads_Side")) { %>
+        <a href="/employees/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ads</span></a>
+      <% } %>
+      <% if (access.includes("Manage_Ads_Sponsored")) { %>
+        <a href="/employees/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ads</span></a>
+      <% } %>
+    </div>
+  <% } %>
+  <% if (access.includes("Manage_Jobs")) { %>
+    <a href="/employees/jobs" class="d-flex align-items-center"><i class="fas fa-briefcase nav-icon"></i><span class="nav-text">Manage Jobs</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Blogs")) { %>
+    <a href="/employees/blogs" class="d-flex align-items-center"><i class="fas fa-blog nav-icon"></i><span class="nav-text">Manage Blogs</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Analytics")) { %>
+    <a href="#" class="d-flex align-items-center"><i class="fas fa-chart-bar nav-icon"></i><span class="nav-text">Manage Analytics</span></a>
+  <% } %>
+  <% if (access.includes("Manage_MandiRates")) { %>
+    <a href="/employees/mandis"><i class="fas fa-balance-scale nav-icon"></i><span class="nav-text">Manage Mandi Rates</span></a>
+    <a href="/employees/commodities"><i class="fas fa-boxes nav-icon"></i><span class="nav-text">Manage Commodities</span></a>
+  <% } %>
+  <% if (access.includes("Manage_PushNotifications")) { %>
+    <a href="#"><i class="fas fa-bell nav-icon"></i><span class="nav-text">Manage Push Notifications</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Plans")) { %>
+    <a href="/employees/plans"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Manage Plans</span></a>
+  <% } %>
+  <% if (access.includes("Manage_Payments")) { %>
+    <a href="#"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Manage Payments</span></a>
+  <% } %>
+  <a href="/employees/auth/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
+</div>
+

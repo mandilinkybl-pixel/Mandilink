@@ -1,0 +1,71 @@
+<%- include('common/header') %>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container-fluid">
+              <div class="container py-4">
+                <h2>Create Job</h2>
+        <form action="/admin/jobs/create" method="POST">
+    <div class="mb-3">
+      <label>Title</label>
+      <input type="text" name="title" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Company Name</label>
+      <input type="text" name="companyName" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Location</label>
+      <input type="text" name="location" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Description</label>
+      <textarea name="description" class="form-control" required></textarea>
+    </div>
+    <div class="mb-3">
+      <label>Requirements (comma separated)</label>
+      <input type="text" name="requirements" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Salary</label>
+      <input type="text" name="salary" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Contact Number</label>
+      <input type="text" name="contactNumber" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Contact Email</label>
+      <input type="email" name="contactEmail" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Job Type</label>
+      <select name="jobType" class="form-control">
+        <option>Full-Time</option>
+        <option>Part-Time</option>
+        <option>Internship</option>
+        <option>Contract</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success">Create Job</button>
+  </form>
+</div>    
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <!-- Custom JS for sidebar -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<%- include('layout/header') %>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container-fluid">
+            <h1 class="mb-4 text-center text-md-start" style="color:var(--card-title);">Welcome to Mandilink Employee Dashboard</h1>
+            <p class="mb-4 text-center text-md-start" style="color:#4a90a4;">Track your team, tasks, and performance in a modern, employee-focused dashboard.</p>
+            <div class="row g-4 justify-content-center">
+                <div class="col-12 col-sm-6 col-md-4 d-flex">
+                    <div class="card flex-fill">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Today's Attendance</h5>
+                            <p class="card-text">Check in and see your team's attendance status.</p>
+                            <button class="btn btn-soft mt-2"><i class="fas fa-calendar-check me-1"></i> Check In</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4 d-flex">
+                    <div class="card flex-fill">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Pending Tasks</h5>
+                            <p class="card-text">View and manage your current assignments.</p>
+                            <button class="btn btn-soft mt-2"><i class="fas fa-tasks me-1"></i> View Tasks</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4 d-flex">
+                    <div class="card flex-fill">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Rewards & Recognitions</h5>
+                            <p class="card-text">Celebrate achievements and milestones.</p>
+                            <button class="btn btn-soft mt-2"><i class="fas fa-award me-1"></i> View Rewards</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row mt-5">
+                <div class="col-12 col-lg-6 chart-container">
+                    <h5 class="mb-3 text-center" style="color:var(--card-title);">Attendance Trend (Last 6 Months)</h5>
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+                <div class="col-12 col-lg-6 chart-container">
+                    <h5 class="mb-3 text-center" style="color:var(--card-title);">Task Status Distribution</h5>
+                    <canvas id="taskChart"></canvas>
+                </div>
+                <div class="col-12 col-lg-6 chart-container">
+                    <h5 class="mb-3 text-center" style="color:var(--card-title);">Performance Ratings</h5>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                <div class="col-12 col-lg-6 chart-container">
+                    <h5 class="mb-3 text-center" style="color:var(--card-title);">Leave Types</h5>
+                    <canvas id="leaveChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js Initialization -->
+    <script>
+        // Attendance Line Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                datasets: [{
+                    label: 'Attendance (%)',
+                    data: [96, 97, 95, 93, 94, 98],
+                    borderColor: '#b3c6e0',
+                    backgroundColor: 'rgba(180,198,224,0.18)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true, labels: { color: '#4a90a4' } }}
+            }
+        });
+
+        // Task Pie Chart
+        const taskCtx = document.getElementById('taskChart').getContext('2d');
+        new Chart(taskCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Completed', 'In Progress', 'Pending', 'Blocked'],
+                datasets: [{
+                    label: 'Tasks',
+                    data: [40, 30, 20, 10],
+                    backgroundColor: [
+                        '#b3c6e0', '#eaf6f6', '#fafdff', '#dbe6fd'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true, labels: { color: '#4a90a4' } }}
+            }
+        });
+
+        // Performance Bar Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'],
+                datasets: [{
+                    label: 'Employee Count',
+                    data: [15, 25, 10, 3],
+                    backgroundColor: '#dbe6fd'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#4a90a4' } },
+                    y: { ticks: { color: '#4a90a4' } }
+                }
+            }
+        });
+
+        // Leave Doughnut Chart
+        const leaveCtx = document.getElementById('leaveChart').getContext('2d');
+        new Chart(leaveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Casual', 'Sick', 'Earned', 'Unpaid'],
+                datasets: [{
+                    label: 'Leaves',
+                    data: [6, 2, 4, 1],
+                    backgroundColor: [
+                        '#b3c6e0', '#eaf6f6', '#fafdff', '#dbe6fd'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true, labels: { color: '#4a90a4' } }}
+            }
+        });
+    </script>
+    <!-- Sidebar Toggle JS -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>
