@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./app/.env  # Make sure this exists and has all needed env vars for production/dev
+      - .env  # Make sure this exists and has all needed env vars for production/dev
     depends_on:
       - mongo
       - redis
