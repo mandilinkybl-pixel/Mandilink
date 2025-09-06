@@ -44,19 +44,20 @@ class AdminAuthController {
   try {
     const { email, password } = req.body;
 
+    console.log("Admin login attempt:", email);
     const admin = await SecureEmployee.findOne({ email, role: "admin" });
-
+    console.log("Admin found:", admin);
     if (!admin) {
-      return res.redirect("/admin/login");
+      return res.redirect("/admin/login1");
     }
 
     if (admin.isBlocked) {
-      return res.redirect("/admin/login");
+      return res.redirect("/admin/login2");
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.redirect("/admin/login");
+      return res.redirect("/admin/login3");
     }
 
     // ✅ Generate token
