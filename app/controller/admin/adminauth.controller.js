@@ -67,12 +67,14 @@ class AdminAuthController {
       { expiresIn: "1d" }
     );
 
+
     // ✅ Set cookie (httpOnly so it's safe)
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // secure only in prod
       sameSite: "strict",
     });
+console.log("✅ Token set in cookie:", token);
 
     // console.log("✅ Login successful, token issued:", token);
 

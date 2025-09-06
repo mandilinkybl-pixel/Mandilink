@@ -6,7 +6,7 @@ const adminAuth = (req, res, next) => {
     const token = req.cookies?.token; // Get token from cookies
     if (!token) {
         console.log("No token found");
-      return res.redirect("/admin/login");
+      return res.redirect("/admin/dashboard");
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
