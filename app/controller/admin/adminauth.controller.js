@@ -108,34 +108,3 @@ adminLogout = async (req, res) => {
 
 
 module.exports = new AdminAuthController();
-// Employee Login
-// exports.employeeLogin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-
-//     const employee = await SecureEmployee.findOne({ email, role: "employee" });
-//     if (!employee) {
-//       return res.status(401).json({ message: "Employee not found" });
-//     }
-
-//     if (employee.isBlocked) {
-//       return res.status(403).json({ message: "Your account is blocked" });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, employee.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
-
-//     const token = jwt.sign(
-//       { id: employee._id, role: employee.role },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1d" }
-//     );
-
-//     res.cookie("token", token, { httpOnly: true });
-//     res.json({ message: "Employee login successful", token });
-//   } catch (err) {
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
