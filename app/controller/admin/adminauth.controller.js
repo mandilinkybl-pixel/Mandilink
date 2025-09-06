@@ -6,6 +6,39 @@ const SecureEmployee = require("../../models/adminEmployee")
 
 class AdminAuthController {
 
+  createAdmin = async (req, res) => {
+    try {
+      const { name, email, password,mobile } = req.body;
+
+      // Check if admin already exists
+      let existingAdmin = await SecureEmployee.findOne({ email });
+      if (existingAdmin) {
+        return res.status(400).json({ error: "Admin already exists with this email" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create admin
+      const admin = new SecureEmployee({
+        name,
+        email,
+        password: hashedPassword,
+        role: "admin",   // ✅ Force admin role
+        isBlocked: false,
+        mobile
+      });
+
+      await admin.save();
+
+      return res.status(201).json({ message: "Admin created successfully", admin });
+    } catch (err) {
+      console.error("Error creating admin:", err);
+      return res.status(500).json({ error: "Server error while creating admin" });
+    }
+  };
+
+
 
   adminLogin = async (req, res) => {
   try {
