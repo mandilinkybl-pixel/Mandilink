@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const adSchema = new mongoose.Schema(
   {
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: "SecureEmployee", required: true }, 
     title: {
       type: String,
       required: true,

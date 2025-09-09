@@ -48,16 +48,16 @@ class AdminAuthController {
     const admin = await SecureEmployee.findOne({ email, role: "admin" });
     console.log("Admin found:", admin);
     if (!admin) {
-      return res.redirect("/admin/login1");
+      return res.redirect("/admin/login");
     }
 
     if (admin.isBlocked) {
-      return res.redirect("/admin/login2");
+      return res.redirect("/admin/login");
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.redirect("/admin/login3");
+      return res.redirect("/admin/login");
     }
 
     // ✅ Generate token
@@ -74,7 +74,7 @@ class AdminAuthController {
       secure: process.env.NODE_ENV === "production", // secure only in prod
       sameSite: "strict",
     });
-console.log("✅ Token set in cookie:", token);
+// console.log("✅ Token set in cookie:", token);
 
     // console.log("✅ Login successful, token issued:", token);
 

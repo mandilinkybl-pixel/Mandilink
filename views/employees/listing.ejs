@@ -1,0 +1,673 @@
+```ejs
+<%- include('layout/header') %>
+
+<div class="main-content" id="mainContent">
+  <div class="container-fluid">
+    <h2 style="margin-top: clamp(10px, 3vw, 20px); margin-bottom: clamp(10px, 3vw, 20px); text-align: center; color: #6c63ff; font-size: clamp(1.5rem, 4vw, 2rem);">User Listing</h2>
+    <p class="text-muted" style="font-size: clamp(0.9rem, 2.2vw, 1rem); text-align: center;">
+      Showing data for <strong><%= new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></strong> for User ID: <strong><%= user.id %></strong>
+    </p>
+
+    <!-- FILTER BAR -->
+    <div class="row mb-3 g-2" id="filterBar">
+      <div class="col-12 col-md-3">
+        <select id="filterCategory" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value="">Select Category</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat._id %>" <%= selectedCategory==cat._id?'selected':'' %>><%= cat.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="filterState" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value="">Select State</option>
+          <% states.forEach(st => { %>
+            <option value="<%= st._id %>" <%= selectedState==st._id?'selected':'' %>><%= st.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="filterDistrict" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value=""><%= selectedDistrict || 'Select District' %></option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="filterMandi" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value=""><%= selectedMandi || 'Select Mandi' %></option>
+        </select>
+      </div>
+    </div>
+
+    <!-- INSTANT SEARCH BAR -->
+    <div class="row mb-3">
+      <div class="col-12 col-md-6">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search user table..." style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+      </div>
+    </div>
+
+    <!-- ROW COUNT DISPLAY -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <p id="rowCountDisplay" class="text-muted" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">
+          Showing <span id="filteredRowCount">0</span> of <span id="totalRowCount">0</span> users
+        </p>
+      </div>
+    </div>
+
+    <!-- ADD/EDIT USERS FORM -->
+    <form action="/employees/userlist/add" method="POST" id="addUserForm">
+      <input type="hidden" name="category" id="hiddenCategory" value="<%= selectedCategory %>">
+      <input type="hidden" name="state" id="hiddenState" value="<%= selectedState %>">
+      <input type="hidden" name="district" id="hiddenDistrict" value="<%= selectedDistrict %>">
+      <input type="hidden" name="mandi" id="hiddenMandi" value="<%= selectedMandi %>">
+      <input type="hidden" name="userId" id="hiddenUserId" value="<%= user.id %>">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="userTable" style="background: var(--card-gradient); box-shadow: var(--shadow);">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 5%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Serial No.</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">District</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Mandi</th>
+              <th style="width: 20%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">User Name</th>
+              <th style="width: 25%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Address</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Contact Number</th>
+              <th style="width: 10%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Action</th>
+            </tr>
+          </thead>
+          <tbody id="userRowsWrapper">
+            <% 
+              const groupedData = {};
+              users.forEach(u => {
+                const district = u.district || 'Unknown';
+                const mandi = u.mandi || 'Unknown';
+                const districtKey = district;
+                const mandiKey = `${district}_${mandi}`;
+                if (!groupedData[districtKey]) {
+                  groupedData[districtKey] = { name: district, mandis: {} };
+                }
+                if (!groupedData[districtKey].mandis[mandi]) {
+                  groupedData[districtKey].mandis[mandi] = { name: mandi, users: [] };
+                }
+                groupedData[districtKey].mandis[mandi].users.push(u);
+              });
+              let globalRowCount = 1;
+              Object.keys(groupedData).sort().forEach(districtKey => {
+                const district = groupedData[districtKey];
+                Object.keys(district.mandis).sort().forEach(mandiKey => {
+                  const mandi = district.mandis[mandiKey];
+                  mandi.users.forEach(u => {
+            %>
+              <tr class="userRow existingRow"
+                  data-category="<%= u.category %>"
+                  data-state="<%= u.state %>"
+                  data-district="<%= u.district %>"
+                  data-mandi="<%= u.mandi %>"
+                  data-name="<%= u.name %>"
+                  data-address="<%= u.address %>"
+                  data-contactnumber="<%= u.contactNumber %>"
+                  data-id="<%= u._id %>"
+                  data-userid="<%= u.user_id %>">
+                <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= globalRowCount++ %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= district.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= mandi.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= u.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= u.address %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= u.contactNumber %></td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    <button type="button"
+                            class="btn btn-sm btn-primary btn-soft editBtn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editUserModal"
+                            title="Edit"
+                            style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <a href="/employees/userlist/delete/<%= u._id %>"
+                       class="btn btn-sm btn-danger btn-soft"
+                       onclick="return confirm('Are you sure?')"
+                       title="Delete"
+                       style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% 
+                  });
+                });
+              });
+            %>
+            <tr class="userRow addRow">
+              <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= globalRowCount %></td>
+              <td><input type="text" class="form-control" value="<%= selectedDistrict || '' %>" name="districts[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" class="form-control" value="<%= selectedMandi || '' %>" name="mandis[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="names[]" class="form-control" placeholder="User Name" required style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" required style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><button type="button" class="btn btn-danger btn-soft removeRow" style="display:none; font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);"><i class="bi bi-x-circle"></i></button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="7">
+                <button type="submit" class="btn btn-success btn-soft" id="saveAllBtn" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Save All</button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <nav aria-label="User table pagination">
+        <ul class="pagination justify-content-center" id="paginationControls">
+          <!-- Pagination items will be generated by JS -->
+        </ul>
+      </nav>
+    </form>
+  </div>
+
+  <!-- View Table Modal -->
+  <div class="modal fade" id="viewTableModal" tabindex="-1" aria-labelledby="viewTableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewTableModalLabel" style="font-size: clamp(1.25rem, 3vw, 1.5rem);">User Data by District and Mandi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: clamp(15px, 3vw, 20px);">
+          <div id="viewTableContent"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-soft" data-bs-dismiss="modal" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form id="editUserForm" method="POST">
+        <div class="modal-content" style="border-radius: 12px;">
+          <div class="modal-header">
+            <h5 class="modal-title" style="font-size: clamp(1.25rem, 3vw, 1.5rem);">Edit User</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" style="padding: clamp(15px, 3vw, 20px);">
+            <input type="hidden" id="editUserId" name="id">
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">User Name</label>
+              <input type="text" id="editName" name="name" class="form-control" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Address</label>
+              <input type="text" id="editAddress" name="address" class="form-control" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Contact Number</label>
+              <input type="text" id="editContactNumber" name="contactNumber" class="form-control" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-soft" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Update</button>
+            <button type="button" class="btn btn-secondary btn-soft" data-bs-dismiss="modal" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Tabulator CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css">
+  <!-- jsPDF and AutoTable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Tabulator JS -->
+  <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // State ID to Name mapping
+      const stateMap = {};
+      <% states.forEach(st => { %>
+        stateMap['<%= st._id %>'] = '<%= st.name %>';
+      <% }) %>
+
+      // Initialize user data for Tabulator
+      const userData = [
+        <% 
+          let rowCounter = 1;
+          users.forEach(u => { %>
+            {
+              id: "<%= u._id %>",
+              rowNo: <%= rowCounter++ %>,
+              category: "<%= u.category %>",
+              state: "<%= u.state %>",
+              stateName: "<%= stateMap[u.state] || 'Unknown' %>",
+              district: "<%= u.district || 'Unknown' %>",
+              mandi: "<%= u.mandi || 'Unknown' %>",
+              name: "<%= u.name %>",
+              address: "<%= u.address %>",
+              contactNumber: "<%= u.contactNumber %>",
+              userId: "<%= u.user_id %>"
+            },
+        <% }) %>
+      ];
+
+      // ------------------- FILTER DROPDOWNS -------------------
+      const filterCategory = document.getElementById("filterCategory");
+      const filterState = document.getElementById("filterState");
+      const filterDistrict = document.getElementById("filterDistrict");
+      const filterMandi = document.getElementById("filterMandi");
+      const hiddenCategory = document.getElementById("hiddenCategory");
+      const hiddenState = document.getElementById("hiddenState");
+      const hiddenDistrict = document.getElementById("hiddenDistrict");
+      const hiddenMandi = document.getElementById("hiddenMandi");
+
+      function updateHiddenInputsAndFilter() {
+        hiddenCategory.value = filterCategory.value;
+        hiddenState.value = filterState.value;
+        hiddenDistrict.value = filterDistrict.value;
+        hiddenMandi.value = filterMandi.value;
+        filterAndPaginate();
+        updateAddRowState();
+      }
+
+      filterCategory.addEventListener("change", updateHiddenInputsAndFilter);
+      filterState.addEventListener("change", function() {
+        loadFilterDistricts(this.value, filterDistrict.value, filterDistrict, filterMandi);
+        updateHiddenInputsAndFilter();
+      });
+      filterDistrict.addEventListener("change", function() {
+        loadFilterMandis(this.value, filterMandi.value, filterMandi);
+        updateHiddenInputsAndFilter();
+      });
+      filterMandi.addEventListener("change", updateHiddenInputsAndFilter);
+
+      async function loadFilterDistricts(stateId, selectedDistrict = "", districtSelect, mandiSelect) {
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
+        if (!stateId) return;
+        try {
+          const res = await fetch(`/employees/userlist/districts/${stateId}`);
+          const districts = await res.json();
+          districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d;
+            opt.textContent = d;
+            if (d === selectedDistrict) opt.selected = true;
+            districtSelect.appendChild(opt);
+          });
+          if (selectedDistrict) loadFilterMandis(selectedDistrict, filterMandi.value, mandiSelect);
+        } catch (err) {
+          console.error('Error loading districts:', err);
+        }
+      }
+
+      async function loadFilterMandis(district, selectedMandi = "", mandiSelect) {
+        mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
+        if (!district) return;
+        try {
+          const res = await fetch(`/employees/userlist/mandis/${district}`);
+          const mandis = await res.json();
+          mandis.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.name;
+            opt.textContent = m.name;
+            if (m.name === selectedMandi) opt.selected = true;
+            mandiSelect.appendChild(opt);
+          });
+        } catch (err) {
+          console.error('Error loading mandis:', err);
+        }
+      }
+
+      // Initialize filter dropdowns with pre-selected values
+      if (filterState.value) {
+        loadFilterDistricts(filterState.value, filterDistrict.value, filterDistrict, filterMandi);
+      }
+
+      // ------------------- TABLE FILTERING AND PAGINATION -------------------
+      const searchInput = document.getElementById('searchInput');
+      let currentPage = 1;
+      const rowsPerPage = 100;
+      let filteredRows = [];
+
+      function filterTableRows() {
+        const searchVal = searchInput.value.toLowerCase();
+        filteredRows = Array.from(document.querySelectorAll('.existingRow')).filter(row => {
+          let match = true;
+          if (searchVal) {
+            match = row.textContent.toLowerCase().includes(searchVal);
+          }
+          if (match && filterCategory.value) match = row.dataset.category === filterCategory.value;
+          if (match && filterState.value) match = row.dataset.state === filterState.value;
+          if (match && filterDistrict.value) match = row.dataset.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.dataset.mandi === filterMandi.value;
+          if (match) match = row.dataset.userid === "<%= user.id %>";
+          return match;
+        });
+        return filteredRows;
+      }
+
+      function paginateRows() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        currentPage = Math.min(currentPage, totalPages) || 1;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedRows = filteredRows.slice(start, end);
+
+        document.querySelectorAll('.existingRow').forEach(row => {
+          row.style.display = 'none';
+        });
+
+        paginatedRows.forEach(row => {
+          row.style.display = '';
+        });
+
+        paginatedRows.forEach((row, index) => {
+          row.querySelector('.rowNo').textContent = start + index + 1;
+        });
+
+        generatePagination(totalPages);
+      }
+
+      function generatePagination(totalPages) {
+        const pagination = document.getElementById('paginationControls');
+        pagination.innerHTML = '';
+
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Previous</a>`;
+        pagination.appendChild(prevLi);
+
+        for (let i = 1; i <= totalPages; i++) {
+          const li = document.createElement('li');
+          li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+          li.innerHTML = `<a class="page-link" href="#" data-page="${i}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">${i}</a>`;
+          pagination.appendChild(li);
+        }
+
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Next</a>`;
+        pagination.appendChild(nextLi);
+
+        pagination.querySelectorAll('a[data-page]').forEach(a => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = parseInt(a.dataset.page);
+            if (page >= 1 && page <= totalPages) {
+              currentPage = page;
+              paginateRows();
+            }
+          });
+        });
+      }
+
+      function filterAndPaginate() {
+        const visibleRows = filterTableRows();
+        const totalRows = document.querySelectorAll('.existingRow').length;
+        document.getElementById('filteredRowCount').textContent = visibleRows.length;
+        document.getElementById('totalRowCount').textContent = totalRows;
+        paginateRows();
+      }
+
+      searchInput.addEventListener('input', filterAndPaginate);
+      filterAndPaginate();
+
+      // ------------------- ADD ROW LOGIC -------------------
+      function updateAddRowState() {
+        const addRows = document.querySelectorAll('.addRow');
+        addRows.forEach(row => {
+          const removeBtn = row.querySelector('.removeRow');
+          removeBtn.style.display = addRows.length > 1 ? 'inline-block' : 'none';
+          row.querySelector('td:nth-child(2) input').value = filterDistrict.value || '';
+          row.querySelector('td:nth-child(3) input').value = filterMandi.value || '';
+        });
+        document.getElementById('saveAllBtn').disabled = false;
+      }
+
+      const userRowsWrapper = document.getElementById("userRowsWrapper");
+      userRowsWrapper.addEventListener("keydown", function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          const targetRow = e.target.closest('.addRow');
+          if (targetRow) {
+            e.preventDefault();
+            addUserRow();
+          }
+        }
+      });
+
+      function addUserRow() {
+        const index = document.querySelectorAll('.existingRow').length + document.querySelectorAll('.addRow').length + 1;
+        const row = document.createElement("tr");
+        row.className = "userRow addRow";
+        row.innerHTML = `
+          <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">${index}</td>
+          <td><input type="text" class="form-control" value="${filterDistrict.value || ''}" name="districts[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" class="form-control" value="${filterMandi.value || ''}" name="mandis[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="names[]" class="form-control" placeholder="User Name" required style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" required style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><button type="button" class="btn btn-danger btn-soft removeRow" style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);"><i class="bi bi-x-circle"></i></button></td>
+        `;
+        userRowsWrapper.appendChild(row);
+        row.querySelector('input[name="names[]"]').focus();
+        updateSerials();
+        updateAddRowState();
+      }
+
+      userRowsWrapper.addEventListener("click", function(e) {
+        if (e.target.closest(".removeRow")) {
+          e.target.closest(".addRow").remove();
+          updateSerials();
+          updateAddRowState();
+        }
+      });
+
+      function updateSerials() {
+        const allRows = Array.from(document.querySelectorAll('.existingRow'));
+        allRows.forEach((row, index) => {
+          row.querySelector(".rowNo").textContent = index + 1;
+        });
+        const addRows = document.querySelectorAll('.addRow');
+        addRows.forEach((row, index) => {
+          row.querySelector('.rowNo').textContent = allRows.length + index + 1;
+        });
+        const totalRows = allRows.length;
+        document.getElementById('totalRowCount').textContent = totalRows;
+        filterAndPaginate();
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+          document.getElementById('addUserForm').submit();
+        }
+      });
+
+      // ------------------- EDIT MODAL LOGIC -------------------
+      document.querySelectorAll(".editBtn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const row = this.closest('.userRow');
+          document.getElementById("editUserId").value = row.dataset.id;
+          document.getElementById("editName").value = row.dataset.name;
+          document.getElementById("editAddress").value = row.dataset.address;
+          document.getElementById("editContactNumber").value = row.dataset.contactnumber;
+          document.getElementById("editUserForm").action = `/employees/userlist/edit/${row.dataset.id}`;
+        });
+      });
+
+      // ------------------- VIEW TABLE MODAL LOGIC -------------------
+      let viewTable = null;
+      const viewTableModal = document.getElementById('viewTableModal');
+      viewTableModal.addEventListener('shown.bs.modal', function() {
+        if (viewTable) {
+          viewTable.destroy();
+        }
+
+        const filteredData = userData.filter(row => {
+          let match = true;
+          if (searchInput.value) {
+            match = (
+              row.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.address.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactNumber.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+          }
+          if (match && filterCategory.value) match = row.category === filterCategory.value;
+          if (match && filterState.value) match = row.state === filterState.value;
+          if (match && filterDistrict.value) match = row.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.mandi === filterMandi.value;
+          if (match) match = row.userId === "<%= user.id %>";
+          return match;
+        });
+
+        filteredData.forEach((row, index) => {
+          row.rowNo = index + 1;
+        });
+
+        viewTable = new Tabulator("#viewTableContent", {
+          data: filteredData,
+          layout: "fitColumns",
+          responsiveLayout: "collapse",
+          groupBy: "stateName",
+          groupToggleElement: "header",
+          groupHeader: function(value) {
+            return `${value}`;
+          },
+          columns: [
+            { title: "Serial No.", field: "rowNo", width: 80, sorter: "number", responsive: 0 },
+            { title: "District", field: "district", sorter: "string", responsive: 1 },
+            { title: "Mandi", field: "mandi", sorter: "string", responsive: 2 },
+            { title: "User Name", field: "name", sorter: "string", responsive: 0 },
+            { title: "Address", field: "address", sorter: "string", responsive: 3 },
+            { title: "Contact Number", field: "contactNumber", sorter: "string", responsive: 0 }
+          ],
+          initialSort: [
+            { column: "stateName", dir: "asc" },
+            { column: "district", dir: "asc" },
+            { column: "mandi", dir: "asc" },
+            { column: "rowNo", dir: "asc" }
+          ]
+        });
+      });
+
+      viewTableModal.addEventListener('hidden.bs.modal', function() {
+        if (viewTable) {
+          viewTable.destroy();
+          viewTable = null;
+        }
+      });
+
+      // ------------------- EXPORT FUNCTIONS -------------------
+      function getExportData() {
+        const filteredData = userData.filter(row => {
+          let match = true;
+          if (searchInput.value) {
+            match = (
+              row.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.address.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactNumber.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+          }
+          if (match && filterCategory.value) match = row.category === filterCategory.value;
+          if (match && filterState.value) match = row.state === filterState.value;
+          if (match && filterDistrict.value) match = row.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.mandi === filterMandi.value;
+          if (match) match = row.userId === "<%= user.id %>";
+          return match;
+        });
+
+        filteredData.forEach((row, index) => {
+          row.rowNo = index + 1;
+        });
+
+        return filteredData;
+      }
+
+      document.getElementById('downloadCSV').addEventListener('click', function() {
+        const data = getExportData();
+        let csv = 'Serial No.,District,Mandi,User Name,Address,Contact Number\n';
+        data.forEach(row => {
+          const rowData = [
+            row.rowNo,
+            `"${row.district.replace(/"/g, '""')}"`,
+            `"${row.mandi.replace(/"/g, '""')}"`,
+            `"${row.name.replace(/"/g, '""')}"`,
+            `"${row.address.replace(/"/g, '""')}"`,
+            `"${row.contactNumber.replace(/"/g, '""')}"`
+          ].join(',');
+          csv += `${rowData}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'users.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+      document.getElementById('downloadExcel').addEventListener('click', function() {
+        const data = getExportData();
+        const wsData = [['Serial No.', 'District', 'Mandi', 'User Name', 'Address', 'Contact Number']];
+        data.forEach(row => {
+          wsData.push([
+            row.rowNo,
+            row.district,
+            row.mandi,
+            row.name,
+            row.address,
+            row.contactNumber
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Users');
+        XLSX.writeFile(wb, 'users.xlsx');
+      });
+
+      document.getElementById('downloadPDF').addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const data = getExportData();
+        const tableData = [['Serial No.', 'District', 'Mandi', 'User Name', 'Address', 'Contact Number']];
+        data.forEach(row => {
+          tableData.push([
+            row.rowNo,
+            row.district,
+            row.mandi,
+            row.name,
+            row.address,
+            row.contactNumber
+          ]);
+        });
+        doc.autoTable({
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'striped',
+          styles: { fontSize: 8, cellPadding: 2 },
+          columnStyles: {
+            0: { cellWidth: 10 },
+            1: { cellWidth: 20 },
+            2: { cellWidth: 20 },
+            3: { cellWidth: 30 },
+            4: { cellWidth: 40 },
+            5: { cellWidth: 20 }
+          },
+          margin: { top: 10 }
+        });
+        doc.save('users.pdf');
+      });
+    });
+  </script>
+</div>
+<%- include('layout/footer') %>

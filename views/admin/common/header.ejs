@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>Mandilink Admin Dashboard</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous">
     <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <!-- Custom CSS -->
     <style>
         :root {
@@ -31,34 +31,43 @@
             padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
-            background-size: 200% 200%;
-            animation: bgmove 16s cubic-bezier(0.4,0.3,0.2,1) infinite alternate;
         }
-        @keyframes bgmove {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
+        /* Disable background animation on mobile for performance */
+        @media (prefers-reduced-motion: reduce) or (max-width: 767px) {
+            body {
+                background: #ffffff; /* Fallback to solid color */
+            }
         }
         .navbar {
             background: var(--card-gradient);
             box-shadow: var(--shadow);
             z-index: 1100;
+            padding: 0.5rem 1rem;
         }
         .navbar-brand {
             color: var(--accent) !important;
-            font-weight: bold;
+            font-weight: 700;
             letter-spacing: 1px;
-            font-size: 1.2rem;
+            font-size: clamp(1.1rem, 3vw, 1.2rem);
             display: flex;
             align-items: center;
         }
         .navbar-brand img {
             height: 36px;
             margin-right: 8px;
-            background: rgb(1, 73, 1) ;
+            background: rgb(1, 73, 1);
             border-radius: 6px;
         }
+        .navbar .user-greeting {
+            color: var(--accent);
+            margin: 0;
+            font-size: clamp(1rem, 2.5vw, 1.1rem);
+        }
+        .navbar .user-greeting span {
+            color: var(--text-dark);
+        }
         .toggle-btn {
-            font-size: 22px;
+            font-size: 1.25rem;
             cursor: pointer;
             color: var(--accent);
             background: #f7fafd;
@@ -66,8 +75,9 @@
             padding: 6px 10px;
             margin-left: 12px;
             transition: background 0.2s, color 0.2s;
+            touch-action: manipulation; /* Improve touch */
         }
-        .toggle-btn:hover {
+        .toggle-btn:hover, .toggle-btn:focus {
             background: var(--accent);
             color: var(--text-light);
         }
@@ -79,7 +89,7 @@
             left: 0;
             background: var(--sidebar-gradient);
             padding-top: 56px;
-            transition: width 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            transition: transform 0.3s cubic-bezier(0.4,0.3,0.2,1);
             overflow-x: hidden;
             overflow-y: auto;
             z-index: 1000;
@@ -98,13 +108,14 @@
             scrollbar-color: var(--accent) #e3f6f5;
         }
         .sidebar.collapsed {
-            width: 72px;
+            transform: translateX(-100%);
+            width: 260px; /* Maintain width for off-canvas */
         }
         .sidebar a,
         .sidebar .collapsible-btn {
             padding: 14px 22px;
             text-decoration: none;
-            font-size: 17px;
+            font-size: clamp(0.95rem, 2.5vw, 1rem);
             color: var(--text-light);
             display: flex;
             align-items: center;
@@ -114,6 +125,7 @@
             border-radius: 8px;
             margin: 2px 10px;
             background: none;
+            touch-action: manipulation;
         }
         .sidebar a:hover,
         .sidebar .collapsible-btn:hover {
@@ -133,7 +145,7 @@
         }
         .sidebar .nav-icon {
             margin-right: 12px;
-            font-size: 18px;
+            font-size: clamp(0.95rem, 2.5vw, 1rem);
             width: 23px;
             text-align: center;
             transition: transform 0.2s;
@@ -145,12 +157,11 @@
         }
         .sidebar.collapsed a .nav-text,
         .sidebar.collapsed .collapsible-btn .nav-text {
-            display: none;
+            display: inline; /* Keep text for off-canvas */
         }
         .sidebar.collapsed a,
         .sidebar.collapsed .collapsible-btn {
-            justify-content: center;
-            padding: 14px 0;
+            padding: 14px 22px; /* Consistent padding */
         }
         /* Submenu style */
         .sidebar .collapse {
@@ -161,17 +172,17 @@
             margin-left: 5px;
         }
         .sidebar .collapse .nav-text {
-            font-size: 15px;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
             color: var(--accent) !important;
         }
         .sidebar .collapse a {
             padding-left: 35px;
-            font-size: 15px;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
             color: var(--accent) !important;
             border-radius: 7px;
         }
         .sidebar .collapse a .nav-icon {
-            font-size: 15px;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
             margin-right: 8px;
         }
         .sidebar .collapse a:hover {
@@ -180,12 +191,12 @@
         }
         .main-content {
             margin-left: 260px;
-            padding: 80px 24px 24px 24px;
+            padding: 70px 24px 24px 24px;
             transition: margin-left 0.3s cubic-bezier(0.4,0.3,0.2,1);
             min-height: 100vh;
         }
         .main-content.collapsed {
-            margin-left: 72px;
+            margin-left: 0;
         }
         .card {
             border: none;
@@ -201,6 +212,10 @@
         .card-title {
             color: var(--accent);
             font-weight: 600;
+            font-size: clamp(1.1rem, 3vw, 1.25rem);
+        }
+        .card-text {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
         }
         .chart-container {
             background: #fff;
@@ -208,26 +223,8 @@
             box-shadow: var(--shadow);
             padding: 20px;
             margin-bottom: 28px;
-        }
-        @media (max-width: 991.98px) {
-            .sidebar, .sidebar.collapsed {
-                width: 0;
-            }
-            .main-content,
-            .main-content.collapsed {
-                margin-left: 0;
-                padding-top: 80px;
-            }
-        }
-        @media (max-width: 575.98px) {
-            .main-content,
-            .main-content.collapsed {
-                padding: 100px 6px 24px 6px;
-            }
-            .card-title,
-            .card-text {
-                font-size: 1rem;
-            }
+            max-width: 100%;
+            overflow-x: auto;
         }
         /* Pagination style */
         .pagination {
@@ -238,87 +235,180 @@
             color: var(--accent);
             background: #e3f6f5;
             border: 1px solid #7fcbfa;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
+            padding: 8px 12px;
         }
         .pagination .page-item.active .page-link {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
         }
+        /* Mobile and Tablet Adjustments */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+                box-shadow: none; /* Remove shadow when hidden */
+            }
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 2px 0 16px rgba(63,130,255,0.10);
+            }
+            .main-content,
+            .main-content.collapsed {
+                margin-left: 0;
+                padding-top: 80px;
+            }
+            .navbar {
+                padding: 0.5rem;
+            }
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            .navbar .user-greeting {
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .main-content,
+            .main-content.collapsed {
+                padding: 80px 12px 24px 12px;
+            }
+            .sidebar {
+                width: 80vw; /* Narrower for mobile */
+            }
+            .sidebar a,
+            .sidebar .collapsible-btn {
+                padding: 12px 18px;
+                font-size: 0.95rem;
+            }
+            .sidebar .collapse a {
+                padding-left: 25px;
+                font-size: 0.9rem;
+            }
+            .card {
+                padding: 12px;
+            }
+            .chart-container {
+                padding: 12px;
+            }
+        }
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <img src="/logo/logo.png" alt="">
+                <img src="/logo/logo.png" alt="Mandilink Logo">
                 Mandilink Admin Dashboard
             </a>
-            <h4 style="color: var(--accent); margin-bottom: 0;">Welcome, Admin <span style="color:#202a34"><%= userdetails.name %></span></h4>
-            <span class="toggle-btn ms-3" id="sidebarToggle"><i class="fas fa-bars"></i></span>
+            <h4 class="user-greeting">Welcome, Admin <span><%= userdetails.name %></span></h4>
+            <button class="toggle-btn ms-3" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </nav>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
+       <!-- Standalone Links -->
+<a href="/admin/dashboard" class="d-flex align-items-center">
+    <i class="fas fa-home nav-icon"></i>
+    <span class="nav-text">Dashboard</span>
+</a>
+<a href="/admin/mandirate" class="d-flex align-items-center collapsible-btn" >
+    <i class="fas fa-rupee-sign nav-icon"></i>
+    <span class="nav-text">Mandi Rates</span>
+</a>
 
-        <a href="/admin/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
-   <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#mandiMenu" role="button" aria-expanded="false" aria-controls="mandiMenu" style="cursor:pointer">
-            <i class="fas fa-balance-scale nav-icon"></i>
-            <span class="nav-text flex-grow-1">Mandi</span>
-        </a>
-        <div class="collapse ms-2" id="mandiMenu">
-            <a href="/admin/mandirate" class="d-flex align-items-center"><i class="fas fa-rupee-sign nav-icon"></i><span class="nav-text">Mandi Rate</span></a>
-            <a href="/admin/companylist" class="d-flex align-items-center"><i class="fas fa-building nav-icon"></i><span class="nav-text">Company List</span></a>
-            <a href="/admin/commidities" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Commodity List</span></a>
-            
-            <a href="/admin/mandis" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">City/Mandi List</span></a>
+<!-- Lists Collapsible Menu -->
+<a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#listsMenu" role="button" aria-expanded="false" aria-controls="listsMenu">
+    <i class="fas fa-list-ul nav-icon"></i>
+    <span class="nav-text flex-grow-1">Lists</span>
+</a>
+<div class="collapse ms-2" id="listsMenu">
+    <a href="/admin/companylist" class="d-flex align-items-center">
+        <i class="fas fa-building nav-icon"></i>
+        <span class="nav-text">Company List</span>
+    </a>
+    <a href="/admin/userlist" class="d-flex align-items-center">
+        <i class="fas fa-users nav-icon"></i>
+        <span class="nav-text">User List</span>
+    </a>
+</div>
 
-            <a href="/admin/category" class="d-flex align-items-center"><i class="fas fa-balance-scale"></i><span class="nav-text">Category</span></a>
+<!-- Setup Collapsible Menu -->
+<a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#setupMenu" role="button" aria-expanded="false" aria-controls="setupMenu">
+    <i class="fas fa-cog nav-icon"></i>
+    <span class="nav-text flex-grow-1">Setup</span>
+</a>
+<div class="collapse ms-2" id="setupMenu">
+    <a href="/admin/category" class="d-flex align-items-center">
+        <i class="fas fa-balance-scale nav-icon"></i>
+        <span class="nav-text">Category</span>
+    </a>
+    <a href="/admin/mandis" class="d-flex align-items-center">
+        <i class="fas fa-list nav-icon"></i>
+        <span class="nav-text">City/Mandi List</span>
+    </a>
+    <a href="/admin/commidities" class="d-flex align-items-center">
+        <i class="fas fa-list nav-icon"></i>
+        <span class="nav-text">Commodity List</span>
+    </a>
+    <a href="/admin/state" class="d-flex align-items-center">
+    <i class="fas fa-map nav-icon"></i>
+    <span class="nav-text">State/District</span>
+</a>
+</div>
 
-           
-                <a href="/admin/state" class="d-flex align-items-center"><i class="fas fa-map nav-icon"> </i><span class="nav-text">State/District</span></a>
+<!-- State/District Standalone Link -->
 
-            <!-- commodity -->
-           
-            
-        </div>
         <!-- User Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button" aria-expanded="false" aria-controls="userMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button" aria-expanded="false" aria-controls="userMenu">
             <i class="fas fa-users nav-icon"></i>
             <span class="nav-text flex-grow-1">User</span>
         </a>
         <div class="collapse ms-2" id="userMenu">
             <a href="/admin/subroles" class="d-flex align-items-center"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Subrole</span></a>
             <a href="/admin/plans" class="d-flex align-items-center"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Plans</span></a>
-            <!-- <a href="/admin/addusers" class="d-flex align-items-center"><i class="fas fa-user-plus nav-icon"></i><span class="nav-text">Add users</span></a>
-            <a href="/admin/total-users" class="d-flex align-items-center"><i class="fas fa-users-cog nav-icon"></i><span class="nav-text">Total User</span></a>
-            <a href="#" class="d-flex align-items-center"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Payments</span></a> -->
         </div>
-
         <!-- Employee Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#employeeMenu" role="button" aria-expanded="false" aria-controls="employeeMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#employeeMenu" role="button" aria-expanded="false" aria-controls="employeeMenu">
             <i class="fas fa-user-tie nav-icon"></i>
             <span class="nav-text flex-grow-1">Employee</span>
         </a>
         <div class="collapse ms-2" id="employeeMenu">
-            <a href="/admin/employees" class="d-flex align-items-center"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">SEE EMPLOYEES</span></a>
+            <a href="/admin/employees" class="d-flex align-items-center"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">See Employees</span></a>
         </div>
-
         <!-- Blog Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#blogMenu" role="button" aria-expanded="false" aria-controls="blogMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#blogMenu" role="button" aria-expanded="false" aria-controls="blogMenu">
             <i class="fas fa-blog nav-icon"></i>
             <span class="nav-text flex-grow-1">Blog</span>
         </a>
         <div class="collapse ms-2" id="blogMenu">
             <a href="/admin/blogs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Posts</span></a>
             <a href="/admin/create-blog" class="d-flex align-items-center"><i class="fas fa-plus nav-icon"></i><span class="nav-text">Add Post</span></a>
-        
         </div>
-
         <!-- Job Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#jobMenu" role="button" aria-expanded="false" aria-controls="jobMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#jobMenu" role="button" aria-expanded="false" aria-controls="jobMenu">
             <i class="fas fa-briefcase nav-icon"></i>
             <span class="nav-text flex-grow-1">Job</span>
         </a>
@@ -326,9 +416,8 @@
             <a href="/admin/jobs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Jobs</span></a>
             <a href="/admin/create-job" class="d-flex align-items-center"><i class="fas fa-plus nav-icon"></i><span class="nav-text">Add Job</span></a>
         </div>
-
         <!-- Ads Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu">
             <i class="fas fa-ad nav-icon"></i>
             <span class="nav-text flex-grow-1">Ads</span>
         </a>
@@ -339,24 +428,18 @@
             <a href="/admin/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottoms Ad</span></a>
             <a href="/admin/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ad</span></a>
         </div>
-
         <!-- AI Button -->
         <a href="#" class="d-flex align-items-center collapsible-btn">
             <i class="fas fa-robot nav-icon"></i>
             <span class="nav-text">AI</span>
         </a>
-
-        <!-- Mandiprices / Mandi Daily Bid -->
-     
-
         <!-- Push Notification Button -->
         <a href="#" class="d-flex align-items-center collapsible-btn">
             <i class="fas fa-bell nav-icon"></i>
             <span class="nav-text">Push Notification</span>
         </a>
-
         <!-- Settings Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#settingsMenu" role="button" aria-expanded="false" aria-controls="settingsMenu" style="cursor:pointer">
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#settingsMenu" role="button" aria-expanded="false" aria-controls="settingsMenu">
             <i class="fas fa-cog nav-icon"></i>
             <span class="nav-text flex-grow-1">Settings</span>
         </a>
@@ -364,9 +447,9 @@
             <a href="#" class="d-flex align-items-center"><i class="fas fa-plug nav-icon"></i><span class="nav-text">APIs</span></a>
             <a href="/admin/logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Password Update</span></a>
         </div>
-
-        <!-- Other Static Buttons -->
+        <!-- Logout -->
         <a href="/admin/auth/admin-logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
     </div>
 
- 
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>

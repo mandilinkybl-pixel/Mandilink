@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const companySchema = new mongoose.Schema({
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "SecureEmployee", required: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
   state: { type: mongoose.Schema.Types.ObjectId, ref: "State", required: true },
   district: { type: String, required: true, trim: true },

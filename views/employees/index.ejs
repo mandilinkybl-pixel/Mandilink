@@ -143,16 +143,4 @@
             }
         });
     </script>
-    <!-- Sidebar Toggle JS -->
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('collapsed');
-        });
-    </script>
-</body>
-</html>
+   <%- include('layout/footer') %>

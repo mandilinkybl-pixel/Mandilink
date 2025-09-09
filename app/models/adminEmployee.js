@@ -34,6 +34,7 @@ const secureEmployeeSchema = new mongoose.Schema({
             "Manage_Plans",             // 💳 New
             "Manage_Payments",          // 💰 New
             "Manage_CompanyList" ,      // 🏢 New
+            "Manage_UsersList",         // 👥 New
             "Manage_Commodities",       // 🛢️ New
             "Manage_Mandis",            // 🏬 New
             "Manage_Categories"         // 🗂️ New

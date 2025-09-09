@@ -63,7 +63,8 @@
             "Manage_CompanyList",
             "Manage_Commodities",
             "Manage_Mandis",
-            "Manage_Categories"
+            "Manage_Categories",
+            "Manage_UsersList"
       ]; %>
       <% permissions.forEach(p => { %>
         <label style="display: flex; align-items: center; gap:6px; font-size:0.98em; background:#f7f7fc; border-radius:6px; padding:4px 10px;">
@@ -90,18 +91,4 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js Initialization -->
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('collapsed');
-        });
-    </script>
-</body>
-</html>
+  <%- include('common/footer') %>

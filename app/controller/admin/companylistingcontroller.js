@@ -5,6 +5,14 @@ const Mandi = require("../../models/mandilistmodel");
 const SecureEmployee = require("../../models/adminEmployee");
 
 class CompanyController {
+  // Helper function to convert string to title case
+  toTitleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\w\S*/g, function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+  }
+
   // Show page and optionally filtered companies
   getCompanies = async (req, res) => {
     try {
@@ -13,20 +21,40 @@ class CompanyController {
       const categories = await Category.find().sort({ name: 1 });
       const states = await State.find().sort({ name: 1 });
 
-      // Get filter values (from POST or GET)
-      const { category, state, district, mandi } = req.body || {};
+      // Debug: Log states to verify data
+      // console.log('States:', states);
+
+      // Ensure statenameMap is always defined, even if states is empty
+      const statenameMap = states.reduce((acc, state) => {
+        acc[state._id] = state.name;
+        return acc;
+      }, {});
+      // console.log('State Name Map:', statenameMap);
+
+      // Update companies with missing user.id
+      await Company.updateMany(
+        { user: { $exists: false } }, // or { user: null } if some are explicitly null
+        { $set: { user: user.id } }
+      );
+
+      // Get filter values (prefer req.body for POST, fallback to req.query for GET)
+      const { category, state, district, mandi } = req.body || req.query || {};
 
       const query = {};
-      if (category) query.category = category;
-      if (state) query.state = state;
-      if (district) query.district = district;
-      if (mandi) query.mandi = mandi;
+      if (category) query.category = this.toTitleCase(category);
+      if (state) query.state = this.toTitleCase(state);
+      if (district) query.district = this.toTitleCase(district);
+      if (mandi) query.mandi = this.toTitleCase(mandi);
 
       const companies = await Company.find(query).sort({ name: 1 });
 
+      // console.log('Companies:', companies);
+
+      // Pass stateMap to match what the template expects (rename from statenameMap)
       res.render("admin/company", {
         user,
         userdetails,
+        stateMap: statenameMap,  // Renamed to stateMap to fix the ReferenceError
         categories,
         states,
         companies,
@@ -38,7 +66,7 @@ class CompanyController {
         error_msg: req.flash("error_msg")
       });
     } catch (err) {
-      console.error(err);
+      console.error('Error in getCompanies:', err);
       req.flash("error_msg", "Error loading company page");
       res.redirect("/admin/companylist");
     }
@@ -51,22 +79,34 @@ class CompanyController {
       let companyDocs = [];
 
       // If only one row, names, etc may be string not array
-      const namesArr = Array.isArray(names) ? names : [names];
-      const addressesArr = Array.isArray(addresses) ? addresses : [addresses];
-      const contactPersonsArr = Array.isArray(contactPersons) ? contactPersons : [contactPersons];
-      const contactNumbersArr = Array.isArray(contactNumbers) ? contactNumbers : [contactNumbers];
+      const namesArr = Array.isArray(names) ? names : [names].filter(Boolean);
+      const addressesArr = Array.isArray(addresses) ? addresses : [addresses].filter(Boolean);
+      const contactPersonsArr = Array.isArray(contactPersons) ? contactPersons : [contactPersons].filter(Boolean);
+      const contactNumbersArr = Array.isArray(contactNumbers) ? contactNumbers : [contactNumbers].filter(Boolean);
+
+      // Convert filter fields to title case once
+      const categoryTitle = this.toTitleCase(category);
+      const stateTitle = this.toTitleCase(state);
+      const districtTitle = this.toTitleCase(district);
+      const mandiTitle = this.toTitleCase(mandi);
 
       for (let i = 0; i < namesArr.length; i++) {
-        if (namesArr[i]?.trim()) {
+        const trimmedName = namesArr[i]?.trim();
+        if (trimmedName) {
+          const trimmedAddress = addressesArr[i]?.trim() || '';
+          const trimmedContactPerson = contactPersonsArr[i]?.trim() || '';
+          const trimmedContactNumber = contactNumbersArr[i]?.trim() || '';
+
           companyDocs.push({
-            category,
-            state,
-            district,
-            mandi,
-            name: namesArr[i].trim(),
-            address: addressesArr[i].trim(),
-            contactPerson: contactPersonsArr[i].trim(),
-            contactNumber: contactNumbersArr[i].trim()
+            user_id: req.user.id,
+            category: categoryTitle,
+            state: stateTitle,
+            district: districtTitle,
+            mandi: mandiTitle,
+            name: this.toTitleCase(trimmedName),
+            address: this.toTitleCase(trimmedAddress),
+            contactPerson: this.toTitleCase(trimmedContactPerson),
+            contactNumber: trimmedContactNumber  // No title case for phone numbers
           });
         }
       }
@@ -87,20 +127,31 @@ class CompanyController {
   };
 
   // Edit a company
-  // Edit a company (already modal-compatible)
-editCompany = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, address, contactPerson, contactNumber } = req.body;
-    await Company.findByIdAndUpdate(id, { name, address, contactPerson, contactNumber });
-    req.flash("success_msg", "Company updated successfully");
-    res.redirect("/admin/companylist");
-  } catch (err) {
-    console.error(err);
-    req.flash("error_msg", "Error updating company");
-    res.redirect("/admin/companylist");
-  }
-};
+  editCompany = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, address, contactPerson, contactNumber } = req.body;
+
+      const trimmedName = name ? name.trim() : '';
+      const trimmedAddress = address ? address.trim() : '';
+      const trimmedContactPerson = contactPerson ? contactPerson.trim() : '';
+      const trimmedContactNumber = contactNumber ? contactNumber.trim() : '';
+
+      await Company.findByIdAndUpdate(id, { 
+        name: this.toTitleCase(trimmedName),
+        address: this.toTitleCase(trimmedAddress),
+        contactPerson: this.toTitleCase(trimmedContactPerson),
+        contactNumber: trimmedContactNumber  // No title case for phone numbers
+      });
+      req.flash("success_msg", "Company updated successfully");
+      res.redirect("/admin/companylist");
+    } catch (err) {
+      console.error(err);
+      req.flash("error_msg", "Error updating company");
+      res.redirect("/admin/companylist");
+    }
+  };
+
   // Delete a company
   deleteCompany = async (req, res) => {
     try {

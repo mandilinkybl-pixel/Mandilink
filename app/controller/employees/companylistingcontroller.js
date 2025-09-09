@@ -1,3 +1,4 @@
+// app/controller/employees/companylistingcontroller.js
 const Company = require("../../models/companylisting");
 const Category = require("../../models/category.model");
 const State = require("../../models/stateSchema");
@@ -5,32 +6,82 @@ const Mandi = require("../../models/mandilistmodel");
 const SecureEmployee = require("../../models/adminEmployee");
 
 class CompanyController {
-  // Show page and optionally filtered companies
+  toTitleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\w\S*/g, function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+  }
+
   getCompanies = async (req, res) => {
     try {
       const user = req.user;
       const userdetails = await SecureEmployee.findById(user.id);
+      if (!userdetails) {
+        throw new Error('User not found');
+      }
+
       const categories = await Category.find().sort({ name: 1 });
       const states = await State.find().sort({ name: 1 });
 
-      // Get filter values (from POST or GET)
-      const { category, state, district, mandi } = req.body || {};
+      const stateMap = states.reduce((acc, state) => {
+        acc[state._id] = state.name;
+        return acc;
+      }, {});
+
+      // Update companies with missing user.id
+      await Company.updateMany(
+        { user: { $exists: false } },
+        { $set: { user: user.id } }
+      );
+
+      // Get filter values (prefer req.body for POST, fallback to req.query for GET)
+      const { category, state, district, mandi } = req.body || req.query || {};
 
       const query = {};
-      if (category) query.category = category;
-      if (state) query.state = state;
-      if (district) query.district = district;
-      if (mandi) query.mandi = mandi;
+      if (category) query.category = this.toTitleCase(category);
+      if (state) query.state = this.toTitleCase(state);
+      if (district) query.district = this.toTitleCase(district);
+      if (mandi) query.mandi = this.toTitleCase(mandi);
 
-      const companies = await Company.find(query).sort({ name: 1 });
-      const employee = await SecureEmployee.findById(user.id);
+      // Filter for today's companies (September 9, 2025, in IST)
+      const now = new Date(); // Current date: September 9, 2025, 08:02 PM IST
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      startOfDay.setHours(0, 0, 0, 0); // Start of day in IST
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endOfDay.setHours(23, 59, 59, 999); // End of day in IST
+      query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+
+      let todayCompanies = [];
+      try {
+        todayCompanies = await Company.find(query).sort({ name: 1 });
+        console.log(`Fetched ${todayCompanies.length} companies for today`);
+      } catch (err) {
+        console.error('Error fetching todayCompanies:', err);
+        todayCompanies = []; // Fallback to empty array
+      }
+
+      // Fetch all companies for serial number calculations
+      const allQuery = { ...query };
+      delete allQuery.createdAt; // Remove date filter
+      let allCompanies = [];
+      try {
+        allCompanies = await Company.find(allQuery).sort({ name: 1 });
+        console.log(`Fetched ${allCompanies.length} companies for serial number calculations`);
+      } catch (err) {
+        console.error('Error fetching allCompanies:', err);
+        allCompanies = []; // Fallback to empty array
+      }
+
       res.render("employees/company", {
         user,
         userdetails,
+        employee: userdetails,
+        stateMap,
         categories,
         states,
-        employee,
-        companies,
+        todayCompanies,
+        allCompanies,
         selectedCategory: category || "",
         selectedState: state || "",
         selectedDistrict: district || "",
@@ -39,35 +90,44 @@ class CompanyController {
         error_msg: req.flash("error_msg")
       });
     } catch (err) {
-      console.error(err);
+      console.error('Error in getCompanies:', err);
       req.flash("error_msg", "Error loading company page");
       res.redirect("/employees/companylist");
     }
   };
 
-  // Add multiple companies, using hidden selection values
   addCompanies = async (req, res) => {
     try {
       const { category, state, district, mandi, names, addresses, contactPersons, contactNumbers } = req.body;
       let companyDocs = [];
 
-      // If only one row, names, etc may be string not array
-      const namesArr = Array.isArray(names) ? names : [names];
-      const addressesArr = Array.isArray(addresses) ? addresses : [addresses];
-      const contactPersonsArr = Array.isArray(contactPersons) ? contactPersons : [contactPersons];
-      const contactNumbersArr = Array.isArray(contactNumbers) ? contactNumbers : [contactNumbers];
+      const namesArr = Array.isArray(names) ? names : [names].filter(Boolean);
+      const addressesArr = Array.isArray(addresses) ? addresses : [addresses].filter(Boolean);
+      const contactPersonsArr = Array.isArray(contactPersons) ? contactPersons : [contactPersons].filter(Boolean);
+      const contactNumbersArr = Array.isArray(contactNumbers) ? contactNumbers : [contactNumbers].filter(Boolean);
+
+      const categoryTitle = this.toTitleCase(category);
+      const stateTitle = this.toTitleCase(state);
+      const districtTitle = this.toTitleCase(district);
+      const mandiTitle = this.toTitleCase(mandi);
 
       for (let i = 0; i < namesArr.length; i++) {
-        if (namesArr[i]?.trim()) {
+        const trimmedName = namesArr[i]?.trim();
+        if (trimmedName) {
+          const trimmedAddress = addressesArr[i]?.trim() || '';
+          const trimmedContactPerson = contactPersonsArr[i]?.trim() || '';
+          const trimmedContactNumber = contactNumbersArr[i]?.trim() || '';
+
           companyDocs.push({
-            category,
-            state,
-            district,
-            mandi,
-            name: namesArr[i].trim(),
-            address: addressesArr[i].trim(),
-            contactPerson: contactPersonsArr[i].trim(),
-            contactNumber: contactNumbersArr[i].trim()
+            user_id: req.user.id,
+            category: categoryTitle,
+            state: stateTitle,
+            district: districtTitle,
+            mandi: mandiTitle,
+            name: this.toTitleCase(trimmedName),
+            address: this.toTitleCase(trimmedAddress),
+            contactPerson: this.toTitleCase(trimmedContactPerson),
+            contactNumber: trimmedContactNumber
           });
         }
       }
@@ -87,22 +147,31 @@ class CompanyController {
     }
   };
 
-  // Edit a company
-  // Edit a company (already modal-compatible)
-editCompany = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, address, contactPerson, contactNumber } = req.body;
-    await Company.findByIdAndUpdate(id, { name, address, contactPerson, contactNumber });
-    req.flash("success_msg", "Company updated successfully");
-    res.redirect("/employees/companylist");
-  } catch (err) {
-    console.error(err);
-    req.flash("error_msg", "Error updating company");
-    res.redirect("/employees/companylist");
-  }
-};
-  // Delete a company
+  editCompany = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, address, contactPerson, contactNumber } = req.body;
+
+      const trimmedName = name ? name.trim() : '';
+      const trimmedAddress = address ? address.trim() : '';
+      const trimmedContactPerson = contactPerson ? contactPerson.trim() : '';
+      const trimmedContactNumber = contactNumber ? contactNumber.trim() : '';
+
+      await Company.findByIdAndUpdate(id, {
+        name: this.toTitleCase(trimmedName),
+        address: this.toTitleCase(trimmedAddress),
+        contactPerson: this.toTitleCase(trimmedContactPerson),
+        contactNumber: trimmedContactNumber
+      });
+      req.flash("success_msg", "Company updated successfully");
+      res.redirect("/employees/companylist");
+    } catch (err) {
+      console.error(err);
+      req.flash("error_msg", "Error updating company");
+      res.redirect("/employees/companylist");
+    }
+  };
+
   deleteCompany = async (req, res) => {
     try {
       const { id } = req.params;
@@ -116,7 +185,6 @@ editCompany = async (req, res) => {
     }
   };
 
-  // Get districts by state
   getDistricts = async (req, res) => {
     try {
       const state = await State.findById(req.params.stateId);
@@ -128,7 +196,6 @@ editCompany = async (req, res) => {
     }
   };
 
-  // Get mandis by district
   getMandis = async (req, res) => {
     try {
       const mandis = await Mandi.find({ district: req.params.district });

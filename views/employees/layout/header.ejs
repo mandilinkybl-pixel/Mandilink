@@ -1,3 +1,4 @@
+```ejs
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,29 +44,29 @@
             background: var(--card-gradient);
             box-shadow: var(--shadow);
             z-index: 1100;
+            padding: 0.5rem 1rem;
         }
         .navbar-brand {
             color: var(--accent) !important;
             font-weight: bold;
             letter-spacing: 1px;
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.2rem);
             display: flex;
             align-items: center;
         }
         .navbar-brand img {
-            height: 36px;
+            height: clamp(30px, 5vw, 36px);
             margin-right: 8px;
             background: var(--accent);
             border-radius: 6px;
         }
         .toggle-btn {
-            font-size: 22px;
+            font-size: clamp(18px, 4vw, 22px);
             cursor: pointer;
             color: var(--accent);
             background: #fafdff;
             border-radius: 6px;
             padding: 6px 10px;
-            margin-left: 12px;
             transition: background 0.2s, color 0.2s;
         }
         .toggle-btn:hover {
@@ -80,7 +81,7 @@
             left: 0;
             background: var(--sidebar-gradient);
             padding-top: 56px;
-            transition: width 0.3s cubic-bezier(0.4,0.3,0.2,1);
+            transition: transform 0.3s cubic-bezier(0.4,0.3,0.2,1);
             overflow-x: hidden;
             overflow-y: auto;
             z-index: 1000;
@@ -99,13 +100,13 @@
             scrollbar-color: var(--accent) #e3f6f5;
         }
         .sidebar.collapsed {
-            width: 72px;
+            transform: translateX(-100%);
         }
         .sidebar a,
         .sidebar .collapsible-btn {
             padding: 14px 22px;
             text-decoration: none;
-            font-size: 17px;
+            font-size: clamp(15px, 2.5vw, 17px);
             color: var(--sidebar-text);
             display: flex;
             align-items: center;
@@ -134,7 +135,7 @@
         }
         .sidebar .nav-icon {
             margin-right: 12px;
-            font-size: 18px;
+            font-size: clamp(16px, 2.5vw, 18px);
             width: 23px;
             text-align: center;
             transition: transform 0.2s;
@@ -153,6 +154,7 @@
         .sidebar.collapsed .collapsible-btn {
             justify-content: center;
             padding: 14px 0;
+            width: 72px;
         }
         /* Submenu style */
         .sidebar .collapse {
@@ -163,17 +165,17 @@
             margin-left: 5px;
         }
         .sidebar .collapse .nav-text {
-            font-size: 15px;
+            font-size: clamp(13px, 2.2vw, 15px);
             color: var(--accent) !important;
         }
         .sidebar .collapse a {
             padding-left: 35px;
-            font-size: 15px;
+            font-size: clamp(13px, 2.2vw, 15px);
             color: var(--accent) !important;
             border-radius: 7px;
         }
         .sidebar .collapse a .nav-icon {
-            font-size: 15px;
+            font-size: clamp(13px, 2.2vw, 15px);
             margin-right: 8px;
         }
         .sidebar .collapse a:hover {
@@ -182,12 +184,12 @@
         }
         .main-content {
             margin-left: 260px;
-            padding: 80px 24px 24px 24px;
+            padding: clamp(60px, 10vw, 80px) clamp(12px, 3vw, 24px) 24px;
             transition: margin-left 0.3s cubic-bezier(0.4,0.3,0.2,1);
             min-height: 100vh;
         }
         .main-content.collapsed {
-            margin-left: 72px;
+            margin-left: 0;
         }
         .card {
             border: none;
@@ -195,6 +197,7 @@
             box-shadow: var(--shadow);
             background: var(--card-gradient);
             transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 1.5rem;
         }
         .card:hover {
             transform: translateY(-4px) scale(1.03);
@@ -203,143 +206,195 @@
         .card-title {
             color: var(--card-title);
             font-weight: 600;
+            font-size: clamp(1rem, 3vw, 1.25rem);
+        }
+        .card-text {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
         }
         .chart-container {
             background: #fff;
             border-radius: 12px;
             box-shadow: var(--shadow);
-            padding: 20px;
-            margin-bottom: 28px;
+            padding: clamp(12px, 3vw, 20px);
+            margin-bottom: clamp(20px, 5vw, 28px);
+            width: 100%;
+            max-width: 100%;
         }
         .btn-soft {
             background: var(--button-bg);
             color: var(--button-text);
             border: none;
             border-radius: 8px;
-            padding: 8px 18px;
+            padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 18px);
             font-weight: 600;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
             transition: background 0.3s, color 0.3s, box-shadow 0.3s;
             box-shadow: 0 2px 4px rgba(180,198,224,0.10);
+            touch-action: manipulation;
         }
         .btn-soft:hover, .btn-soft:active {
             background: var(--button-bg-hover);
             color: #fafdff;
             box-shadow: 0 4px 8px rgba(180,198,224,0.14);
         }
-        @media (max-width: 991.98px) {
-            .sidebar, .sidebar.collapsed {
-                width: 0;
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            transition: opacity 0.3s;
+        }
+        .sidebar-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: 260px;
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
             }
             .main-content,
             .main-content.collapsed {
                 margin-left: 0;
-                padding-top: 80px;
+                padding: clamp(80px, 15vw, 100px) clamp(6px, 2vw, 12px) 24px;
+            }
+            .navbar-brand {
+                font-size: clamp(0.9rem, 2.8vw, 1rem);
+            }
+            .navbar-brand img {
+                height: clamp(24px, 4vw, 30px);
+            }
+            .toggle-btn {
+                font-size: clamp(16px, 3.5vw, 18px);
+            }
+            .sidebar a,
+            .sidebar .collapsible-btn {
+                font-size: clamp(14px, 2.3vw, 16px);
+            }
+            .sidebar .nav-icon {
+                font-size: clamp(14px, 2.3vw, 16px);
+            }
+            .sidebar .collapse .nav-text,
+            .sidebar .collapse a {
+                font-size: clamp(12px, 2vw, 14px);
             }
         }
         @media (max-width: 575.98px) {
-            .main-content,
-            .main-content.collapsed {
-                padding: 100px 6px 24px 6px;
+            .card-title {
+                font-size: clamp(0.9rem, 2.5vw, 1rem);
             }
-            .card-title,
             .card-text {
-                font-size: 1rem;
+                font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+            }
+            .btn-soft {
+                font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+                padding: clamp(5px, 1.5vw, 6px) clamp(10px, 2.5vw, 12px);
             }
         }
     </style>
 </head>
 <body>
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <img src="/logo/logo.png" alt="">
+                <img src="/logo/logo.png" alt="Mandilink Logo">
                 Employee Dashboard
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+           
             <div class="collapse navbar-collapse" id="navbarNav">
-               
+                <!-- Navbar items can be added here if needed -->
             </div>
             <span class="toggle-btn ms-3" id="sidebarToggle"><i class="fas fa-bars"></i></span>
         </div>
     </nav>
 
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar with Access-Controlled Buttons -->
-<% const access = employee.access; %>
-    <div class="sidebar" id="sidebar">
+    <% const access = employee.access; %>
+    <div class="sidebar collapsed" id="sidebar">
         <a href="/employees/dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Dashboard</span></a>
-      <% if (access.includes("Manage_Users")) { %>
-        <a href="#"><i class="fas fa-users nav-icon"></i><span class="nav-text">Manage Users</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Roles")) { %>
-        <a href="#"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">Manage Roles</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Admin")) { %>
-        <a href="#"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Manage Admin</span></a>
-      <% } %>
-      <% if (access.includes("Manage_CallLogs")) { %>
-        <a href="#"><i class="fas fa-phone nav-icon"></i><span class="nav-text">Manage Call Logs</span></a>
-      <% } %>
-      <% if (access.includes("Manage_SupportTickets")) { %>
-        <a href="#"><i class="fas fa-headset nav-icon"></i><span class="nav-text">Manage Support Tickets</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Reports")) { %>
-        <a href="#"><i class="fas fa-file-alt nav-icon"></i><span class="nav-text">Manage Reports</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Settings")) { %>
-        <a href="#"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Manage Settings</span></a>
-      <% } %>
-      <% if (
+        <% if (access.includes("Manage_UsersList")) { %>
+            <a href="/employees/userlist"><i class="fas fa-users nav-icon"></i><span class="nav-text">Manage Users Listing</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Roles")) { %>
+            <a href="#"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">Manage Roles</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Admin")) { %>
+            <a href="#"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Manage Admin</span></a>
+        <% } %>
+        <% if (access.includes("Manage_CallLogs")) { %>
+            <a href="#"><i class="fas fa-phone nav-icon"></i><span class="nav-text">Manage Call Logs</span></a>
+        <% } %>
+        <% if (access.includes("Manage_SupportTickets")) { %>
+            <a href="#"><i class="fas fa-headset nav-icon"></i><span class="nav-text">Manage Support Tickets</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Reports")) { %>
+            <a href="#"><i class="fas fa-file-alt nav-icon"></i><span class="nav-text">Manage Reports</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Settings")) { %>
+            <a href="#"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Manage Settings</span></a>
+        <% } %>
+        <% if (
             access.includes("Manage_Ads_Top") ||
             access.includes("Manage_Ads_Bottom") ||
             access.includes("Manage_Ads_Side") ||
             access.includes("Manage_Ads_Sponsored")
         ) { %>
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
-          <i class="fas fa-ad nav-icon"></i>
-          <span class="nav-text flex-grow-1">Manage Ads</span>
-        </a>
-        <div class="collapse ms-2" id="adsMenu">
-            <a href="/employees/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add new Ads</span></a>
-          <% if (access.includes("Manage_Ads_Top")) { %>
-            <a href="/employees/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
-          <% } %>
-          <% if (access.includes("Manage_Ads_Bottom")) { %>
-            <a href="/employees/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottom Ads</span></a>
-          <% } %>
-          <% if (access.includes("Manage_Ads_Side")) { %>
-            <a href="/employees/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ads</span></a>
-          <% } %>
-          <% if (access.includes("Manage_Ads_Sponsored")) { %>
-            <a href="/employees/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ads</span></a>
-          <% } %>
-        </div>
-      <% } %>
-      <% if (access.includes("Manage_Jobs")) { %>
-        <a href="/employees/jobs" class="d-flex align-items-center"><i class="fas fa-briefcase nav-icon"></i><span class="nav-text">Manage Jobs</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Blogs")) { %>
-        <a href="/employees/blogs" class="d-flex align-items-center"><i class="fas fa-blog nav-icon"></i><span class="nav-text">Manage Blogs</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Analytics")) { %>
-        <a href="#" class="d-flex align-items-center"><i class="fas fa-chart-bar nav-icon"></i><span class="nav-text">Manage Analytics</span></a>
-      <% } %>
-      <% if (access.includes("Manage_MandiRates")) { %>
-        <a href="/employees/mandirate"><i class="fas fa-balance-scale nav-icon"></i><span class="nav-text">Manage Mandi Rates</span></a>
-        <a href="/employees/commodities"><i class="fas fa-boxes nav-icon"></i><span class="nav-text">Manage Commodities</span></a>
-      <% } %>
-      <% if (access.includes("Manage_PushNotifications")) { %>
-        <a href="#"><i class="fas fa-bell nav-icon"></i><span class="nav-text">Manage Push Notifications</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Plans")) { %>
-        <a href="/employees/plans"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Manage Plans</span></a>
-      <% } %>
-      <% if (access.includes("Manage_Payments")) { %>
-        <a href="#"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Manage Payments</span></a>
-      <% } %>
+            <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu" style="cursor:pointer">
+                <i class="fas fa-ad nav-icon"></i>
+                <span class="nav-text flex-grow-1">Manage Ads</span>
+            </a>
+            <div class="collapse ms-2" id="adsMenu">
+                <a href="/employees/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add new Ads</span></a>
+                <% if (access.includes("Manage_Ads_Top")) { %>
+                    <a href="/employees/top-ads" class="d-flex align-items-center"><i class="fas fa-arrow-up nav-icon"></i><span class="nav-text">Top Ads</span></a>
+                <% } %>
+                <% if (access.includes("Manage_Ads_Bottom")) { %>
+                    <a href="/employees/bottom-ads" class="d-flex align-items-center"><i class="fas fa-arrow-down nav-icon"></i><span class="nav-text">Bottom Ads</span></a>
+                <% } %>
+                <% if (access.includes("Manage_Ads_Side")) { %>
+                    <a href="/employees/side-ads" class="d-flex align-items-center"><i class="fas fa-columns nav-icon"></i><span class="nav-text">Side Ads</span></a>
+                <% } %>
+                <% if (access.includes("Manage_Ads_Sponsored")) { %>
+                    <a href="/employees/sponsored-ads" class="d-flex align-items-center"><i class="fas fa-star nav-icon"></i><span class="nav-text">Sponsored Ads</span></a>
+                <% } %>
+            </div>
+        <% } %>
+        <% if (access.includes("Manage_Jobs")) { %>
+            <a href="/employees/jobs" class="d-flex align-items-center"><i class="fas fa-briefcase nav-icon"></i><span class="nav-text">Manage Jobs</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Blogs")) { %>
+            <a href="/employees/blogs" class="d-flex align-items-center"><i class="fas fa-blog nav-icon"></i><span class="nav-text">Manage Blogs</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Analytics")) { %>
+            <a href="#" class="d-flex align-items-center"><i class="fas fa-chart-bar nav-icon"></i><span class="nav-text">Manage Analytics</span></a>
+        <% } %>
+        <% if (access.includes("Manage_MandiRates")) { %>
+            <a href="/employees/mandirate"><i class="fas fa-balance-scale nav-icon"></i><span class="nav-text">Manage Mandi Rates</span></a>
+            <a href="/employees/commodities"><i class="fas fa-boxes nav-icon"></i><span class="nav-text">Manage Commodities</span></a>
+        <% } %>
+        <% if (access.includes("Manage_PushNotifications")) { %>
+            <a href="#"><i class="fas fa-bell nav-icon"></i><span class="nav-text">Manage Push Notifications</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Plans")) { %>
+            <a href="/employees/plans"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Manage Plans</span></a>
+        <% } %>
+        <% if (access.includes("Manage_Payments")) { %>
+            <a href="#"><i class="fas fa-money-check-alt nav-icon"></i><span class="nav-text">Manage Payments</span></a>
+        <% } %>
         <% if (access.includes("Manage_CompanyList")) { %>
             <a href="/employees/companylist"><i class="fas fa-building nav-icon"></i><span class="nav-text">Manage Company List</span></a>
         <% } %>
@@ -349,6 +404,5 @@
         <% if (access.includes("Manage_Categories")) { %>
             <a href="/employees/category"><i class="fas fa-th-list nav-icon"></i><span class="nav-text">Manage Categories</span></a>
         <% } %>
-      <a href="/employees/auth/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
+        <a href="/employees/auth/logout"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
     </div>
-

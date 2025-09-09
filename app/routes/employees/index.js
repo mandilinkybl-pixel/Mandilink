@@ -15,6 +15,7 @@ app.use('/companylist', require('./company.js'));
 app.use('/mandis', require('./mandi.js'));
 app.use("/category",require('./category.routes.js'))
 app.use('/mandirate', require('./mandirates.js'));
+app.use('/userlist', require('./listing.js'));
 
 
 

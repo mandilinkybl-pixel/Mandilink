@@ -23,5 +23,6 @@ app.use("/category",require('./category.routes.js'))
 app.use('/state', require('./state.routes.js'));
 app.use('/companylist', require('./company.js'));
 app.use('/mandirate', require('./mandirate.js'));
+app.use('/userlist', require('./listing.js'));
 
 module.exports = app;

@@ -189,14 +189,7 @@
     
     <!-- Sidebar Toggle JS -->
     <script>
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('collapsed');
-        });
+      
           // Client-side search functionality
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
@@ -252,5 +245,5 @@
     });
   });
     </script>
-</body>
-</html>
+
+   <%- include('layout/footer') %>

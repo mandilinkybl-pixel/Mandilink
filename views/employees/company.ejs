@@ -1,323 +1,696 @@
+
 <%- include('layout/header') %>
-    <!-- Main Content -->
-  <div class="main-content" id="mainContent">
 
-<div class="container mt-4">
-  <h2>Company Listing</h2>
+<div class="main-content" id="mainContent">
+  <div class="container-fluid">
+    <h2 style="margin-top: clamp(10px, 3vw, 20px); margin-bottom: clamp(10px, 3vw, 20px); text-align: center; color: #6c63ff; font-size: clamp(1.5rem, 4vw, 2rem);">Company Listing</h2>
+    <p class="text-muted" style="font-size: clamp(0.9rem, 2.2vw, 1rem); text-align: center;">
+      Showing data for <strong><%= new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></strong> for User ID: <strong><%= user.id %></strong>
+    </p>
 
-
-  <!-- FILTER BAR -->
-  <div class="row mb-2" id="filterBar">
-    <div class="col-md-3">
-      <select id="filterCategory" class="form-select" required>
-        <option value="">Select Category</option>
-        <% categories.forEach(cat => { %>
-          <option value="<%= cat._id %>" <%= selectedCategory==cat._id?'selected':'' %>><%= cat.name %></option>
-        <% }) %>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select id="filterState" class="form-select" required>
-        <option value="">Select State</option>
-        <% states.forEach(st => { %>
-          <option value="<%= st._id %>" <%= selectedState==st._id?'selected':'' %>><%= st.name %></option>
-        <% }) %>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select id="filterDistrict" class="form-select" required>
-        <option value=""><%= selectedDistrict || 'Select District' %></option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select id="filterMandi" class="form-select" required>
-        <option value=""><%= selectedMandi || 'Select Mandi' %></option>
-      </select>
-    </div>
-  </div>
-
-  <!-- INSTANT SEARCH BAR -->
-  <input type="text" id="searchInput" class="form-control mb-2" placeholder="Search company table...">
-
-  <!-- ADD/EDIT COMPANIES FORM -->
-  <form action="/employees/companylist/add" method="POST" id="addCompanyForm">
-    <!-- Hidden filter values -->
-    <input type="hidden" name="category" id="hiddenCategory" value="<%= selectedCategory %>">
-    <input type="hidden" name="state" id="hiddenState" value="<%= selectedState %>">
-    <input type="hidden" name="district" id="hiddenDistrict" value="<%= selectedDistrict %>">
-    <input type="hidden" name="mandi" id="hiddenMandi" value="<%= selectedMandi %>">
-    <table class="table table-bordered" id="companyTable">
-      <thead>
-        <tr>
-          <th>S.No</th>
-          <th>Company Name</th>
-          <th>Address</th>
-          <th>Contact Person</th>
-          <th>Contact Number</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="companyRowsWrapper">
-        <% companies.forEach((c,i) => { %>
-          <tr class="companyRow existingRow"
-              data-category="<%= c.category %>"
-              data-state="<%= c.state %>"
-              data-district="<%= c.district %>"
-              data-mandi="<%= c.mandi %>">
-            <td><%= i+1 %></td>
-            <td><%= c.name %></td>
-            <td><%= c.address %></td>
-            <td><%= c.contactPerson %></td>
-            <td><%= c.contactNumber %></td>
-            <td>
-              <button type="button"
-                      class="btn btn-sm btn-primary editBtn"
-                      data-id="<%= c._id %>"
-                      data-name="<%= c.name %>"
-                      data-address="<%= c.address %>"
-                      data-contactperson="<%= c.contactPerson %>"
-                      data-contactnumber="<%= c.contactNumber %>"
-                      title="Edit">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-              <a href="/employees/companylist/delete/<%= c._id %>"
-                 class="btn btn-sm btn-danger"
-                 onclick="return confirm('Are you sure?')"
-                 title="Delete">
-                <i class="bi bi-trash"></i>
-              </a>
-            </td>
-          </tr>
-        <% }) %>
-        <!-- ADD ROWS (at bottom, always one blank row) -->
-        <tr class="companyRow addRow">
-          <td class="serialNo"><%= companies.length+1 %></td>
-          <td><input type="text" name="names[]" class="form-control" placeholder="Company Name" required></td>
-          <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" required></td>
-          <td><input type="text" name="contactPersons[]" class="form-control" placeholder="Contact Person" required></td>
-          <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" required></td>
-          <td><button type="button" class="btn btn-danger removeRow" style="display:none;"><i class="bi bi-x-circle"></i></button></td>
-        </tr>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="6">
-            <button type="submit" class="btn btn-success" id="saveAllBtn">Save All</button>
-          </td>
-        </tr>
-      </tfoot>
-    </table>
-  </form>
-</div>
-
-<!-- Edit Company Modal -->
-<div class="modal fade" id="editCompanyModal" tabindex="-1" aria-labelledby="editCompanyModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="editCompanyForm" method="POST">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Company</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="editCompanyId" name="id">
-          <div class="mb-2">
-            <label>Company Name</label>
-            <input type="text" id="editName" name="name" class="form-control" required>
-          </div>
-          <div class="mb-2">
-            <label>Address</label>
-            <input type="text" id="editAddress" name="address" class="form-control" required>
-          </div>
-          <div class="mb-2">
-            <label>Contact Person</label>
-            <input type="text" id="editContactPerson" name="contactPerson" class="form-control" required>
-          </div>
-          <div class="mb-2">
-            <label>Contact Number</label>
-            <input type="text" id="editContactNumber" name="contactNumber" class="form-control" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success">Update</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
+    <!-- FILTER BAR -->
+    <div class="row mb-3 g-2" id="filterBar">
+      <div class="col-12 col-md-3">
+        <select id="filterCategory" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value="">Select Category</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat._id %>" <%= selectedCategory==cat._id?'selected':'' %>><%= cat.name %></option>
+          <% }) %>
+        </select>
       </div>
+      <div class="col-12 col-md-3">
+        <select id="filterState" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value="">Select State</option>
+          <% states.forEach(st => { %>
+            <option value="<%= st._id %>" <%= selectedState==st._id?'selected':'' %>><%= st.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="filterDistrict" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value=""><%= selectedDistrict || 'Select District' %></option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <select id="filterMandi" class="form-select" required style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+          <option value=""><%= selectedMandi || 'Select Mandi' %></option>
+        </select>
+      </div>
+    </div>
+
+    <!-- INSTANT SEARCH BAR AND EXPORT BUTTONS -->
+    <div class="row mb-3 g-2">
+      <div class="col-12 col-md-6">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search company table..." style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+      </div>
+      <div class="col-12 col-md-6 text-md-end mt-2 mt-md-0">
+        <button id="downloadCSV" class="btn btn-sm btn-primary btn-soft" style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px);">Export CSV</button>
+        <button id="downloadExcel" class="btn btn-sm btn-primary btn-soft" style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px);">Export Excel</button>
+        <button id="downloadPDF" class="btn btn-sm btn-primary btn-soft" style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px);">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- ROW COUNT DISPLAY -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <p id="rowCountDisplay" class="text-muted" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">
+          Showing <span id="filteredRowCount">0</span> of <span id="totalRowCount">0</span> companies
+        </p>
+      </div>
+    </div>
+
+    <!-- ADD/EDIT COMPANIES FORM -->
+    <form action="/employees/companylist/add" method="POST" id="addCompanyForm">
+      <input type="hidden" name="category" id="hiddenCategory" value="<%= selectedCategory %>">
+      <input type="hidden" name="state" id="hiddenState" value="<%= selectedState %>">
+      <input type="hidden" name="district" id="hiddenDistrict" value="<%= selectedDistrict %>">
+      <input type="hidden" name="mandi" id="hiddenMandi" value="<%= selectedMandi %>">
+      <input type="hidden" name="userId" id="hiddenUserId" value="<%= user.id %>">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="companyTable" style="background: var(--card-gradient); box-shadow: var(--shadow);">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 5%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Row</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">District</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Mandi</th>
+              <th style="width: 20%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Company Name</th>
+              <th style="width: 20%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Address</th>
+              <th style="width: 15%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Contact Person</th>
+              <th style="width: 10%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Contact Number</th>
+              <th style="width: 10%; font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Action</th>
+            </tr>
+          </thead>
+          <tbody id="companyRowsWrapper">
+            <% 
+              const groupedData = {};
+              todayCompanies.forEach(c => {
+                const district = c.district || 'Unknown';
+                const mandi = c.mandi || 'Unknown';
+                const districtKey = district;
+                const mandiKey = `${district}_${mandi}`;
+                if (!groupedData[districtKey]) {
+                  groupedData[districtKey] = { name: district, mandis: {} };
+                }
+                if (!groupedData[districtKey].mandis[mandi]) {
+                  groupedData[districtKey].mandis[mandi] = { name: mandi, companies: [] };
+                }
+                groupedData[districtKey].mandis[mandi].companies.push(c);
+              });
+              let globalRowCount = 1;
+              Object.keys(groupedData).sort().forEach(districtKey => {
+                const district = groupedData[districtKey];
+                Object.keys(district.mandis).sort().forEach(mandiKey => {
+                  const mandi = district.mandis[mandiKey];
+                  mandi.companies.forEach(c => {
+            %>
+              <tr class="companyRow existingRow"
+                  data-category="<%= c.category %>"
+                  data-state="<%= c.state %>"
+                  data-district="<%= c.district %>"
+                  data-mandi="<%= c.mandi %>"
+                  data-name="<%= c.name %>"
+                  data-address="<%= c.address %>"
+                  data-contactperson="<%= c.contactPerson %>"
+                  data-contactnumber="<%= c.contactNumber %>"
+                  data-id="<%= c._id %>"
+                  data-userid="<%= c.user_id %>">
+                <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= globalRowCount++ %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= district.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= mandi.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= c.name %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= c.address %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= c.contactPerson %></td>
+                <td style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= c.contactNumber %></td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    <button type="button"
+                            class="btn btn-sm btn-primary btn-soft editBtn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editCompanyModal"
+                            title="Edit"
+                            style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <a href="/employees/companylist/delete/<%= c._id %>"
+                       class="btn btn-sm btn-danger btn-soft"
+                       onclick="return confirm('Are you sure?')"
+                       title="Delete"
+                       style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% 
+                  });
+                });
+              });
+            %>
+            <tr class="companyRow addRow">
+              <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);"><%= globalRowCount %></td>
+              <td><input type="text" class="form-control" value="<%= selectedDistrict || '' %>" name="districts[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" class="form-control" value="<%= selectedMandi || '' %>" name="mandis[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="names[]" class="form-control" placeholder="Company Name" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="contactPersons[]" class="form-control" placeholder="Contact Person" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+              <td><button type="button" class="btn btn-danger btn-soft removeRow" style="display:none; font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);"><i class="bi bi-x-circle"></i></button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8">
+                <button type="submit" class="btn btn-success btn-soft" id="saveAllBtn" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Save All</button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <nav aria-label="Company table pagination">
+        <ul class="pagination justify-content-center" id="paginationControls">
+          <!-- Pagination items will be generated by JS -->
+        </ul>
+      </nav>
     </form>
   </div>
-</div>
 
-<!-- Bootstrap Icons CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  // ------------------- FILTER DROPDOWNS -------------------
-  const filterCategory = document.getElementById("filterCategory");
-  const filterState = document.getElementById("filterState");
-  const filterDistrict = document.getElementById("filterDistrict");
-  const filterMandi = document.getElementById("filterMandi");
-  const hiddenCategory = document.getElementById("hiddenCategory");
-  const hiddenState = document.getElementById("hiddenState");
-  const hiddenDistrict = document.getElementById("hiddenDistrict");
-  const hiddenMandi = document.getElementById("hiddenMandi");
-
-  function updateHiddenInputsAndFilter() {
-    hiddenCategory.value = filterCategory.value;
-    hiddenState.value = filterState.value;
-    hiddenDistrict.value = filterDistrict.value;
-    hiddenMandi.value = filterMandi.value;
-    filterTable();
-    updateAddRowState();
-  }
-
-  filterCategory.addEventListener("change", updateHiddenInputsAndFilter);
-  filterState.addEventListener("change", function() {
-    loadFilterDistricts(this.value, "", filterDistrict, filterMandi);
-    updateHiddenInputsAndFilter();
-  });
-  filterDistrict.addEventListener("change", function() {
-    loadFilterMandis(this.value, "", filterMandi);
-    updateHiddenInputsAndFilter();
-  });
-  filterMandi.addEventListener("change", updateHiddenInputsAndFilter);
-
-  async function loadFilterDistricts(stateId, selectedDistrict="", districtSelect, mandiSelect){
-    districtSelect.innerHTML = '<option value="">Select District</option>';
-    mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
-    if(!stateId) return;
-    const res = await fetch(`/employees/companylist/districts/${stateId}`);
-    const districts = await res.json();
-    districts.forEach(d=>{
-      const opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = d;
-      if(d==selectedDistrict) opt.selected = true;
-      districtSelect.appendChild(opt);
-    });
-    if(selectedDistrict) loadFilterMandis(selectedDistrict, "", mandiSelect);
-    updateHiddenInputsAndFilter();
-  }
-  async function loadFilterMandis(district, selectedMandi="", mandiSelect){
-    mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
-    if(!district) return;
-    const res = await fetch(`/employees/companylist/mandis/${district}`);
-    const mandis = await res.json();
-    mandis.forEach(m=>{
-      const opt = document.createElement("option");
-      opt.value = m.name;
-      opt.textContent = m.name;
-      if(m.name==selectedMandi) opt.selected=true;
-      mandiSelect.appendChild(opt);
-    });
-    updateHiddenInputsAndFilter();
-  }
-
-  document.getElementById('searchInput').addEventListener('input', filterTable);
-
-  function filterTable() {
-    const searchVal = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.existingRow').forEach(row => {
-      let match = true;
-      if(searchVal) {
-        match = row.textContent.toLowerCase().includes(searchVal);
-      }
-      if(match && filterCategory.value) match = row.dataset.category === filterCategory.value;
-      if(match && filterState.value) match = row.dataset.state === filterState.value;
-      if(match && filterDistrict.value) match = row.dataset.district === filterDistrict.value;
-      if(match && filterMandi.value) match = row.dataset.mandi === filterMandi.value;
-      row.style.display = match ? '' : 'none';
-    });
-  }
-
-  function updateAddRowState() {
-    const allFilled = filterCategory.value && filterState.value && filterDistrict.value && filterMandi.value;
-    document.querySelectorAll('.addRow input, .addRow button').forEach(el => {
-      el.disabled = !allFilled;
-    });
-    document.getElementById('saveAllBtn').disabled = !allFilled;
-  }
-  updateAddRowState();
-
-  const companyRowsWrapper = document.getElementById("companyRowsWrapper");
-  companyRowsWrapper.addEventListener("keydown", function(e){
-    if(e.key==='Enter' && !e.shiftKey) {
-      const targetRow = e.target.closest('.addRow');
-      if(targetRow) {
-        e.preventDefault();
-        addCompanyRow();
-      }
-    }
-  });
-
-  function addCompanyRow() {
-    const index = document.querySelectorAll('.addRow').length + document.querySelectorAll('.existingRow').length;
-    const row = document.createElement("tr");
-    row.className = "companyRow addRow";
-    row.innerHTML = `
-      <td class="serialNo">${index+1}</td>
-      <td><input type="text" name="names[]" class="form-control" placeholder="Company Name" required></td>
-      <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" required></td>
-      <td><input type="text" name="contactPersons[]" class="form-control" placeholder="Contact Person" required></td>
-      <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" required></td>
-      <td><button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i></button></td>
-    `;
-    companyRowsWrapper.appendChild(row);
-    row.querySelector('input').focus();
-    updateSerials();
-    updateAddRowState();
-  }
-  companyRowsWrapper.addEventListener("click", function(e){
-    if(e.target.closest(".removeRow")){
-      e.target.closest(".addRow").remove();
-      updateSerials();
-    }
-  });
-  function updateSerials(){
-    Array.from(companyRowsWrapper.children).forEach((row,i)=>{
-      row.querySelector(".serialNo").textContent = i+1;
-    });
-  }
-  document.addEventListener("keydown", function(e) {
-    if(e.ctrlKey && e.key.toLowerCase() === 'c') {
-      document.getElementById('addCompanyForm').submit();
-    }
-  });
-
-  // ------------------- EDIT MODAL LOGIC -------------------
-  document.querySelectorAll(".editBtn").forEach(btn => {
-    btn.addEventListener("click", function(){
-      document.getElementById("editCompanyId").value = this.dataset.id;
-      document.getElementById("editName").value = this.dataset.name;
-      document.getElementById("editAddress").value = this.dataset.address;
-      document.getElementById("editContactPerson").value = this.dataset.contactperson;
-      document.getElementById("editContactNumber").value = this.dataset.contactnumber;
-      document.getElementById("editCompanyForm").action = `/employees/companylist/edit/${this.dataset.id}`;
-      var editModal = new bootstrap.Modal(document.getElementById("editCompanyModal"));
-      editModal.show();
-    });
-  });
-});
-</script>
-
-<!-- bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+  <!-- View Table Modal -->
+  <div class="modal fade" id="viewTableModal" tabindex="-1" aria-labelledby="viewTableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewTableModalLabel" style="font-size: clamp(1.25rem, 3vw, 1.5rem);">Company Data by District and Mandi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: clamp(15px, 3vw, 20px);">
+          <div id="viewTableContent"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-soft" data-bs-dismiss="modal" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Close</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Sidebar Toggle JS -->
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const sidebarToggle = document.getElementById('sidebarToggle');
+  <!-- Edit Company Modal -->
+  <div class="modal fade" id="editCompanyModal" tabindex="-1" aria-labelledby="editCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form id="editCompanyForm" method="POST">
+        <div class="modal-content" style="border-radius: 12px;">
+          <div class="modal-header">
+            <h5 class="modal-title" style="font-size: clamp(1.25rem, 3vw, 1.5rem);">Edit Company</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" style="padding: clamp(15px, 3vw, 20px);">
+            <input type="hidden" id="editCompanyId" name="id">
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Company Name</label>
+              <input type="text" id="editName" name="name" class="form-control" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Address</label>
+              <input type="text" id="editAddress" name="address" class="form-control" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Contact Person</label>
+              <input type="text" id="editContactPerson" name="contactPerson" class="form-control" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+            <div class="mb-2">
+              <label style="font-size: clamp(0.9rem, 2.2vw, 1rem);">Contact Number</label>
+              <input type="text" id="editContactNumber" name="contactNumber" class="form-control" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px);">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-soft" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Update</button>
+            <button type="button" class="btn btn-secondary btn-soft" data-bs-dismiss="modal" style="font-size: clamp(0.9rem, 2.2vw, 1rem); padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px);">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('collapsed');
+  <!-- Bootstrap Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Tabulator CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css">
+  <!-- jsPDF and AutoTable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Tabulator JS -->
+  <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // State ID to Name mapping
+      const stateMap = {};
+      <% states.forEach(st => { %>
+        stateMap['<%= st._id %>'] = '<%= st.name %>';
+      <% }) %>
+
+      // Initialize company data for Tabulator
+      const companyData = [
+        <% 
+          let rowCounter = 1;
+          todayCompanies.forEach(c => { %>
+            {
+              id: "<%= c._id %>",
+              rowNo: <%= rowCounter++ %>,
+              category: "<%= c.category %>",
+              state: "<%= c.state %>",
+              stateName: "<%= stateMap[c.state] || 'Unknown' %>",
+              district: "<%= c.district || 'Unknown' %>",
+              mandi: "<%= c.mandi || 'Unknown' %>",
+              name: "<%= c.name %>",
+              address: "<%= c.address %>",
+              contactPerson: "<%= c.contactPerson %>",
+              contactNumber: "<%= c.contactNumber %>",
+              userId: "<%= c.user_id %>"
+            },
+        <% }) %>
+      ];
+
+      // ------------------- FILTER DROPDOWNS -------------------
+      const filterCategory = document.getElementById("filterCategory");
+      const filterState = document.getElementById("filterState");
+      const filterDistrict = document.getElementById("filterDistrict");
+      const filterMandi = document.getElementById("filterMandi");
+      const hiddenCategory = document.getElementById("hiddenCategory");
+      const hiddenState = document.getElementById("hiddenState");
+      const hiddenDistrict = document.getElementById("hiddenDistrict");
+      const hiddenMandi = document.getElementById("hiddenMandi");
+
+      function updateHiddenInputsAndFilter() {
+        hiddenCategory.value = filterCategory.value;
+        hiddenState.value = filterState.value;
+        hiddenDistrict.value = filterDistrict.value;
+        hiddenMandi.value = filterMandi.value;
+        filterAndPaginate();
+        updateAddRowState();
+      }
+
+      filterCategory.addEventListener("change", updateHiddenInputsAndFilter);
+      filterState.addEventListener("change", function() {
+        loadFilterDistricts(this.value, filterDistrict.value, filterDistrict, filterMandi);
+        updateHiddenInputsAndFilter();
+      });
+      filterDistrict.addEventListener("change", function() {
+        loadFilterMandis(this.value, filterMandi.value, filterMandi);
+        updateHiddenInputsAndFilter();
+      });
+      filterMandi.addEventListener("change", updateHiddenInputsAndFilter);
+
+      async function loadFilterDistricts(stateId, selectedDistrict = "", districtSelect, mandiSelect) {
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
+        if (!stateId) return;
+        try {
+          const res = await fetch(`/employees/companylist/districts/${stateId}`);
+          const districts = await res.json();
+          districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d;
+            opt.textContent = d;
+            if (d === selectedDistrict) opt.selected = true;
+            districtSelect.appendChild(opt);
+          });
+          if (selectedDistrict) loadFilterMandis(selectedDistrict, filterMandi.value, mandiSelect);
+        } catch (err) {
+          console.error('Error loading districts:', err);
+        }
+      }
+
+      async function loadFilterMandis(district, selectedMandi = "", mandiSelect) {
+        mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
+        if (!district) return;
+        try {
+          const res = await fetch(`/employees/companylist/mandis/${district}`);
+          const mandis = await res.json();
+          mandis.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.name;
+            opt.textContent = m.name;
+            if (m.name === selectedMandi) opt.selected = true;
+            mandiSelect.appendChild(opt);
+          });
+        } catch (err) {
+          console.error('Error loading mandis:', err);
+        }
+      }
+
+      // Initialize filter dropdowns with pre-selected values
+      if (filterState.value) {
+        loadFilterDistricts(filterState.value, filterDistrict.value, filterDistrict, filterMandi);
+      }
+
+      // ------------------- TABLE FILTERING AND PAGINATION -------------------
+      const searchInput = document.getElementById('searchInput');
+      let currentPage = 1;
+      const rowsPerPage = 100;
+      let filteredRows = [];
+
+      function filterTableRows() {
+        const searchVal = searchInput.value.toLowerCase();
+        filteredRows = Array.from(document.querySelectorAll('.existingRow')).filter(row => {
+          let match = true;
+          if (searchVal) {
+            match = row.textContent.toLowerCase().includes(searchVal);
+          }
+          if (match && filterCategory.value) match = row.dataset.category === filterCategory.value;
+          if (match && filterState.value) match = row.dataset.state === filterState.value;
+          if (match && filterDistrict.value) match = row.dataset.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.dataset.mandi === filterMandi.value;
+          if (match) match = row.dataset.userid === "<%= user.id %>";
+          return match;
         });
-    </script>
-</body>
-</html>
+        return filteredRows;
+      }
+
+      function paginateRows() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        currentPage = Math.min(currentPage, totalPages) || 1;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedRows = filteredRows.slice(start, end);
+
+        document.querySelectorAll('.existingRow').forEach(row => {
+          row.style.display = 'none';
+        });
+
+        paginatedRows.forEach(row => {
+          row.style.display = '';
+        });
+
+        paginatedRows.forEach((row, index) => {
+          row.querySelector('.rowNo').textContent = start + index + 1;
+        });
+
+        generatePagination(totalPages);
+      }
+
+      function generatePagination(totalPages) {
+        const pagination = document.getElementById('paginationControls');
+        pagination.innerHTML = '';
+
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Previous</a>`;
+        pagination.appendChild(prevLi);
+
+        for (let i = 1; i <= totalPages; i++) {
+          const li = document.createElement('li');
+          li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+          li.innerHTML = `<a class="page-link" href="#" data-page="${i}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">${i}</a>`;
+          pagination.appendChild(li);
+        }
+
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">Next</a>`;
+        pagination.appendChild(nextLi);
+
+        pagination.querySelectorAll('a[data-page]').forEach(a => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = parseInt(a.dataset.page);
+            if (page >= 1 && page <= totalPages) {
+              currentPage = page;
+              paginateRows();
+            }
+          });
+        });
+      }
+
+      function filterAndPaginate() {
+        const visibleRows = filterTableRows();
+        const totalRows = document.querySelectorAll('.existingRow').length;
+        document.getElementById('filteredRowCount').textContent = visibleRows.length;
+        document.getElementById('totalRowCount').textContent = totalRows;
+        paginateRows();
+      }
+
+      searchInput.addEventListener('input', filterAndPaginate);
+      filterAndPaginate();
+
+      // ------------------- ADD ROW LOGIC -------------------
+      function updateAddRowState() {
+        const addRows = document.querySelectorAll('.addRow');
+        addRows.forEach(row => {
+          const removeBtn = row.querySelector('.removeRow');
+          removeBtn.style.display = addRows.length > 1 ? 'inline-block' : 'none';
+          row.querySelector('td:nth-child(2) input').value = filterDistrict.value || '';
+          row.querySelector('td:nth-child(3) input').value = filterMandi.value || '';
+        });
+        document.getElementById('saveAllBtn').disabled = false;
+      }
+
+      const companyRowsWrapper = document.getElementById("companyRowsWrapper");
+      companyRowsWrapper.addEventListener("keydown", function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          const targetRow = e.target.closest('.addRow');
+          if (targetRow) {
+            e.preventDefault();
+            addCompanyRow();
+          }
+        }
+      });
+
+      function addCompanyRow() {
+        const index = document.querySelectorAll('.existingRow').length + document.querySelectorAll('.addRow').length + 1;
+        const row = document.createElement("tr");
+        row.className = "companyRow addRow";
+        row.innerHTML = `
+          <td class="rowNo" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem);">${index}</td>
+          <td><input type="text" class="form-control" value="${filterDistrict.value || ''}" name="districts[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" class="form-control" value="${filterMandi.value || ''}" name="mandis[]" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="names[]" class="form-control" placeholder="Company Name" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="addresses[]" class="form-control" placeholder="Full Address" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="contactPersons[]" class="form-control" placeholder="Contact Person" value="No" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><input type="text" name="contactNumbers[]" class="form-control" placeholder="Contact Number" style="font-size: clamp(0.85rem, 2.2vw, 0.95rem); padding: clamp(6px, 1.5vw, 8px);"></td>
+          <td><button type="button" class="btn btn-danger btn-soft removeRow" style="font-size: clamp(0.8rem, 2vw, 0.9rem); padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 10px);"><i class="bi bi-x-circle"></i></button></td>
+        `;
+        companyRowsWrapper.appendChild(row);
+        row.querySelector('input[name="names[]"]').focus();
+        updateSerials();
+        updateAddRowState();
+      }
+
+      companyRowsWrapper.addEventListener("click", function(e) {
+        if (e.target.closest(".removeRow")) {
+          e.target.closest(".addRow").remove();
+          updateSerials();
+          updateAddRowState();
+        }
+      });
+
+      function updateSerials() {
+        const allRows = Array.from(document.querySelectorAll('.existingRow'));
+        allRows.forEach((row, index) => {
+          row.querySelector(".rowNo").textContent = index + 1;
+        });
+        const addRows = document.querySelectorAll('.addRow');
+        addRows.forEach((row, index) => {
+          row.querySelector('.rowNo').textContent = allRows.length + index + 1;
+        });
+        const totalRows = allRows.length;
+        document.getElementById('totalRowCount').textContent = totalRows;
+        filterAndPaginate();
+      }
+
+      document.addEventListener("keydown", function(e) {
+        if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+          document.getElementById('addCompanyForm').submit();
+        }
+      });
+
+      // ------------------- EDIT MODAL LOGIC -------------------
+      document.querySelectorAll(".editBtn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const row = this.closest('.companyRow');
+          document.getElementById("editCompanyId").value = row.dataset.id;
+          document.getElementById("editName").value = row.dataset.name;
+          document.getElementById("editAddress").value = row.dataset.address;
+          document.getElementById("editContactPerson").value = row.dataset.contactperson;
+          document.getElementById("editContactNumber").value = row.dataset.contactnumber;
+          document.getElementById("editCompanyForm").action = `/employees/companylist/edit/${row.dataset.id}`;
+        });
+      });
+
+      // ------------------- VIEW TABLE MODAL LOGIC -------------------
+      let viewTable = null;
+      const viewTableModal = document.getElementById('viewTableModal');
+      viewTableModal.addEventListener('shown.bs.modal', function() {
+        if (viewTable) {
+          viewTable.destroy();
+        }
+
+        const filteredData = companyData.filter(row => {
+          let match = true;
+          if (searchInput.value) {
+            match = (
+              row.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.address.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactPerson.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactNumber.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+          }
+          if (match && filterCategory.value) match = row.category === filterCategory.value;
+          if (match && filterState.value) match = row.state === filterState.value;
+          if (match && filterDistrict.value) match = row.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.mandi === filterMandi.value;
+          if (match) match = row.userId === "<%= user.id %>";
+          return match;
+        });
+
+        filteredData.forEach((row, index) => {
+          row.rowNo = index + 1;
+        });
+
+        viewTable = new Tabulator("#viewTableContent", {
+          data: filteredData,
+          layout: "fitColumns",
+          responsiveLayout: "collapse",
+          groupBy: "stateName",
+          groupToggleElement: "header",
+          groupHeader: function(value) {
+            return `${value}`;
+          },
+          columns: [
+            { title: "Row", field: "rowNo", width: 80, sorter: "number", responsive: 0 },
+            { title: "District", field: "district", sorter: "string", responsive: 1 },
+            { title: "Mandi", field: "mandi", sorter: "string", responsive: 2 },
+            { title: "Company Name", field: "name", sorter: "string", responsive: 0 },
+            { title: "Address", field: "address", sorter: "string", responsive: 3 },
+            { title: "Contact Person", field: "contactPerson", sorter: "string", responsive: 4 },
+            { title: "Contact Number", field: "contactNumber", sorter: "string", responsive: 0 }
+          ],
+          initialSort: [
+            { column: "stateName", dir: "asc" },
+            { column: "district", dir: "asc" },
+            { column: "mandi", dir: "asc" },
+            { column: "rowNo", dir: "asc" }
+          ]
+        });
+      });
+
+      viewTableModal.addEventListener('hidden.bs.modal', function() {
+        if (viewTable) {
+          viewTable.destroy();
+          viewTable = null;
+        }
+      });
+
+      // ------------------- EXPORT FUNCTIONS -------------------
+      function getExportData() {
+        const filteredData = companyData.filter(row => {
+          let match = true;
+          if (searchInput.value) {
+            match = (
+              row.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.address.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactPerson.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              row.contactNumber.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+          }
+          if (match && filterCategory.value) match = row.category === filterCategory.value;
+          if (match && filterState.value) match = row.state === filterState.value;
+          if (match && filterDistrict.value) match = row.district === filterDistrict.value;
+          if (match && filterMandi.value) match = row.mandi === filterMandi.value;
+          if (match) match = row.userId === "<%= user.id %>";
+          return match;
+        });
+
+        filteredData.forEach((row, index) => {
+          row.rowNo = index + 1;
+        });
+
+        return filteredData;
+      }
+
+      document.getElementById('downloadCSV').addEventListener('click', function() {
+        const data = getExportData();
+        let csv = 'Row,District,Mandi,Company Name,Address,Contact Person,Contact Number\n';
+        data.forEach(row => {
+          const rowData = [
+            row.rowNo,
+            `"${row.district.replace(/"/g, '""')}"`,
+            `"${row.mandi.replace(/"/g, '""')}"`,
+            `"${row.name.replace(/"/g, '""')}"`,
+            `"${row.address.replace(/"/g, '""')}"`,
+            `"${row.contactPerson.replace(/"/g, '""')}"`,
+            `"${row.contactNumber.replace(/"/g, '""')}"`
+          ].join(',');
+          csv += `${rowData}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'companies.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+      document.getElementById('downloadExcel').addEventListener('click', function() {
+        const data = getExportData();
+        const wsData = [['Row', 'District', 'Mandi', 'Company Name', 'Address', 'Contact Person', 'Contact Number']];
+        data.forEach(row => {
+          wsData.push([
+            row.rowNo,
+            row.district,
+            row.mandi,
+            row.name,
+            row.address,
+            row.contactPerson,
+            row.contactNumber
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Companies');
+        XLSX.writeFile(wb, 'companies.xlsx');
+      });
+
+      document.getElementById('downloadPDF').addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const data = getExportData();
+        const tableData = [['Row', 'District', 'Mandi', 'Company Name', 'Address', 'Contact Person', 'Contact Number']];
+        data.forEach(row => {
+          tableData.push([
+            row.rowNo,
+            row.district,
+            row.mandi,
+            row.name,
+            row.address,
+            row.contactPerson,
+            row.contactNumber
+          ]);
+        });
+        doc.autoTable({
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'striped',
+          styles: { fontSize: 8, cellPadding: 2 },
+          columnStyles: {
+            0: { cellWidth: 10 },
+            1: { cellWidth: 20 },
+            2: { cellWidth: 20 },
+            3: { cellWidth: 30 },
+            4: { cellWidth: 40 },
+            5: { cellWidth: 30 },
+            6: { cellWidth: 20 }
+          },
+          margin: { top: 10 }
+        });
+        doc.save('companies.pdf');
+      });
+    });
+  </script>
+</div>
+<%- include('layout/footer') %>

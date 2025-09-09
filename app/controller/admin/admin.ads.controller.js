@@ -12,8 +12,9 @@ class AdController {
       if (!req.file) {
         return res.status(400).json({ message: "Image is required" });
       }
-
+      const user=req.user
       const ad = new Ad({
+        user_id: user.id, // assuming createdBy is the user_id of the admin/employee creating the ad
         title,
         link,
         type,
@@ -45,6 +46,7 @@ class AdController {
 
       // Prepare update data
       let updateData = {
+        user_id: req.user.id,
         title,
         link,
         type,

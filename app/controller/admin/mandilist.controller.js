@@ -2,6 +2,15 @@ const Mandi = require("../../models/mandilistmodel");
 const State = require("../../models/stateSchema");
 const SecureEmployee = require("../../models/adminEmployee");
 
+// 🔹 Helper function: normalize mandi names
+function formatName(name) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ") // collapse extra spaces
+    .replace(/\b\w/g, (char) => char.toUpperCase()); // title case
+}
+
 class MandiController {
   // Show all mandis
   getMandis = async (req, res) => {
@@ -9,7 +18,6 @@ class MandiController {
       const mandis = await Mandi.find()
         .populate("state")
         .sort({ createdAt: 1 }); // ascending order
-
 
       const states = await State.find();
       const user = req.user;
@@ -30,28 +38,31 @@ class MandiController {
     }
   };
 
-  // Add multiple mandis (no duplicates)
+  // Add multiple mandis (no duplicates, normalized names)
   addMandi = async (req, res) => {
     try {
       const { state, district, names } = req.body;
-
       let mandiDocs = [];
 
       for (let i = 0; i < names.length; i++) {
-        const mandiName = names[i].trim();
-        if (!mandiName) continue;
+        let mandiName = names[i];
+        if (!mandiName || !mandiName.trim()) continue;
+
+        mandiName = formatName(mandiName);
 
         // Check duplicate
         const exists = await Mandi.findOne({
           state,
           district,
-          name: { $regex: `^${mandiName}$`, $options: "i" },
+          user_id: req.user.id,
+          name: mandiName,
         });
 
         if (!exists) {
           mandiDocs.push({
             state,
             district,
+            user_id: req.user.id,
             name: mandiName,
           });
         }
@@ -59,15 +70,9 @@ class MandiController {
 
       if (mandiDocs.length > 0) {
         await Mandi.insertMany(mandiDocs);
-        req.flash(
-          "success_msg",
-          `${mandiDocs.length} Mandi(s) added successfully`
-        );
+        req.flash("success_msg", `${mandiDocs.length} Mandi(s) added successfully`);
       } else {
-        req.flash(
-          "error_msg",
-          "No new mandi added (duplicates or empty names)"
-        );
+        req.flash("error_msg", "No new mandi added (duplicates or empty names)");
       }
 
       res.redirect("/admin/mandis");
@@ -78,11 +83,11 @@ class MandiController {
     }
   };
 
-  // Edit mandi (check duplicates)
+  // Edit mandi (check duplicates, normalize name)
   editMandi = async (req, res) => {
     try {
       const { id } = req.params;
-      const { state, district, name } = req.body;
+      let { state, district, name } = req.body;
 
       const mandi = await Mandi.findById(id);
       if (!mandi) {
@@ -90,24 +95,25 @@ class MandiController {
         return res.redirect("/admin/mandis");
       }
 
+      name = formatName(name);
+
       const duplicate = await Mandi.findOne({
         _id: { $ne: id },
         state,
         district,
-        name: { $regex: `^${name.trim()}$`, $options: "i" },
+        user_id: req.user.id,
+        name,
       });
 
       if (duplicate) {
-        req.flash(
-          "error_msg",
-          "Mandi with this name already exists in selected district"
-        );
+        req.flash("error_msg", "Mandi with this name already exists in selected district");
         return res.redirect("/admin/mandis");
       }
 
       mandi.state = state;
       mandi.district = district;
-      mandi.name = name.trim();
+      mandi.user_id = req.user.id;
+      mandi.name = name;
 
       await mandi.save();
 
@@ -134,7 +140,7 @@ class MandiController {
     }
   };
 
-  // ✅ Delete multiple mandis
+  // Delete multiple mandis
   deleteManyMandis = async (req, res) => {
     try {
       const { ids } = req.body; // Expecting array of IDs

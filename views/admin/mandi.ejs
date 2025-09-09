@@ -1,319 +1,620 @@
 <%- include('common/header') %>
 
 <div class="main-content" id="mainContent">
+  <div class="container mt-4">
+    <h2 class="mb-4">Mandi Rates</h2>
 
-
-<div class="container mt-4">
-  <h2 class="mb-4">Mandi List</h2>
-
-
-
-  <!-- Filters -->
-  <div class="row mb-3 align-items-end">
-    <div class="col-md-2">
-      <input type="text" id="searchSerial" class="form-control" placeholder="S.No">
+    <!-- Filters and Buttons -->
+    <div class="row mb-3 align-items-end">
+      <div class="col-md-2">
+        <input type="text" id="searchSerial" class="form-control" placeholder="S.No">
+      </div>
+      <div class="col-md-2">
+        <input type="text" id="searchCommodity" class="form-control" placeholder="Commodity">
+      </div>
+      <div class="col-md-2">
+        <select id="filterState" class="form-select">
+          <option value="">All States</option>
+          <% states.forEach(state => { %>
+            <option value="<%= state._id %>"><%= state.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="filterDistrict" class="form-select">
+          <option value="">All Districts</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="filterMandi" class="form-select">
+          <option value="">All Mandis</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addRateModal">
+          <i class="bi bi-plus-circle"></i> Add Rates
+        </button>
+        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#viewTableModal">
+          <i class="bi bi-table"></i> View Table
+        </button>
+        <div class="btn-group">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download"></i> Download
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" id="download-csv">Download CSV</a></li>
+            <li><a class="dropdown-item" href="#" id="download-xlsx">Download Excel</a></li>
+            <li><a class="dropdown-item" href="#" id="download-pdf">Download PDF</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <div class="col-md-2">
-      <input type="text" id="searchName" class="form-control" placeholder="Mandi Name">
-    </div>
-    <div class="col-md-3">
-      <select id="filterState" class="form-select">
-        <option value="">All States</option>
-        <% states.forEach(state => { %>
-          <option value="<%= state._id %>"><%= state.name %></option>
-        <% }) %>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select id="filterDistrict" class="form-select">
-        <option value="">All Districts</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addMandiModal">
-        <i class="bi bi-plus-circle"></i> Add Mandis
+
+    <!-- Bulk Delete Form -->
+    <form id="bulkDeleteForm" action="/admin/mandirate/delete-many" method="POST">
+      <div id="mandiRateTable"></div>
+      <button type="submit" class="btn btn-danger mt-2">
+        <i class="bi bi-trash"></i> Delete Selected
       </button>
-    </div>
-  </div>
+    </form>
 
-  <form id="bulkDeleteForm" action="/admin/mandis/delete-many" method="POST">
-    <table class="table table-bordered table-hover" id="mandiTable">
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="selectAll"></th>
-          <th>S.No</th>
-          <th>Name</th>
-          <th>District</th>
-          <th>State</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% mandis.sort((a,b)=>a.name.localeCompare(b.name)).forEach((mandi,index)=>{ %>
-          <tr data-id="<%= mandi._id %>" data-state="<%= mandi.state._id %>" data-district="<%= mandi.district %>">
-            <td><input type="checkbox" name="ids" value="<%= mandi._id %>"></td>
-            <td class="sno"><%= index+1 %></td>
-            <td><%= mandi.name %></td>
-            <td><%= mandi.district %></td>
-            <td><%= mandi.state.name %></td>
-            <td>
-              <button type="button" class="btn btn-sm btn-primary editBtn"
-                data-id="<%= mandi._id %>"
-                data-name="<%= mandi.name %>"
-                data-state="<%= mandi.state._id %>"
-                data-district="<%= mandi.district %>"
-                title="Edit"
-                data-bs-toggle="modal" data-bs-target="#editMandiModal">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-              <form action="/admin/mandis/delete/<%= mandi._id %>" method="POST" style="display:inline;">
-                <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <button type="submit" class="btn btn-danger mt-2">
-      <i class="bi bi-trash"></i> Delete Selected
-    </button>
-  </form>
-
-  <!-- Add Mandis Modal (Multiple) -->
-  <div class="modal fade" id="addMandiModal" tabindex="-1" aria-labelledby="addMandiModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <form id="addMandiForm" method="POST" action="/admin/mandis/add">
-          <div class="modal-header">
-            <h5 class="modal-title">Add Multiple Mandis</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label>State</label>
-              <select name="state" id="addState" class="form-select" required>
-                <option value="">Select State</option>
-                <% states.forEach(state => { %>
-                  <option value="<%= state._id %>"><%= state.name %></option>
-                <% }) %>
-              </select>
+    <!-- Add Rates Modal (Multiple) -->
+    <div class="modal fade" id="addRateModal" tabindex="-1" aria-labelledby="addRateModalLabel" aria-hidden="true" style="padding-top: 100px;">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form id="addRateForm" method="POST" action="/admin/mandirate/add">
+            <div class="modal-header">
+              <h5 class="modal-title">Add Multiple Mandi Rates</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="mb-3">
-              <label>District</label>
-              <select name="district" id="addDistrict" class="form-select" required>
-                <option value="">Select District</option>
-              </select>
-            </div>
-            <div id="mandiNamesWrapper">
-              <div class="mb-3 mandiNameRow">
-                <label>Mandi Name</label>
-                <div class="input-group">
-                  <input type="text" name="names[]" class="form-control" required>
-                  <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label>State</label>
+                <select name="state" id="addState" class="form-select" required>
+                  <option value="">Select State</option>
+                  <% states.forEach(state => { %>
+                    <option value="<%= state._id %>"><%= state.name %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>District</label>
+                <select name="district" id="addDistrict" class="form-select" required>
+                  <option value="">Select District</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Mandi</label>
+                <select name="mandi" id="addMandi" class="form-select" required>
+                  <option value="">Select Mandi</option>
+                </select>
+              </div>
+              <div id="rateRowsWrapper">
+                <div class="mb-3 rateRow">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <label>Commodity</label>
+                      <select name="commodity_ids[]" class="form-select" required>
+                        <option value="">Select Commodity</option>
+                        <% commodities.forEach(com => { %>
+                          <option value="<%= com._id %>"><%= com.name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <label>Min Price</label>
+                      <input type="number" name="minimums[]" class="form-control" min="0" step="0.01" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label>Max Price</label>
+                      <input type="number" name="maximums[]" class="form-control" min="0" step="0.01" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label>Est. Qty</label>
+                      <input type="number" name="arrivals[]" class="form-control" min="0" step="0.01">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                      <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
+                    </div>
+                  </div>
                 </div>
               </div>
+              <button type="button" class="btn btn-secondary" id="addMoreBtn">
+                <i class="bi bi-plus"></i> Add More Rate
+              </button>
             </div>
-            <button type="button" class="btn btn-secondary" id="addMoreBtn">
-              <i class="bi bi-plus"></i> Add More Mandi
-            </button>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Save Mandis</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Save Rates</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Edit Mandi Modal -->
-  <div class="modal fade" id="editMandiModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form id="editMandiForm" method="POST">
+    <!-- Edit Rate Modal -->
+    <div class="modal fade" id="editRateModal" tabindex="-1" aria-hidden="true" style="padding-top: 50px;">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="editRateForm" method="POST">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit Mandi Rate</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="editMandiRateId" name="mandiRateId">
+              <input type="hidden" id="editCommodityId" name="commodityId">
+              <div class="mb-3">
+                <label>State</label>
+                <select name="state" id="editState" class="form-select" required>
+                  <option value="">Select State</option>
+                  <% states.forEach(state => { %>
+                    <option value="<%= state._id %>"><%= state.name %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>District</label>
+                <select name="district" id="editDistrict" class="form-select" required>
+                  <option value="">Select District</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Mandi</label>
+                <select name="mandi" id="editMandi" class="form-select" required>
+                  <option value="">Select Mandi</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Commodity</label>
+                <select name="commodity_id" id="editCommodity" class="form-select" required>
+                  <option value="">Select Commodity</option>
+                  <% commodities.forEach(com => { %>
+                    <option value="<%= com._id %>"><%= com.name %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Min Price</label>
+                <input type="number" name="minimum" id="editMinimum" class="form-control" min="0" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label>Max Price</label>
+                <input type="number" name="maximum" id="editMaximum" class="form-control" min="0" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label>Est. Qty</label>
+                <input type="number" name="estimatedArrival" id="editEstimatedArrival" class="form-control" min="0" step="0.01">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Update</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Table Modal -->
+    <div class="modal fade" id="viewTableModal" tabindex="-1" aria-hidden="true" style="padding-top: 50px;">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Edit Mandi</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="viewTableModalLabel">View Mandi Rates (State & District-Wise)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <input type="hidden" id="editMandiId" name="id">
-            <div class="mb-3">
-              <label>State</label>
-              <select name="state" id="editState" class="form-select" required>
-                <option value="">Select State</option>
-                <% states.forEach(state => { %>
-                  <option value="<%= state._id %>"><%= state.name %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label>District</label>
-              <select name="district" id="editDistrict" class="form-select" required>
-                <option value="">Select District</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label>Mandi Name</label>
-              <input type="text" name="name" id="editName" class="form-control" required>
-            </div>
+            <div id="viewMandiRateTable"></div>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Update</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css">
+    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  // Filters and Search
-  const searchSerial = document.getElementById("searchSerial");
-  const searchName = document.getElementById("searchName");
-  const filterState = document.getElementById("filterState");
-  const filterDistrict = document.getElementById("filterDistrict");
-
-  filterState.addEventListener("change", async function(){
-    const stateId=this.value;
-    filterDistrict.innerHTML='<option value="">All Districts</option>';
-    if(!stateId) return;
-    const res=await fetch(`/admin/mandis/districts/${stateId}`);
-    const districts=await res.json();
-    districts.forEach(d=>{
-      const opt=document.createElement("option");
-      opt.value=d; opt.textContent=d;
-      filterDistrict.appendChild(opt);
-    });
-    filterTable();
-  });
-
-  [searchSerial,searchName,filterState,filterDistrict].forEach(el=>{
-    el.addEventListener("input",filterTable);
-    el.addEventListener("change",filterTable);
-  });
-
-  function filterTable(){
-    const snoFilter=searchSerial.value.toLowerCase();
-    const nameFilter=searchName.value.toLowerCase();
-    const stateFilter=filterState.value;
-    const districtFilter=filterDistrict.value;
-
-    document.querySelectorAll("#mandiTable tbody tr").forEach((row,index)=>{
-      const sno=(index+1).toString();
-      const name=row.children[2].textContent.toLowerCase();
-      const state=row.dataset.state;
-      const district=row.dataset.district;
-
-      if(
-        sno.includes(snoFilter) &&
-        name.includes(nameFilter) &&
-        (!stateFilter || state===stateFilter) &&
-        (!districtFilter || district===districtFilter)
-      ){ row.style.display=""; } else { row.style.display="none"; }
-    });
-    // Update S.No after filter
-    let visibleIndex=1;
-    document.querySelectorAll("#mandiTable tbody tr").forEach((row)=>{
-      if(row.style.display !== "none"){
-        row.querySelector(".sno").textContent=visibleIndex++;
-      }
-    });
-  }
-
-  // Edit Button Modal
-  document.querySelectorAll(".editBtn").forEach(btn=>{
-    btn.addEventListener("click",async function(){
-      const id=this.dataset.id;
-      const name=this.dataset.name;
-      const state=this.dataset.state;
-      const district=this.dataset.district;
-
-      document.getElementById("editMandiId").value=id;
-      document.getElementById("editName").value=name;
-      document.getElementById("editState").value=state;
-
-      // Load districts for selected state
-      const res=await fetch(`/admin/mandis/districts/${state}`);
-      const districts=await res.json();
-      const districtSelect=document.getElementById("editDistrict");
-      districtSelect.innerHTML='<option value="">Select District</option>';
-      districts.forEach(d=>{
-        const opt=document.createElement("option");
-        opt.value=d; opt.textContent=d;
-        if(d===district) opt.selected=true;
-        districtSelect.appendChild(opt);
-      });
-
-      document.getElementById("editMandiForm").action=`/admin/mandis/edit/${id}`;
-    });
-  });
-
-  // Add Multiple Mandis Modal
-  const addState=document.getElementById("addState");
-  const addDistrict=document.getElementById("addDistrict");
-  const addMoreBtn=document.getElementById("addMoreBtn");
-  const mandiNamesWrapper=document.getElementById("mandiNamesWrapper");
-
-  addState.addEventListener("change",async function(){
-    const stateId=this.value;
-    addDistrict.innerHTML='<option value="">Select District</option>';
-    if(!stateId) return;
-    const res=await fetch(`/admin/mandis/districts/${stateId}`);
-    const districts=await res.json();
-    districts.forEach(d=>{
-      const opt=document.createElement("option"); opt.value=d; opt.textContent=d;
-      addDistrict.appendChild(opt);
-    });
-  });
-
-  addMoreBtn.addEventListener("click",()=>{
-    const row=document.createElement("div");
-    row.classList.add("mb-3","mandiNameRow");
-    row.innerHTML=`
-      <label>Mandi Name</label>
-      <div class="input-group">
-        <input type="text" name="names[]" class="form-control" required>
-        <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
-      </div>
-    `;
-    mandiNamesWrapper.appendChild(row);
-    row.querySelector(".removeRow").addEventListener("click",()=>row.remove());
-  });
-
-  document.querySelectorAll(".removeRow").forEach(btn=>{
-    btn.addEventListener("click",e=>e.target.closest(".mandiNameRow").remove());
-  });
-
-  // Select all checkboxes
-  document.getElementById("selectAll").addEventListener("change",function(){
-    document.querySelectorAll('input[name="ids"]').forEach(cb=>cb.checked=this.checked);
-  });
-});
-</script>
-
-
-<!-- Bootstrap JS -->
- </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-   
-    <!-- Custom JS for sidebar -->
     <script>
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const sidebarToggle = document.getElementById('sidebarToggle');
+      document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Mandi Rate Data
+        const rateData = [
+          <% let index = 0; %>
+          <% rates.forEach(rate => { %>
+            <% rate.rates.forEach(item => { %>
+              {
+                id: "<%= rate._id %>_<%= item.commodity?._id %>",
+                overallSno: <%= ++index %>,
+                stateDistrictSno: 0,
+                mandiRateId: "<%= rate._id %>",
+                commodityId: "<%= item.commodity?._id %>",
+                commodity: "<%= item.commodity?.name %>",
+                minimum: <%= item.minimum %>,
+                maximum: <%= item.maximum %>,
+                estimatedArrival: <%= item.estimatedArrival ?? 'null' %>,
+                lastUpdated: "<%= formatDate(item.updatedAt || rate.updatedAt) %>",
+                mandi: "<%= rate.mandi?.name %>",
+                district: "<%= rate.district %>",
+                stateId: "<%= rate.state?._id %>",
+                state: "<%= rate.state?.name %>"
+              },
+            <% }) %>
+          <% }) %>
+        ];
 
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('collapsed');
+        // Add stateDistrictSno for grouping
+        const groupedData = {};
+        rateData.forEach(rate => {
+          const key = `${rate.state}_${rate.district}`;
+          if (!groupedData[key]) {
+            groupedData[key] = [];
+          }
+          groupedData[key].push(rate);
         });
+
+        let sno = 1;
+        Object.values(groupedData).forEach(group => {
+          group.forEach(rate => {
+            rate.stateDistrictSno = sno++;
+          });
+        });
+
+        // Initialize Main Table
+        const mainTable = new Tabulator("#mandiRateTable", {
+          data: rateData,
+          layout: "fitColumns",
+          selectable: true,
+          columns: [
+            { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 50 },
+            { title: "Overall S.No", field: "overallSno", width: 100, sorter: "number" },
+            { title: "Mandi", field: "mandi", sorter: "string" },
+            { title: "Address", field: "address", formatter: cell => `${cell.getData().state} / ${cell.getData().district} / ${cell.getData().mandi}`, sorter: "string" },
+            { title: "Commodity", field: "commodity", sorter: "string" },
+            { title: "Min Price", field: "minimum", sorter: "number" },
+            { title: "Max Price", field: "maximum", sorter: "number" },
+            { title: "Est. Qty", field: "estimatedArrival", sorter: "number" },
+            { title: "Last Updated", field: "lastUpdated", sorter: "string" },
+            {
+              title: "Actions",
+              field: "actions",
+              hozAlign: "center",
+              formatter: function(cell) {
+                const data = cell.getRow().getData();
+                return `
+                  <button type="button" class="btn btn-sm btn-primary editBtn"
+                    data-mandi-rate-id="${data.mandiRateId}" data-commodity-id="${data.commodityId}"
+                    data-state="${data.stateId}" data-district="${data.district}" data-mandi="${data.mandi}"
+                    data-commodity="${data.commodity}" data-minimum="${data.minimum}" data-maximum="${data.maximum}"
+                    data-estimated-arrival="${data.estimatedArrival ?? ''}" title="Edit" data-bs-toggle="modal" data-bs-target="#editRateModal">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <form action="/admin/mandirate/delete-commodity/${data.mandiRateId}/${data.commodityId}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Delete this rate?')">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                `;
+              },
+              headerSort: false
+            }
+          ],
+          initialSort: [
+            { column: "state", dir: "asc" },
+            { column: "district", dir: "asc" },
+            { column: "mandi", dir: "asc" }
+          ]
+        });
+
+        // Update hidden inputs for bulk delete
+        mainTable.on("rowSelectionChanged", function(data) {
+          const form = document.getElementById("bulkDeleteForm");
+          form.querySelectorAll("input[name='ids[]']").forEach(el => el.remove());
+          data.forEach(row => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "ids[]";
+            input.value = `${row.mandiRateId}_${row.commodityId}`;
+            form.appendChild(input);
+          });
+        });
+
+        // Initialize View Table in Modal
+        let viewTable = null;
+        const viewTableModal = document.getElementById("viewTableModal");
+        viewTableModal.addEventListener("shown.bs.modal", function() {
+          if (viewTable) {
+            viewTable.destroy(); // Destroy previous instance to avoid duplicates
+          }
+
+          viewTable = new Tabulator("#viewMandiRateTable", {
+            data: rateData,
+            layout: "fitColumns",
+            groupBy: "state",
+            groupToggleElement: "header",
+            groupHeader: function(value, count, data, group) {
+              return `${value}`;
+            },
+            columns: [
+              { title: "S.No", field: "stateDistrictSno", width: 80, sorter: "number" },
+              { title: "Mandi", field: "mandi", sorter: "string" },
+              { title: "District", field: "district", sorter: "string" },
+              { title: "Commodity", field: "commodity", sorter: "string" },
+              { title: "Min Price", field: "minimum", sorter: "number" },
+              { title: "Max Price", field: "maximum", sorter: "number" },
+              { title: "Est. Qty", field: "estimatedArrival", sorter: "number" },
+              { title: "Last Updated", field: "lastUpdated", sorter: "string" }
+            ],
+            initialSort: [
+              { column: "state", dir: "asc" },
+              { column: "district", dir: "asc" },
+              { column: "mandi", dir: "asc" }
+            ]
+          });
+        });
+
+        // Clean up table when modal is hidden
+        viewTableModal.addEventListener("hidden.bs.modal", function() {
+          if (viewTable) {
+            viewTable.destroy();
+            viewTable = null;
+          }
+        });
+
+        // Filters & Search
+        const searchSerial = document.getElementById("searchSerial");
+        const searchCommodity = document.getElementById("searchCommodity");
+        const filterState = document.getElementById("filterState");
+        const filterDistrict = document.getElementById("filterDistrict");
+        const filterMandi = document.getElementById("filterMandi");
+
+        filterState.addEventListener("change", async function() {
+          filterDistrict.innerHTML = '<option value="">All Districts</option>';
+          filterMandi.innerHTML = '<option value="">All Mandis</option>';
+          if (!this.value) {
+            filterTable();
+            return;
+          }
+          try {
+            const res = await fetch(`/admin/mandis/districts/${this.value}`);
+            const districts = await res.json();
+            districts.forEach(d => {
+              const opt = document.createElement("option");
+              opt.value = d;
+              opt.textContent = d;
+              filterDistrict.appendChild(opt);
+            });
+            filterTable();
+          } catch (err) {
+            console.error(err);
+            filterTable();
+          }
+        });
+
+        filterDistrict.addEventListener("change", async function() {
+          filterMandi.innerHTML = '<option value="">All Mandis</option>';
+          if (!this.value) {
+            filterTable();
+            return;
+          }
+          try {
+            const res = await fetch(`/admin/mandis/${encodeURIComponent(this.value)}`);
+            const mandis = await res.json();
+            mandis.forEach(m => {
+              const opt = document.createElement("option");
+              opt.value = m._id;
+              opt.textContent = m.name;
+              filterMandi.appendChild(opt);
+            });
+            filterTable();
+          } catch (err) {
+            console.error(err);
+            filterTable();
+          }
+        });
+
+        filterMandi.addEventListener("change", filterTable);
+
+        [searchSerial, searchCommodity, filterState, filterDistrict, filterMandi].forEach(el => {
+          el.addEventListener("input", filterTable);
+          el.addEventListener("change", filterTable);
+        });
+
+        function filterTable() {
+          const snoFilter = searchSerial.value.toLowerCase();
+          const commodityFilter = searchCommodity.value.toLowerCase();
+          const stateFilter = filterState.value;
+          const districtFilter = filterDistrict.value;
+          const mandiFilter = filterMandi.value;
+
+          mainTable.setFilter([
+            { field: "overallSno", type: "like", value: snoFilter },
+            { field: "commodity", type: "like", value: commodityFilter },
+            { field: "stateId", type: stateFilter ? "=" : "like", value: stateFilter },
+            { field: "district", type: districtFilter ? "=" : "like", value: districtFilter },
+            { field: "mandi", type: mandiFilter ? "=" : "like", value: mandiFilter }
+          ]);
+        }
+
+        // Download Buttons
+        document.getElementById("download-csv").addEventListener("click", function() {
+          mainTable.download("csv", "mandi_rates.csv", {
+            columns: ["overallSno", "mandi", "address", "commodity", "minimum", "maximum", "estimatedArrival", "lastUpdated"]
+          });
+        });
+
+        document.getElementById("download-xlsx").addEventListener("click", function() {
+          mainTable.download("xlsx", "mandi_rates.xlsx", {
+            sheetName: "Mandi Rates",
+            columns: ["overallSno", "mandi", "address", "commodity", "minimum", "maximum", "estimatedArrival", "lastUpdated"]
+          });
+        });
+
+        document.getElementById("download-pdf").addEventListener("click", function() {
+          mainTable.download("pdf", "mandi_rates.pdf", {
+            orientation: "portrait",
+            title: "Mandi Rates",
+            autoTable: {
+              theme: "grid",
+              styles: { fontSize: 10 },
+              headStyles: { fillColor: [41, 128, 185] },
+              margin: { top: 30 },
+              columns: [
+                { header: "Overall S.No", dataKey: "overallSno" },
+                { header: "Mandi", dataKey: "mandi" },
+                { header: "Address", dataKey: "address" },
+                { header: "Commodity", dataKey: "commodity" },
+                { header: "Min Price", dataKey: "minimum" },
+                { header: "Max Price", dataKey: "maximum" },
+                { header: "Est. Qty", dataKey: "estimatedArrival" },
+                { header: "Last Updated", dataKey: "lastUpdated" }
+              ]
+            }
+          });
+        });
+
+        // Edit Button Modal
+        document.addEventListener("click", async function(e) {
+          if (e.target.closest(".editBtn")) {
+            const btn = e.target.closest(".editBtn");
+            const mandiRateId = btn.dataset.mandiRateId;
+            const commodityId = btn.dataset.commodityId;
+            const state = btn.dataset.state;
+            const district = btn.dataset.district;
+            const mandi = btn.dataset.mandi;
+            const commodity = btn.dataset.commodity;
+            const minimum = btn.dataset.minimum;
+            const maximum = btn.dataset.maximum;
+            const estimatedArrival = btn.dataset.estimatedArrival;
+
+            document.getElementById("editMandiRateId").value = mandiRateId;
+            document.getElementById("editCommodityId").value = commodityId;
+            document.getElementById("editState").value = state;
+            document.getElementById("editCommodity").value = commodityId;
+            document.getElementById("editMinimum").value = minimum;
+            document.getElementById("editMaximum").value = maximum;
+            document.getElementById("editEstimatedArrival").value = estimatedArrival;
+
+            // Populate districts
+            const districtRes = await fetch(`/admin/mandis/districts/${state}`);
+            const districts = await districtRes.json();
+            const districtSelect = document.getElementById("editDistrict");
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            districts.forEach(d => {
+              const opt = document.createElement("option");
+              opt.value = d;
+              opt.textContent = d;
+              if (d === district) opt.selected = true;
+              districtSelect.appendChild(opt);
+            });
+
+            // Populate mandis
+            const mandiRes = await fetch(`/admin/mandis/${encodeURIComponent(district)}`);
+            const mandis = await mandiRes.json();
+            const mandiSelect = document.getElementById("editMandi");
+            mandiSelect.innerHTML = '<option value="">Select Mandi</option>';
+            mandis.forEach(m => {
+              const opt = document.createElement("option");
+              opt.value = m._id;
+              opt.textContent = m.name;
+              if (m.name === mandi) opt.selected = true;
+              mandiSelect.appendChild(opt);
+            });
+
+            document.getElementById("editRateForm").action = `/admin/mandirate/edit-commodity/${mandiRateId}/${commodityId}`;
+          }
+        });
+
+        // Add Multiple Rates Modal
+        const addState = document.getElementById("addState");
+        const addDistrict = document.getElementById("addDistrict");
+        const addMandi = document.getElementById("addMandi");
+        const addMoreBtn = document.getElementById("addMoreBtn");
+        const rateRowsWrapper = document.getElementById("rateRowsWrapper");
+
+        addState.addEventListener("change", async function() {
+          addDistrict.innerHTML = '<option value="">Select District</option>';
+          addMandi.innerHTML = '<option value="">Select Mandi</option>';
+          if (!this.value) return;
+          const res = await fetch(`/admin/mandis/districts/${this.value}`);
+          const districts = await res.json();
+          districts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d;
+            opt.textContent = d;
+            addDistrict.appendChild(opt);
+          });
+        });
+
+        addDistrict.addEventListener("change", async function() {
+          addMandi.innerHTML = '<option value="">Select Mandi</option>';
+          if (!this.value) return;
+          const res = await fetch(`/admin/mandis/${encodeURIComponent(this.value)}`);
+          const mandis = await res.json();
+          mandis.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m._id;
+            opt.textContent = m.name;
+            addMandi.appendChild(opt);
+          });
+        });
+
+        addMoreBtn.addEventListener("click", () => {
+          const row = document.createElement("div");
+          row.classList.add("mb-3", "rateRow");
+          row.innerHTML = `
+            <div class="row">
+              <div class="col-md-4">
+                <label>Commodity</label>
+                <select name="commodity_ids[]" class="form-select" required>
+                  <option value="">Select Commodity</option>
+                  <% commodities.forEach(com => { %>
+                    <option value="<%= com._id %>"><%= com.name %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label>Min Price</label>
+                <input type="number" name="minimums[]" class="form-control" min="0" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label>Max Price</label>
+                <input type="number" name="maximums[]" class="form-control" min="0" step="0.01" required>
+              </div>
+              <div class="col-md-2">
+                <label>Est. Qty</label>
+                <input type="number" name="arrivals[]" class="form-control" min="0" step="0.01">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-danger removeRow"><i class="bi bi-x-circle"></i> Remove</button>
+              </div>
+            </div>
+          `;
+          rateRowsWrapper.appendChild(row);
+          row.querySelector(".removeRow").addEventListener("click", () => row.remove());
+        });
+
+        document.querySelectorAll(".removeRow").forEach(btn => {
+          btn.addEventListener("click", e => e.target.closest(".rateRow").remove());
+        });
+
+        <% 
+          function formatDate(dateStr) {
+            if (!dateStr) return "";
+            const dateObj = new Date(dateStr);
+            return dateObj.toLocaleString('en-IN', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            });
+          }
+        %>
+      });
     </script>
-</body>
-</html>
+  </div>
+
+<%- include('common/footer') %>
