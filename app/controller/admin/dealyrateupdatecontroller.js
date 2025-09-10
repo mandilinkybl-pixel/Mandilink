@@ -433,6 +433,10 @@ class MandiRateController {
         return res.redirect("/admin/mandirate");
       }
 
+
+
+      
+
       const mandiRate = await MandiRate.findOne({ _id: mandiRateId, user_id: user.id });
       if (!mandiRate) {
         req.flash("error_msg", "Mandi Rate not found or not authorized");
