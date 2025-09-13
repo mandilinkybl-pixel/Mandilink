@@ -2,28 +2,25 @@
 
 <div class="main-content" id="mainContent">
   <div class="container-fluid mt-4">
-    <h3 class="mb-4">Company List</h3>
+    <h3 class="mb-4">User Listings</h3>
 
     <!-- Search Box -->
-    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search company...">
+    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search user...">
 
-    <!-- Scrollable container -->
+    <!-- Scrollable Table -->
     <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
       <table class="table table-bordered table-hover align-middle">
         <thead class="table-dark">
           <tr>
             <th>#</th>
-            <th>Company Name</th>
-            <th>Contact Person</th>
-            <th>Contact Number</th>
+            <th>Name</th>
             <th>Email</th>
-            <th>Address</th>
+            <th>Contact Number</th>
             <th>Category</th>
             <th>State</th>
             <th>District</th>
             <th>Mandi</th>
-            <th>GST Number</th>
-            <th>License Number</th>
+            <th>Address</th>
             <th>Status</th>
             <th>Action</th>
             <th>Verified</th>
@@ -32,55 +29,54 @@
           </tr>
         </thead>
 
-        <!-- Hidden storage -->
-        <tbody id="companyBodyAll" style="display: none;">
-          <% if (companies && companies.length > 0) { %>
-            <% companies.forEach((company, index) => { %>
+        <!-- Hidden rows (all users) -->
+        <tbody id="userBodyAll" style="display: none;">
+          <% if (listings && listings.length > 0) { %>
+            <% listings.forEach((listing, index) => { %>
               <tr>
                 <td><%= index + 1 %></td>
-                <td><%= company.name %></td>
-                <td><%= company.contactPerson %></td>
-                <td><%= company.contactNumber %></td>
-                <td><%= company.email %></td>
-                <td><%= company.address %></td>
-                <td><%= company.category ? company.category.name : '-' %></td>
-                <td><%= company.state ? company.state.name : '-' %></td>
-                <td><%= company.district %></td>
-                <td><%= company.mandi %></td>
-                <td><%= company.gstNumber || '-' %></td>
-                <td><%= company.licenseNumber || '-' %></td>
+                <td><%= listing.name %></td>
+                <td><%= listing.email || '-' %></td>
+                <td><%= listing.contactNumber || '-' %></td>
+                <td><%= listing.category ? listing.category.name : '-' %></td>
+                <td><%= listing.state ? listing.state.name : '-' %></td>
+                <td><%= listing.district %></td>
+                <td><%= listing.mandi %></td>
+                <td><%= listing.address || '-' %></td>
                 <td>
-                  <% if (company.isActive) { %>
+                  <% if (listing.isActive) { %>
                     <span class="badge bg-success">Active</span>
                   <% } else { %>
                     <span class="badge bg-danger">Inactive</span>
                   <% } %>
                 </td>
                 <td>
-                  <% if (company.isActive) { %>
-                    <a href="/admin/blockunblockcompany/block/<%= company._id %>" class="btn btn-sm btn-danger">Block</a>
+                  <% if (listing.isActive) { %>
+                    <a href="/admin/blockedlisting/block/<%= listing._id %>" class="btn btn-sm btn-danger">Block</a>
                   <% } else { %>
-                    <a href="/admin/blockunblockcompany/unblock/<%= company._id %>" class="btn btn-sm btn-success">Unblock</a>
+                    <a href="/admin/blockedlisting/unblock/<%= listing._id %>" class="btn btn-sm btn-success">Unblock</a>
                   <% } %>
                 </td>
                 <td>
-                  <% if (company.isVerified) { %>
+                  <% if (listing.isVerified) { %>
                     <span class="badge bg-primary">Yes</span>
                   <% } else { %>
                     <span class="badge bg-secondary">No</span>
                   <% } %>
                 </td>
-                <td><%= company.Verifybatch || '-' %></td>
-                <td><%= new Date(company.createdAt).toLocaleDateString() %></td>
+                <td><%= listing.Verifybatch || '-' %></td>
+                <td><%= new Date(listing.createdAt).toLocaleDateString() %></td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr><td colspan="17" class="text-center">No companies found</td></tr>
+            <tr>
+              <td colspan="14" class="text-center">No users found</td>
+            </tr>
           <% } %>
         </tbody>
 
         <!-- Visible rows -->
-        <tbody id="companyBody"></tbody>
+        <tbody id="userBody"></tbody>
       </table>
     </div>
   </div>
@@ -88,8 +84,8 @@
 
 <!-- ✅ Script for Search + Lazy Loading + Scroll -->
 <script>
-  const allRows = Array.from(document.querySelectorAll("#companyBodyAll tr"));
-  const displayBody = document.getElementById("companyBody");
+  const allRows = Array.from(document.querySelectorAll("#userBodyAll tr"));
+  const displayBody = document.getElementById("userBody");
   const searchBox = document.getElementById("searchBox");
   const scrollContainer = document.querySelector(".table-responsive");
 
