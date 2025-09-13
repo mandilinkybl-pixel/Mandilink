@@ -1,143 +1,127 @@
 <%- include('common/header') %>
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <div class="container-fluid">
-            <h1 class="mb-4 text-center text-md-start" style="color:#4e7d29;">Welcome to Mandilink Admin Dashboard</h1>
-            <p class="mb-4 text-center text-md-start" style="color:#7dc850;">A responsive agriculture-focused admin dashboard with animated backgrounds, green color combinations, and smooth UI effects.</p>
-            <div class="row g-4 justify-content-center">
-                <div class="col-12 col-sm-6 col-md-4 d-flex">
-                    <div class="card flex-fill">
-                        <div class="card-body">
-                            <h5 class="card-title">Crops Overview</h5>
-                            <p class="card-text">Track crop yields, prices, and weather conditions.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-md-4 d-flex">
-                    <div class="card flex-fill">
-                        <div class="card-body">
-                            <h5 class="card-title">Machinery Status</h5>
-                            <p class="card-text">Monitor machinery usage, maintenance and availability.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-md-4 d-flex">
-                    <div class="card flex-fill">
-                        <div class="card-body">
-                            <h5 class="card-title">Farmer Community</h5>
-                            <p class="card-text">Connect and manage farmers and their activities.</p>
-                        </div>
+
+<div class="main-content" id="mainContent">
+    <div class="container-fluid py-5">
+        <h1 class="mb-4 text-center text-md-start" style="color:#4e7d29;">Welcome to Mandilink Admin Dashboard <hr></h1>
+       
+
+        <!-- Totals Cards -->
+        <div class="row g-4 justify-content-center mb-5">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Companies</h5>
+                        <h2 class="fw-bold text-success"><%= totalCompanies %></h2>
                     </div>
                 </div>
             </div>
-
-            <!-- Charts Section -->
-            <div class="row mt-5">
-                <div class="col-12 col-lg-6 chart-container">
-                    <h5 class="mb-3 text-center" style="color:#4e7d29;">Crop Production Over Months</h5>
-                    <canvas id="lineChart"></canvas>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Users</h5>
+                        <h2 class="fw-bold text-success"><%= totalUsers %></h2>
+                    </div>
                 </div>
-                <div class="col-12 col-lg-6 chart-container">
-                    <h5 class="mb-3 text-center" style="color:#4e7d29;">Machinery Usage Distribution</h5>
-                    <canvas id="pieChart"></canvas>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Commodities</h5>
+                        <h2 class="fw-bold text-success"><%= totalCommodities %></h2>
+                    </div>
                 </div>
-                <div class="col-12 col-lg-6 chart-container">
-                    <h5 class="mb-3 text-center" style="color:#4e7d29;">Farmer Registrations</h5>
-                    <canvas id="barChart"></canvas>
-                </div>
-                <div class="col-12 col-lg-6 chart-container">
-                    <h5 class="mb-3 text-center" style="color:#4e7d29;">Market Prices</h5>
-                    <canvas id="doughnutChart"></canvas>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Employees</h5>
+                        <h2 class="fw-bold text-success"><%= totalEmployees %></h2>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Date-wise Charts -->
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-center mb-3" style="color:#4e7d29;">Companies Registered Date-wise</h5>
+                    <canvas id="companiesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-center mb-3" style="color:#4e7d29;">Users Registered Date-wise</h5>
+                    <canvas id="usersChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optional Additional Charts -->
+        <div class="row g-4 mt-5">
+            <div class="col-12 col-lg-6 chart-container">
+                <h5 class="mb-3 text-center" style="color:#4e7d29;">Other Chart Placeholder</h5>
+                <canvas id="lineChart"></canvas>
+            </div>
+            <div class="col-12 col-lg-6 chart-container">
+                <h5 class="mb-3 text-center" style="color:#4e7d29;">Other Chart Placeholder</h5>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- Bootstrap JS -->
-  
-    <!-- Chart.js Initialization -->
-    <script>
-        // Line Chart
-        const lineCtx = document.getElementById('lineChart').getContext('2d');
-        new Chart(lineCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [{
-                    label: 'Crop Production (tons)',
-                    data: [120, 150, 180, 170, 200, 220, 210],
-                    borderColor: '#4e7d29',
-                    backgroundColor: 'rgba(125,200,80,0.2)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true, labels: { color: '#4e7d29' } }}
-            }
-        });
+<%- include('common/footer') %>
 
-        // Pie Chart
-        const pieCtx = document.getElementById('pieChart').getContext('2d');
-        new Chart(pieCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Tractors', 'Harvesters', 'Plows', 'Seeders'],
-                datasets: [{
-                    label: 'Machinery Usage',
-                    data: [40, 25, 20, 15],
-                    backgroundColor: [
-                        '#7dc850', '#b4ec51', '#e9ffdb', '#4e7d29'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true, labels: { color: '#4e7d29' } }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Companies Date-wise Chart
+    const companiesCtx = document.getElementById('companiesChart').getContext('2d');
+    new Chart(companiesCtx, {
+        type: 'line',
+        data: {
+            labels: <%- companyDates %>,
+            datasets: [{
+                label: 'Companies Registered',
+                data: <%- companyCounts %>,
+                borderColor: '#4e7d29',
+                backgroundColor: 'rgba(125,200,80,0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true, labels: { color: '#4e7d29' } } },
+            scales: {
+                x: { ticks: { color: '#4e7d29' } },
+                y: { ticks: { color: '#4e7d29' }, beginAtZero: true }
             }
-        });
+        }
+    });
 
-        // Bar Chart
-        const barCtx = document.getElementById('barChart').getContext('2d');
-        new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: ['2019', '2020', '2021', '2022', '2023'],
-                datasets: [{
-                    label: 'Farmers Registered',
-                    data: [250, 400, 500, 650, 920],
-                    backgroundColor: '#7dc850'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#4e7d29' } },
-                    y: { ticks: { color: '#4e7d29' } }
-                }
+    // Users Date-wise Chart
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: <%- userDates %>,
+            datasets: [{
+                label: 'Users Registered',
+                data: <%- userCounts %>,
+                borderColor: '#7dc850',
+                backgroundColor: 'rgba(125,200,80,0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true, labels: { color: '#4e7d29' } } },
+            scales: {
+                x: { ticks: { color: '#4e7d29' } },
+                y: { ticks: { color: '#4e7d29' }, beginAtZero: true }
             }
-        });
-
-        // Doughnut Chart
-        const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
-        new Chart(doughnutCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Wheat', 'Rice', 'Maize', 'Soybean'],
-                datasets: [{
-                    label: 'Market Prices',
-                    data: [30, 25, 20, 25],
-                    backgroundColor: [
-                        '#b4ec51', '#7dc850', '#e9ffdb', '#4e7d29'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: true, labels: { color: '#4e7d29' } }}
-            }
-        });
-    </script>
-   <%- include('common/footer') %>
+        }
+    });
+</script>

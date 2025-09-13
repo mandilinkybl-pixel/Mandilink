@@ -10,15 +10,50 @@ const mandirates = require("../../models/mandirates");
 const plan = require("../../models/plan");
 const Subrole = require("../../models/subrole");
 const Ad = require("../../models/topads");
+const listing = require("../../models/lisingSchema");
+const companylisting = require("../../models/companylisting");
 class PagesController {
     async index(req, res) {
 
-        const user = req.user; // Access user data from middleware
-       
-
+      const user = req.user; // Access user data from middleware
         const userdetails = await Sechueemploueeschema.findById(user.id);
-        //  console.log("User data:", user,userdetails);
-        res.render('admin/index', { user, userdetails });
+
+        // Fetch totals
+        const totalCompanies = await companylisting.countDocuments();
+        const totalUsers = await listing.countDocuments();
+        const totalCommodities = await commodityname.countDocuments();
+        const totalEmployees = await SecureEmployee.countDocuments();
+
+        // Companies grouped by date
+        const companiesByDate = await companylisting.aggregate([
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const companyDates = companiesByDate.map(item => item._id);
+        const companyCounts = companiesByDate.map(item => item.count);
+
+        // Users grouped by date
+        const usersByDate = await listing.aggregate([
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const userDates = usersByDate.map(item => item._id);
+        const userCounts = usersByDate.map(item => item.count);
+
+        res.render('admin/index', { 
+            user,
+            userdetails,
+            totalCompanies,
+            totalUsers,
+            totalCommodities,
+            totalEmployees,
+            companyDates: JSON.stringify(companyDates),
+            companyCounts: JSON.stringify(companyCounts),
+            userDates: JSON.stringify(userDates),
+            userCounts: JSON.stringify(userCounts)
+        });
     }
     login(req, res) {
         res.render('admin/login')
