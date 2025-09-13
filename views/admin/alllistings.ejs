@@ -92,6 +92,7 @@
   let itemsPerLoad = 10;
   let currentIndex = 0;
   let filteredRows = allRows;
+  let scrollCount = 0; // counter for scrolls
 
   function loadMoreRows() {
     let nextIndex = currentIndex + itemsPerLoad;
@@ -103,10 +104,14 @@
   // Initial load
   loadMoreRows();
 
-  // Lazy load on scroll inside table
+  // Lazy load only after 10 scrolls
   scrollContainer.addEventListener("scroll", function () {
     if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
-      loadMoreRows();
+      scrollCount++;
+      if (scrollCount >= 10) {
+        loadMoreRows();
+        scrollCount = 0; // reset after loading
+      }
     }
   });
 
@@ -115,6 +120,7 @@
     let filter = this.value.toLowerCase();
     displayBody.innerHTML = "";
     currentIndex = 0;
+    scrollCount = 0;
 
     filteredRows = allRows.filter(row => row.innerText.toLowerCase().includes(filter));
     loadMoreRows();
