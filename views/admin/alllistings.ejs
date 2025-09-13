@@ -30,7 +30,7 @@
         </thead>
 
         <!-- Hidden rows (all users) -->
-        <tbody id="userBodyAll" style="display: none;">
+        <tbody id="userBodyAll" style="display:none;">
           <% if (listings && listings.length > 0) { %>
             <% listings.forEach((listing, index) => { %>
               <tr>
@@ -82,7 +82,7 @@
   </div>
 </div>
 
-<!-- ✅ Script for Search + Lazy Loading + Scroll -->
+<!-- ✅ Script for Scroll + Lazy Load + Search -->
 <script>
   const allRows = Array.from(document.querySelectorAll("#userBodyAll tr"));
   const displayBody = document.getElementById("userBody");
@@ -103,14 +103,14 @@
   // Initial load
   loadMoreRows();
 
-  // Lazy load on scroll
+  // Lazy load on scroll inside table
   scrollContainer.addEventListener("scroll", function () {
-    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
+    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
       loadMoreRows();
     }
   });
 
-  // Search Function
+  // Search filter
   searchBox.addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     displayBody.innerHTML = "";
