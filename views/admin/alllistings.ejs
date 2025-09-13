@@ -28,9 +28,7 @@
             <th>Created At</th>
           </tr>
         </thead>
-
-        <!-- Hidden rows (all users) -->
-        <tbody id="userBodyAll" style="display:none;">
+        <tbody id="userBody">
           <% if (listings && listings.length > 0) { %>
             <% listings.forEach((listing, index) => { %>
               <tr>
@@ -74,56 +72,21 @@
             </tr>
           <% } %>
         </tbody>
-
-        <!-- Visible rows -->
-        <tbody id="userBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ✅ Script for Scroll + Lazy Load + Search -->
+<!-- ✅ Simple Search Filter -->
 <script>
-  const allRows = Array.from(document.querySelectorAll("#userBodyAll tr"));
-  const displayBody = document.getElementById("userBody");
-  const searchBox = document.getElementById("searchBox");
-  const scrollContainer = document.querySelector(".table-responsive");
-
-  let itemsPerLoad = 10;
-  let currentIndex = 0;
-  let filteredRows = allRows;
-  let scrollCount = 0; // counter for scrolls
-
-  function loadMoreRows() {
-    let nextIndex = currentIndex + itemsPerLoad;
-    let rowsToAdd = filteredRows.slice(currentIndex, nextIndex);
-    rowsToAdd.forEach(row => displayBody.appendChild(row.cloneNode(true)));
-    currentIndex = nextIndex;
-  }
-
-  // Initial load
-  loadMoreRows();
-
-  // Lazy load only after 10 scrolls
-  scrollContainer.addEventListener("scroll", function () {
-    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
-      scrollCount++;
-      if (scrollCount >= 10) {
-        loadMoreRows();
-        scrollCount = 0; // reset after loading
-      }
-    }
-  });
-
-  // Search filter
-  searchBox.addEventListener("keyup", function () {
+  document.getElementById("searchBox").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
-    displayBody.innerHTML = "";
-    currentIndex = 0;
-    scrollCount = 0;
+    let rows = document.querySelectorAll("#userBody tr");
 
-    filteredRows = allRows.filter(row => row.innerText.toLowerCase().includes(filter));
-    loadMoreRows();
+    rows.forEach(row => {
+      let text = row.innerText.toLowerCase();
+      row.style.display = text.includes(filter) ? "" : "none";
+    });
   });
 </script>
 
