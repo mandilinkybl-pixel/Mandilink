@@ -2,24 +2,28 @@
 
 <div class="main-content" id="mainContent">
   <div class="container-fluid mt-4">
-    <h3 class="mb-4">User Listings</h3>
+    <h3 class="mb-4">Company List</h3>
 
     <!-- Search Box -->
-    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search user...">
+    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search company...">
 
+    <!-- Scrollable container -->
     <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
       <table class="table table-bordered table-hover align-middle">
         <thead class="table-dark">
           <tr>
             <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
+            <th>Company Name</th>
+            <th>Contact Person</th>
             <th>Contact Number</th>
+            <th>Email</th>
+            <th>Address</th>
             <th>Category</th>
             <th>State</th>
             <th>District</th>
             <th>Mandi</th>
-            <th>Address</th>
+            <th>GST Number</th>
+            <th>License Number</th>
             <th>Status</th>
             <th>Action</th>
             <th>Verified</th>
@@ -28,71 +32,75 @@
           </tr>
         </thead>
 
-        <!-- ✅ All rows hidden here -->
-        <tbody id="userBodyAll" style="display: none;">
-          <% if (listings && listings.length > 0) { %>
-            <% listings.forEach((listing, index) => { %>
+        <!-- Hidden storage -->
+        <tbody id="companyBodyAll" style="display: none;">
+          <% if (companies && companies.length > 0) { %>
+            <% companies.forEach((company, index) => { %>
               <tr>
                 <td><%= index + 1 %></td>
-                <td><%= listing.name %></td>
-                <td><%= listing.email || '-' %></td>
-                <td><%= listing.contactNumber || '-' %></td>
-                <td><%= listing.category ? listing.category.name : '-' %></td>
-                <td><%= listing.state ? listing.state.name : '-' %></td>
-                <td><%= listing.district %></td>
-                <td><%= listing.mandi %></td>
-                <td><%= listing.address || '-' %></td>
+                <td><%= company.name %></td>
+                <td><%= company.contactPerson %></td>
+                <td><%= company.contactNumber %></td>
+                <td><%= company.email %></td>
+                <td><%= company.address %></td>
+                <td><%= company.category ? company.category.name : '-' %></td>
+                <td><%= company.state ? company.state.name : '-' %></td>
+                <td><%= company.district %></td>
+                <td><%= company.mandi %></td>
+                <td><%= company.gstNumber || '-' %></td>
+                <td><%= company.licenseNumber || '-' %></td>
                 <td>
-                  <% if (listing.isActive) { %>
+                  <% if (company.isActive) { %>
                     <span class="badge bg-success">Active</span>
                   <% } else { %>
                     <span class="badge bg-danger">Inactive</span>
                   <% } %>
                 </td>
                 <td>
-                  <% if (listing.isActive) { %>
-                    <a href="/admin/blockedlisting/block/<%= listing._id %>" class="btn btn-sm btn-danger">Block</a>
+                  <% if (company.isActive) { %>
+                    <a href="/admin/blockunblockcompany/block/<%= company._id %>" class="btn btn-sm btn-danger">Block</a>
                   <% } else { %>
-                    <a href="/admin/blockedlisting/unblock/<%= listing._id %>" class="btn btn-sm btn-success">Unblock</a>
+                    <a href="/admin/blockunblockcompany/unblock/<%= company._id %>" class="btn btn-sm btn-success">Unblock</a>
                   <% } %>
                 </td>
                 <td>
-                  <% if (listing.isVerified) { %>
+                  <% if (company.isVerified) { %>
                     <span class="badge bg-primary">Yes</span>
                   <% } else { %>
                     <span class="badge bg-secondary">No</span>
                   <% } %>
                 </td>
-                <td><%= listing.Verifybatch || '-' %></td>
-                <td><%= new Date(listing.createdAt).toLocaleDateString() %></td>
+                <td><%= company.Verifybatch || '-' %></td>
+                <td><%= new Date(company.createdAt).toLocaleDateString() %></td>
               </tr>
             <% }) %>
           <% } else { %>
-            <tr><td colspan="14" class="text-center">No listings found</td></tr>
+            <tr><td colspan="17" class="text-center">No companies found</td></tr>
           <% } %>
         </tbody>
 
-        <!-- ✅ Visible rows -->
-        <tbody id="userBody"></tbody>
+        <!-- Visible rows -->
+        <tbody id="companyBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ✅ Search + Lazy Loading Script -->
+<!-- ✅ Script for Search + Lazy Loading + Scroll -->
 <script>
-  const allUserRows = Array.from(document.querySelectorAll("#userBodyAll tr"));
-  const displayUserBody = document.getElementById("userBody");
+  const allRows = Array.from(document.querySelectorAll("#companyBodyAll tr"));
+  const displayBody = document.getElementById("companyBody");
   const searchBox = document.getElementById("searchBox");
+  const scrollContainer = document.querySelector(".table-responsive");
 
   let itemsPerLoad = 10;
   let currentIndex = 0;
-  let activeRows = allUserRows; // default to all rows
+  let filteredRows = allRows;
 
   function loadMoreRows() {
     let nextIndex = currentIndex + itemsPerLoad;
-    let rowsToAdd = activeRows.slice(currentIndex, nextIndex);
-    rowsToAdd.forEach(row => displayUserBody.appendChild(row.cloneNode(true)));
+    let rowsToAdd = filteredRows.slice(currentIndex, nextIndex);
+    rowsToAdd.forEach(row => displayBody.appendChild(row.cloneNode(true)));
     currentIndex = nextIndex;
   }
 
@@ -100,20 +108,19 @@
   loadMoreRows();
 
   // Lazy load on scroll
-  document.querySelector(".table-responsive").addEventListener("scroll", function () {
+  scrollContainer.addEventListener("scroll", function () {
     if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
       loadMoreRows();
     }
   });
 
-  // ✅ Search function
+  // Search Function
   searchBox.addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
-    displayUserBody.innerHTML = "";
+    displayBody.innerHTML = "";
     currentIndex = 0;
 
-    activeRows = allUserRows.filter(row => row.innerText.toLowerCase().includes(filter));
-
+    filteredRows = allRows.filter(row => row.innerText.toLowerCase().includes(filter));
     loadMoreRows();
   });
 </script>
