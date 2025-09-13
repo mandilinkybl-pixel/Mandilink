@@ -1,0 +1,94 @@
+<%- include('common/header') %>
+ <div class="main-content" id="mainContent">
+        <div class="container-fluid">
+            <div class="container mt-4">
+<div class="container mt-4">
+  <h3>Privacy Policies</h3>
+
+  <!-- Flash Messages -->
+  <% if (success_msg) { %>
+    <div class="alert alert-success"><%= success_msg %></div>
+  <% } %>
+  <% if (error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
+  <% } %>
+
+  <!-- Add / Edit Form -->
+  <form action="/admin/privacypolicy/save" method="POST" class="mb-4">
+    <% if (editPolicy) { %>
+      <input type="hidden" name="id" value="<%= editPolicy._id %>">
+    <% } %>
+
+    <div class="mb-3">
+      <label class="form-label">Title</label>
+      <input 
+        type="text" 
+        name="title" 
+        class="form-control" 
+        value="<%= editPolicy ? editPolicy.title : '' %>" 
+        required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Paragraphs</label>
+      <textarea 
+        name="paragraph" 
+        class="form-control" 
+        rows="5" 
+        required><%= editPolicy ? editPolicy.paragraph.join("\n") : '' %></textarea>
+      <small class="text-muted">
+        Write each paragraph on a new line. They will be stored as an array.
+      </small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      <%= editPolicy ? 'Update Policy' : 'Add Policy' %>
+    </button>
+    <% if (editPolicy) { %>
+      <a href="/admin/privacypolicy" class="btn btn-secondary">Cancel</a>
+    <% } %>
+  </form>
+
+  <!-- Policies List -->
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>Title</th>
+        <th>Paragraphs</th>
+        <th style="width: 180px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (policies.length > 0) { %>
+        <% policies.forEach(policy => { %>
+          <tr>
+            <td><%= policy.title %></td>
+            <td>
+              <ul class="mb-0">
+                <% policy.paragraph.forEach(p => { %>
+                  <li><%= p %></li>
+                <% }) %>
+              </ul>
+            </td>
+            <td>
+              <a href="/admin/privacypolicy?editId=<%= policy._id %>" class="btn btn-warning btn-sm">
+                Edit
+              </a>
+              <a href="/admin/privacypolicy/delete/<%= policy._id %>" 
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('Are you sure you want to delete this policy?');">
+                Delete
+              </a>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr>
+          <td colspan="3" class="text-center">No policies found.</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('common/footer') %>

@@ -14,16 +14,17 @@ const LikeSchema = new Schema({
 
 // authorType can be 'User' or 'SecureEmployee'
 const BlogPostSchema = new Schema({
-  title:     { type: String, required: true },
-  content:   { type: String, required: true },
-  image:     { type: String },
-  author:    { type: Schema.Types.ObjectId, required: true },
-  authorType:{ type: String, required: true, enum: ['User', 'SecureEmployee'] },
-  tags:      [String],
-  comments:  [CommentSchema],
-  likes:     [LikeSchema],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  title:      { type: String, required: true },
+  content:    { type: String, required: true },
+  image:      { type: String },
+  author:     { type: Schema.Types.ObjectId, required: true },
+  authorType: { type: String, required: true, enum: ['User', 'SecureEmployee'] },
+  category:   { type: Schema.Types.ObjectId, ref: 'Category', required: true }, // ✅ Added category reference
+  tags:       [String],
+  comments:   [CommentSchema],
+  likes:      [LikeSchema],
+  createdAt:  { type: Date, default: Date.now },
+  updatedAt:  { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // Dynamic reference for author

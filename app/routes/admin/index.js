@@ -24,5 +24,8 @@ app.use('/state', require('./state.routes.js'));
 app.use('/companylist', require('./company.js'));
 app.use('/mandirate', require('./mandirate.js'));
 app.use('/userlist', require('./listing.js'));
+app.use('/privacypolicy', require('./privacypolicy.js'));
+app.use("/blockunblockcompany",require('./BlockUnblockCompanyController.js'))
+app.use('/blockedlisting', require('./blockedlisting.js'));
 
 module.exports = app;

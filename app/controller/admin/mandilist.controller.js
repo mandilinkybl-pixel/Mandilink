@@ -13,30 +13,43 @@ function formatName(name) {
 
 class MandiController {
   // Show all mandis
-  getMandis = async (req, res) => {
-    try {
-      const mandis = await Mandi.find()
-        .populate("state")
-        .sort({ createdAt: 1 }); // ascending order
-
-      const states = await State.find();
-      const user = req.user;
-      const userdetails = await SecureEmployee.findById(user.id);
-
-      res.render("admin/mandi", {
-        mandis,
-        states,
-        userdetails,
-        user,
-        success_msg: req.flash("success_msg"),
-        error_msg: req.flash("error_msg"),
-      });
-    } catch (err) {
-      console.error(err);
-      req.flash("error_msg", "Error loading mandi list");
-      res.redirect("/admin");
+ getMandis = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !user.id) {
+      req.flash("error_msg", "Unauthorized user");
+      return res.redirect("/admin");
     }
-  };
+
+    // 🔹 Update mandis that don't have user_id
+    await Mandi.updateMany(
+      { $or: [{ user_id: { $exists: false } }, { user_id: null }] },
+      { $set: { user_id: user.id } }
+    );
+
+    // Fetch updated mandis
+    const mandis = await Mandi.find()
+      .populate("state")
+      .sort({ createdAt: 1 });
+
+    const states = await State.find();
+    const userdetails = await SecureEmployee.findById(user.id);
+
+    res.render("admin/mandi", {
+      mandis,
+      states,
+      userdetails,
+      user,
+      success_msg: req.flash("success_msg"),
+      error_msg: req.flash("error_msg"),
+    });
+  } catch (err) {
+    console.error("Error in getMandis:", err);
+    req.flash("error_msg", "Error loading mandi list");
+    res.redirect("/admin");
+  }
+};
+
 
   // Add multiple mandis (no duplicates, normalized names)
   addMandi = async (req, res) => {

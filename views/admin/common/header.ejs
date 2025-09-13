@@ -342,16 +342,16 @@
 <!-- Lists Collapsible Menu -->
 <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#listsMenu" role="button" aria-expanded="false" aria-controls="listsMenu">
     <i class="fas fa-list-ul nav-icon"></i>
-    <span class="nav-text flex-grow-1">Lists</span>
+    <span class="nav-text flex-grow-1">Listing</span>
 </a>
 <div class="collapse ms-2" id="listsMenu">
     <a href="/admin/companylist" class="d-flex align-items-center">
         <i class="fas fa-building nav-icon"></i>
-        <span class="nav-text">Company List</span>
+        <span class="nav-text">Business List</span>
     </a>
     <a href="/admin/userlist" class="d-flex align-items-center">
         <i class="fas fa-users nav-icon"></i>
-        <span class="nav-text">User List</span>
+        <span class="nav-text">Individual List</span>
     </a>
 </div>
 
@@ -381,19 +381,39 @@
 
 <!-- State/District Standalone Link -->
 
-        <!-- User Tab -->
-        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button" aria-expanded="false" aria-controls="userMenu">
-            <i class="fas fa-users nav-icon"></i>
-            <span class="nav-text flex-grow-1">User</span>
-        </a>
-        <div class="collapse ms-2" id="userMenu">
-            <a href="/admin/subroles" class="d-flex align-items-center"><i class="fas fa-user-shield nav-icon"></i><span class="nav-text">Subrole</span></a>
-            <a href="/admin/plans" class="d-flex align-items-center"><i class="fas fa-gem nav-icon"></i><span class="nav-text">Plans</span></a>
-        </div>
+       <!-- User Management -->
+<a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#userMenu" role="button">
+    <i class="fas fa-users nav-icon"></i>
+    <span class="nav-text flex-grow-1">User Management</span>
+</a>
+<div class="collapse ms-2" id="userMenu">
+
+    <!-- Individual Users -->
+    <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#individualUsers" role="button">
+        <i class="fas fa-user nav-icon"></i>
+        <span class="nav-text flex-grow-1">Individual Users</span>
+    </a>
+    <div class="collapse ms-3" id="individualUsers">
+        <a href="/admin/blockedlisting" class="d-flex align-items-center"><i class="fas fa-user nav-icon"></i><span class="nav-text">All Individual Users</span></a>
+        <a href="/admin/blockedlisting/blocked" class="d-flex align-items-center"><i class="fas fa-user-slash nav-icon"></i><span class="nav-text">Blocked</span></a>
+    </div>
+
+    <!-- Business Users -->
+    <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#businessUsers" role="button">
+        <i class="fas fa-building nav-icon"></i>
+        <span class="nav-text flex-grow-1">Business Users</span>
+    </a>
+    <div class="collapse ms-3" id="businessUsers">
+        <a href="/admin/blockunblockcompany" class="d-flex align-items-center"><i class="fas fa-user-tie nav-icon"></i><span class="nav-text">All Business Users</span></a>
+        <a href="/admin/blockunblockcompany/blocked" class="d-flex align-items-center"><i class="fas fa-user-slash nav-icon"></i><span class="nav-text">Blocked</span></a>
+    </div>
+
+</div>
+
         <!-- Employee Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#employeeMenu" role="button" aria-expanded="false" aria-controls="employeeMenu">
             <i class="fas fa-user-tie nav-icon"></i>
-            <span class="nav-text flex-grow-1">Employee</span>
+            <span class="nav-text flex-grow-1">Employee Management</span>
         </a>
         <div class="collapse ms-2" id="employeeMenu">
             <a href="/admin/employees" class="d-flex align-items-center"><i class="fas fa-user-tag nav-icon"></i><span class="nav-text">See Employees</span></a>
@@ -401,7 +421,7 @@
         <!-- Blog Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#blogMenu" role="button" aria-expanded="false" aria-controls="blogMenu">
             <i class="fas fa-blog nav-icon"></i>
-            <span class="nav-text flex-grow-1">Blog</span>
+            <span class="nav-text flex-grow-1">News & Updates</span>
         </a>
         <div class="collapse ms-2" id="blogMenu">
             <a href="/admin/blogs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Posts</span></a>
@@ -410,16 +430,35 @@
         <!-- Job Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#jobMenu" role="button" aria-expanded="false" aria-controls="jobMenu">
             <i class="fas fa-briefcase nav-icon"></i>
-            <span class="nav-text flex-grow-1">Job</span>
+            <span class="nav-text flex-grow-1">Job Management</span>
         </a>
         <div class="collapse ms-2" id="jobMenu">
             <a href="/admin/jobs" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">All Jobs</span></a>
             <a href="/admin/create-job" class="d-flex align-items-center"><i class="fas fa-plus nav-icon"></i><span class="nav-text">Add Job</span></a>
         </div>
+
+        <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#supportMenu" role="button" aria-expanded="false" aria-controls="supportMenu">
+    <i class="fas fa-headset nav-icon"></i>
+    <span class="nav-text flex-grow-1">Support & Complaints</span>
+</a>
+<div class="collapse ms-2" id="supportMenu">
+    <a href="#" class="d-flex align-items-center">
+        <i class="fas fa-ticket-alt nav-icon"></i>
+        <span class="nav-text">Support Desk</span>
+    </a>
+    <a href="#" class="d-flex align-items-center">
+        <i class="fas fa-list nav-icon"></i>
+        <span class="nav-text">List User Complaints</span>
+    </a>
+    <a href="#" class="d-flex align-items-center">
+        <i class="fas fa-tasks nav-icon"></i>
+        <span class="nav-text">Track Complaints Status</span>
+    </a>
+</div>
         <!-- Ads Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu">
             <i class="fas fa-ad nav-icon"></i>
-            <span class="nav-text flex-grow-1">Ads</span>
+            <span class="nav-text flex-grow-1">Promotion & Ads</span>
         </a>
         <div class="collapse ms-2" id="adsMenu">
             <a href="/admin/ads" class="d-flex align-items-center"><i class="fas fa-list nav-icon"></i><span class="nav-text">Add New Ads</span></a>
@@ -445,11 +484,16 @@
         </a>
         <div class="collapse ms-2" id="settingsMenu">
             <a href="#" class="d-flex align-items-center"><i class="fas fa-plug nav-icon"></i><span class="nav-text">APIs</span></a>
-            <a href="/admin/logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Password Update</span></a>
+            <a href="#" class="d-flex align-items-center"  disabled><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Password Update</span></a>
+            <a href="/admin/privacypolicy" class="d-flex align-items-center"  disabled><i class="fas fa-shield-alt nav-icon"></i><span class="nav-text">Privacy Policy</span></a>
         </div>
         <!-- Logout -->
         <a href="/admin/auth/admin-logout" class="d-flex align-items-center"><i class="fas fa-sign-out-alt nav-icon"></i><span class="nav-text">Logout</span></a>
     </div>
+
+
+ 
+
 
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>

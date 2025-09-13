@@ -16,7 +16,7 @@ router.post('/add', adminAuth, companyController.addUsers);
 router.post('/edit/:id', adminAuth, companyController.editUser);
 
 // Route to delete a user (POST /delete/:id)
-router.post('/delete/:id', adminAuth, companyController.deleteUser);
+router.get('/delete/:id', adminAuth, companyController.deleteUser);
 
 // Route to get districts by state ID (GET /districts/:stateId)
 router.get('/districts/:stateId', adminAuth, companyController.getDistricts);

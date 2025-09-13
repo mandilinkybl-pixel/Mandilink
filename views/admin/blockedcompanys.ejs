@@ -1,0 +1,138 @@
+<%- include('common/header') %>
+<div class="main-content" id="mainContent">
+  <div class="container-fluid mt-4">
+    <h3 class="mb-4">Blocked Company List</h3>
+
+    <!-- Search Box -->
+    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search company...">
+
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Company Name</th>
+            <th>Contact Person</th>
+            <th>Contact Number</th>
+            <th>Email</th>
+            <th>Address</th>
+            <th>Category</th>
+            <th>State</th>
+            <th>District</th>
+            <th>Mandi</th>
+            <th>GST Number</th>
+            <th>License Number</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Verified</th>
+            <th>Verify Batch</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <!-- ✅ Add hidden storage for all rows -->
+        <tbody id="companyBodyAll" style="display: none;">
+          <% if (companies && companies.length > 0) { %>
+            <% companies.forEach((company, index) => { %>
+              <tr>
+                <td><%= index + 1 %></td>
+                <td><%= company.name %></td>
+                <td><%= company.contactPerson %></td>
+                <td><%= company.contactNumber %></td>
+                <td><%= company.email %></td>
+                <td><%= company.address %></td>
+                <td><%= company.category ? company.category.name : '-' %></td>
+                <td><%= company.state ? company.state.name : '-' %></td>
+                <td><%= company.district %></td>
+                <td><%= company.mandi %></td>
+                <td><%= company.gstNumber || '-' %></td>
+                <td><%= company.licenseNumber || '-' %></td>
+                <td>
+                  <% if (company.isActive) { %>
+                    <span class="badge bg-success">Active</span>
+                  <% } else { %>
+                    <span class="badge bg-danger">Inactive</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (company.isActive) { %>
+                    <a href="/admin/blockunblockcompany/block/<%= company._id %>" class="btn btn-sm btn-danger">Block</a>
+                  <% } else { %>
+                    <a href="/admin/blockunblockcompany/unblock/<%= company._id %>" class="btn btn-sm btn-success">Unblock</a>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (company.isVerified) { %>
+                    <span class="badge bg-primary">Yes</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">No</span>
+                  <% } %>
+                </td>
+                <td><%= company.Verifybatch || '-' %></td>
+                <td><%= new Date(company.createdAt).toLocaleDateString() %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="17" class="text-center">No companies found</td>
+            </tr>
+          <% } %>
+        </tbody>
+
+        <!-- ✅ Visible rows -->
+        <tbody id="companyBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Script for Search + Lazy Loading -->
+<script>
+  const allRows = Array.from(document.querySelectorAll("#companyBodyAll tr"));
+  const displayBody = document.getElementById("companyBody");
+  const searchBox = document.getElementById("searchBox");
+
+  let itemsPerLoad = 10; // how many rows per batch
+  let currentIndex = 0;
+
+  function loadMoreRows() {
+    let nextIndex = currentIndex + itemsPerLoad;
+    let rowsToAdd = allRows.slice(currentIndex, nextIndex);
+    rowsToAdd.forEach(row => displayBody.appendChild(row.cloneNode(true)));
+    currentIndex = nextIndex;
+  }
+
+  // Initial load
+  loadMoreRows();
+
+  // Lazy load on scroll
+  document.querySelector(".table-responsive").addEventListener("scroll", function () {
+    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
+      loadMoreRows();
+    }
+  });
+
+  // ✅ Search Function
+  searchBox.addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    displayBody.innerHTML = ""; // clear visible rows
+    currentIndex = 0;
+
+    let filteredRows = allRows.filter(row => row.innerText.toLowerCase().includes(filter));
+    filteredRows.slice(0, itemsPerLoad).forEach(row => displayBody.appendChild(row.cloneNode(true)));
+
+    // update allRows temporarily for scrolling
+    window.filteredRows = filteredRows;
+    currentIndex = itemsPerLoad;
+
+    document.querySelector(".table-responsive").addEventListener("scroll", function () {
+      if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
+        let nextIndex = currentIndex + itemsPerLoad;
+        let rowsToAdd = (window.filteredRows || allRows).slice(currentIndex, nextIndex);
+        rowsToAdd.forEach(row => displayBody.appendChild(row.cloneNode(true)));
+        currentIndex = nextIndex;
+      }
+    });
+  });
+</script>
+
+<%- include('common/footer') %>

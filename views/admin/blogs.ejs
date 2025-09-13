@@ -2,33 +2,46 @@
 
 <div class="main-content" id="mainContent">
   <div class="container py-5">
-    <h1 class="mb-5 text-center fw-bold text-dark">All Blogs</h1>
-<% if (typeof message !== "undefined" && message) { %>
-  <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top:20px;">
-    <%= message %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<% } %>
-<% if (typeof error !== "undefined" && error) { %>
-  <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top:20px;">
-    <%= error %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<% } %>
-    <!-- Search and Filter Controls -->
+    <h1 class="mb-5 text-center fw-bold text-dark">All News</h1>
+
+    <% if (typeof message !== "undefined" && message) { %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top:20px;">
+        <%= message %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top:20px;">
+        <%= error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>
+
+    <!-- Filters -->
     <div class="row mb-5">
-      <div class="col-md-6 mb-3 mb-md-0">
+      <div class="col-md-4 mb-3 mb-md-0">
         <div class="input-group shadow-sm">
           <input type="text" id="searchInput" class="form-control rounded-start" placeholder="Search by title, content, tags, or author..." style="border-color: #e0e0e0;">
           <button class="btn btn-primary rounded-end" type="button" id="searchBtn">Search</button>
         </div>
       </div>
-      <div class="col-md-6">
+
+      <div class="col-md-4 mb-3 mb-md-0">
         <div class="input-group shadow-sm">
           <input type="date" id="startDate" class="form-control" placeholder="Start Date" style="border-color: #e0e0e0;">
           <input type="date" id="endDate" class="form-control ms-2" placeholder="End Date" style="border-color: #e0e0e0;">
           <button class="btn btn-primary ms-2 rounded" type="button" id="dateFilterBtn">Filter by Date</button>
         </div>
+      </div>
+
+      <div class="col-md-4">
+        <select id="categoryFilter" class="form-select shadow-sm">
+          <option value="">All Categories</option>
+          <% categories.forEach(cat => { %>
+            <option value="<%= cat._id %>"><%= cat.name %></option>
+          <% }) %>
+        </select>
       </div>
     </div>
 
@@ -43,10 +56,10 @@
              data-content="<%= blog.content.toLowerCase() %>" 
              data-tags="<%= blog.tags.join(',').toLowerCase() %>" 
              data-author="<%= blog.author_doc ? blog.author_doc.name.toLowerCase() : 'unknown' %>" 
-             data-date="<%= blog.createdAt.toISOString().split('T')[0] %>">
+             data-date="<%= blog.createdAt.toISOString().split('T')[0] %>"
+             data-category="<%= blog.category ? blog.category._id : '' %>">
           <div class="card shadow rounded-3 border-0 h-100" style="transition: transform 0.2s;">
-            
-            <!-- Author Info (Instagram-like) -->
+            <!-- Author -->
             <div class="card-header bg-light d-flex align-items-center border-0 p-3">
               <img src="https://ui-avatars.com/api/?name=<%= blog.author_doc ? blog.author_doc.name : 'User' %>&background=random" 
                    class="rounded-circle me-3" width="50" height="50" alt="Author">
@@ -56,12 +69,10 @@
               </div>
             </div>
 
-            <!-- Blog Image -->
             <% if (blog.image) { %>
               <img src="<%= blog.image %>" class="card-img-top img-fluid" style="object-fit: cover; height: 250px;" alt="Blog Image">
             <% } %>
 
-            <!-- Blog Body -->
             <div class="card-body p-4">
               <h5 class="card-title fw-bold text-dark"><%= blog.title %></h5>
               <p class="card-text text-secondary" style="font-size: 0.95rem;"><%= blog.content %></p>
@@ -72,30 +83,19 @@
               </div>
             </div>
 
-            <!-- Actions -->
             <div class="card-footer bg-light d-flex justify-content-between align-items-center border-0 p-3">
               <div class="d-flex align-items-center">
-                <button class="btn btn-link text-danger p-0 me-3" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#likesModal<%= index %>">
+                <button class="btn btn-link text-danger p-0 me-3" data-bs-toggle="modal" data-bs-target="#likesModal<%= index %>">
                   ❤️ <span><%= blog.likes.length %></span>
                 </button>
-                <button class="btn btn-link text-muted p-0 me-3" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#commentsModal<%= index %>">
+                <button class="btn btn-link text-muted p-0 me-3" data-bs-toggle="modal" data-bs-target="#commentsModal<%= index %>">
                   💬 <span><%= blog.comments.length %></span>
                 </button>
-                <button class="btn btn-link text-primary p-0">
-                  🔗 Share
-                </button>
+                <button class="btn btn-link text-primary p-0">🔗 Share</button>
               </div>
               <div>
-                <button class="btn btn-sm btn-outline-warning me-2" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editModal<%= index %>">
-                  Edit
-                </button>
-                <form action="/admin/blogs/delete/<%= blog._id %>" method="Post" class="d-inline">
+                <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#editModal<%= index %>">Edit</button>
+                <form action="/admin/blogs/delete/<%= blog._id %>" method="POST" class="d-inline">
                   <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this blog?')">Delete</button>
                 </form>
               </div>
@@ -111,84 +111,47 @@
                 <h5 class="modal-title" id="editModalLabel<%= index %>">Edit Blog</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-            <form action="/admin/blogs/<%= blog._id %>?_method=PUT" method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
-  <div class="mb-3">
-    <label class="form-label">Title</label>
-    <input type="text" name="title" value="<%= blog.title %>" class="form-control" required>
-  </div>
+              <form action="/admin/blogs/<%= blog._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" value="<%= blog.title %>" class="form-control" required>
+                  </div>
 
-  <div class="mb-3">
-    <label class="form-label">Content</label>
-    <textarea name="content" rows="5" class="form-control" required><%= blog.content %></textarea>
-  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Content</label>
+                    <textarea name="content" rows="5" class="form-control" required><%= blog.content %></textarea>
+                  </div>
 
-  <div class="mb-3">
-    <label class="form-label">Tags</label>
-    <input type="text" name="tags" value="<%= blog.tags.join(', ') %>" class="form-control">
-  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Tags</label>
+                    <input type="text" name="tags" value="<%= blog.tags.join(', ') %>" class="form-control">
+                  </div>
 
-  <div class="mb-3">
-    <label class="form-label">Current Image</label><br>
-    <% if (blog.image) { %>
-      <img src="<%= blog.image %>" width="120" class="mb-2 rounded">
-    <% } else { %>
-      <span class="text-muted">No Image</span>
-    <% } %>
-    <input type="file" name="image" class="form-control mt-2" accept="image/*">
-  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                      <% categories.forEach(cat => { %>
+                        <option value="<%= cat._id %>" <%= blog.category && blog.category._id.toString() === cat._id.toString() ? 'selected' : '' %>><%= cat.name %></option>
+                      <% }) %>
+                    </select>
+                  </div>
 
-  <button type="submit" class="btn btn-primary">Update Blog</button>
-  <a href="/admin/blogs" class="btn btn-secondary">Cancel</a>
-</form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Likes Modal -->
-        <div class="modal fade" id="likesModal<%= index %>" tabindex="-1" aria-labelledby="likesModalLabel<%= index %>" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="likesModalLabel<%= index %>">Likes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <% if (blog.likes.length === 0) { %>
-                  <p class="text-muted">No likes yet.</p>
-                <% } else { %>
-                  <ul class="list-group list-group-flush">
-                    <% blog.likes.forEach(like => { %>
-                      <li class="list-group-item"><%= like.user_name || 'Anonymous' %></li>
-                    <% }) %>
-                  </ul>
-                <% } %>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Comments Modal -->
-        <div class="modal fade" id="commentsModal<%= index %>" tabindex="-1" aria-labelledby="commentsModalLabel<%= index %>" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel<%= index %>">Comments</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <% if (blog.comments.length === 0) { %>
-                  <p class="text-muted">No comments yet.</p>
-                <% } else { %>
-                  <ul class="list-group list-group-flush">
-                    <% blog.comments.forEach(comment => { %>
-                      <li class="list-group-item">
-                        <strong><%= comment.user_name || 'Anonymous' %>:</strong> <%= comment.text %>
-                        <small class="text-muted d-block mt-1"><%= comment.createdAt.toDateString() %></small>
-                      </li>
-                    <% }) %>
-                  </ul>
-                <% } %>
-              </div>
+                  <div class="mb-3">
+                    <label class="form-label">Current Image</label><br>
+                    <% if (blog.image) { %>
+                      <img src="<%= blog.image %>" width="120" class="mb-2 rounded">
+                    <% } else { %>
+                      <span class="text-muted">No Image</span>
+                    <% } %>
+                    <input type="file" name="image" class="form-control mt-2" accept="image/*">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Update Blog</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -200,20 +163,19 @@
 <%- include('common/footer') %>
 
 <script>
-
-
-  // Client-side search functionality
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
   const startDateInput = document.getElementById('startDate');
   const endDateInput = document.getElementById('endDate');
   const dateFilterBtn = document.getElementById('dateFilterBtn');
+  const categoryFilter = document.getElementById('categoryFilter');
   const blogCards = document.querySelectorAll('.blog-card');
 
   function filterBlogs() {
     const searchTerm = searchInput.value.toLowerCase();
     const startDate = startDateInput.value;
     const endDate = endDateInput.value;
+    const selectedCategory = categoryFilter.value;
 
     blogCards.forEach(card => {
       const title = card.dataset.title;
@@ -221,43 +183,31 @@
       const tags = card.dataset.tags;
       const author = card.dataset.author;
       const date = card.dataset.date;
+      const category = card.dataset.category;
 
-      // Keyword search
-      const matchesSearch = !searchTerm || 
-        title.includes(searchTerm) || 
-        content.includes(searchTerm) || 
-        tags.includes(searchTerm) || 
+      const matchesSearch = !searchTerm ||
+        title.includes(searchTerm) ||
+        content.includes(searchTerm) ||
+        tags.includes(searchTerm) ||
         author.includes(searchTerm);
 
-      // Date filter
       let matchesDate = true;
       if (startDate && date < startDate) matchesDate = false;
       if (endDate && date > endDate) matchesDate = false;
 
-      if (matchesSearch && matchesDate) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
+      let matchesCategory = !selectedCategory || category === selectedCategory;
+
+      card.style.display = (matchesSearch && matchesDate && matchesCategory) ? 'block' : 'none';
     });
   }
 
-  // Trigger filter on search button click or input change
   searchBtn.addEventListener('click', filterBlogs);
   dateFilterBtn.addEventListener('click', filterBlogs);
   searchInput.addEventListener('input', filterBlogs);
+  categoryFilter.addEventListener('change', filterBlogs);
 
-  // Add hover effect for blog cards
   document.querySelectorAll('.blog-card .card').forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'scale(1.02)';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'scale(1)';
-    });
+    card.addEventListener('mouseenter', () => card.style.transform = 'scale(1.02)');
+    card.addEventListener('mouseleave', () => card.style.transform = 'scale(1)');
   });
-
 </script>
-
-</body>
-</html>

@@ -1,0 +1,95 @@
+<%- include('common/header') %>
+
+<div class="main-content" id="mainContent">
+  <div class="container-fluid mt-4">
+    <h3 class="mb-4">User Listings</h3>
+
+    <!-- Flash Messages -->
+  
+
+    <!-- Search Box -->
+    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search listing...">
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Contact Number</th>
+            <th>Category</th>
+            <th>State</th>
+            <th>District</th>
+            <th>Mandi</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Verified</th>
+            <th>Verify Batch</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody id="listingBody">
+          <% if (listings && listings.length > 0) { %>
+            <% listings.forEach((listing, index) => { %>
+              <tr>
+                <td><%= index + 1 %></td>
+                <td><%= listing.name %></td>
+                <td><%= listing.email || '-' %></td>
+                <td><%= listing.contactNumber %></td>
+                <td><%= listing.category ? listing.category.name : '-' %></td>
+                <td><%= listing.state ? listing.state.name : '-' %></td>
+                <td><%= listing.district %></td>
+                <td><%= listing.mandi %></td>
+                <td><%= listing.address || '-' %></td>
+                <td>
+                  <% if (listing.isActive) { %>
+                    <span class="badge bg-success">Active</span>
+                  <% } else { %>
+                    <span class="badge bg-danger">Inactive</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (listing.isActive) { %>
+                    <a href="/admin/blockedlisting/block/<%= listing._id %>" class="btn btn-sm btn-danger">Block</a>
+                  <% } else { %>
+                    <a href="/admin/blockedlisting/unblock/<%= listing._id %>" class="btn btn-sm btn-success">Unblock</a>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (listing.isVerified) { %>
+                    <span class="badge bg-primary">Yes</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">No</span>
+                  <% } %>
+                </td>
+                <td><%= listing.Verifybatch || '-' %></td>
+                <td><%= new Date(listing.createdAt).toLocaleDateString() %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="14" class="text-center">No listings found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Search filter -->
+<script>
+  document.getElementById("searchBox").addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#listingBody tr");
+
+    rows.forEach(row => {
+      let text = row.innerText.toLowerCase();
+      row.style.display = text.includes(filter) ? "" : "none";
+    });
+  });
+</script>
+
+<%- include('common/footer') %>

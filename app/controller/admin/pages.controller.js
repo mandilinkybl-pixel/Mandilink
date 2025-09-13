@@ -1,7 +1,9 @@
 
 
+const SecureEmployee = require("../../models/adminEmployee");
 const Sechueemploueeschema=require("../../models/adminEmployee");
 const BlogPost = require("../../models/blog");
+const categoryModel = require("../../models/category.model");
 const commodityname = require("../../models/commodityname");
 const Job = require("../../models/job");
 const mandirates = require("../../models/mandirates");
@@ -51,21 +53,35 @@ class PagesController {
 
 
         async getAllBlogs(req, res) {
-            try {
+  try {
+    const user = req.user; // Current logged-in user
+    const userdetails = await SecureEmployee.findById(user.id);
 
-                const user = req.user; // Access user data from middleware
-               const userdetails = await Sechueemploueeschema.findById(user.id);
-             const blogs = await BlogPost.find().populate({ path: 'author_doc',select: 'name email'})
-  .sort({ createdAt: -1 });
-                // console.log(blogs)
+    // Fetch blogs with author and category populated
+    const blogs = await BlogPost.find()
+      .populate({ path: "author_doc", select: "name email" })
+      .populate({ path: "category", select: "name" })
+      .sort({ createdAt: -1 })
+      .lean();
 
-              res.render('admin/blogs', { count: blogs.length, blogs, user, userdetails ,  message: req.query.message,
-    error: req.query.error});
-            } catch (error) {
-                console.error("Error fetching blogs:", error);
-              res.status(500).json({ message: "Error fetching blogs", error: error.message });
-            }
-          }
+    // Fetch active categories for dropdown
+    const categories = await categoryModel.find({ status: "active" }).lean();
+
+    // Render EJS with blogs + categories
+    res.render("admin/blogs", {
+      count: blogs.length,
+      blogs,
+      categories,
+      user,
+      userdetails,
+      message: req.query.message,
+      error: req.query.error,
+    });
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    res.status(500).json({ message: "Error fetching blogs", error: error.message });
+  }
+}
 
           async getBlogById(req, res) {
             const { id } = req.params;
@@ -83,7 +99,10 @@ class PagesController {
           async createblog(req, res) {
             const user = req.user; // Access user data from middleware
             const userdetails = await Sechueemploueeschema.findById(user.id);
-            res.render('admin/blogpost', { user, userdetails });
+
+            const categories = await categoryModel.find({ status: "active" }).lean();
+
+            res.render('admin/blogpost', { user, userdetails,categories  });
           }
 
           async rolecreate(req, res) {

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const userschema = new mongoose.Schema({
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "SecureEmployee", required: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "SecureEmployee" },
   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
   state: { type: mongoose.Schema.Types.ObjectId, ref: "State", required: true },
   district: { type: String, required: true, trim: true },
@@ -10,7 +10,13 @@ const userschema = new mongoose.Schema({
 
   name: { type: String, required: true, trim: true },
   address: { type: String },
+  password: { type: String },
+  email: { type: String, trim: true },
   contactNumber: { type: String, required: true, trim: true },
+  isActive: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false },
+  Verifybatch: { type: String, enum: ["batch1", "batch2", "batch3", "batch4"], trim: true }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("LISTING", userschema);

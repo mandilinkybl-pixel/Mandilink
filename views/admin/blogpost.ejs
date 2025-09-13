@@ -1,43 +1,55 @@
 <%- include('common/header') %>
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-       <div class="container-fluid">
-<h1 class="mb-3">Create Blog</h1>
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+   <div class="container-fluid">
+      <h1 class="mb-3">Create News</h1>
 
-<form action="/admin/blogs/create" method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
-  <div class="mb-3">
-    <label class="form-label">Title</label>
-    <input type="text" name="title" class="form-control" required>
-  </div>
+      <form action="/admin/blogs/create" method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        <div class="mb-3">
+          <label class="form-label">Title</label>
+          <input type="text" name="title" class="form-control" required>
+        </div>
 
-  <div class="mb-3">
-    <label class="form-label">Content</label>
-    <textarea name="content" rows="5" class="form-control" required></textarea>
-  </div>
+        <div class="mb-3">
+          <label class="form-label">Content</label>
+          <textarea name="content" rows="5" class="form-control" required></textarea>
+        </div>
 
-  <div class="mb-3">
-    <label class="form-label">Tags (comma separated)</label>
-    <input type="text" name="tags" class="form-control">
-  </div>
+        <div class="mb-3">
+          <label class="form-label">Tags (comma separated)</label>
+          <input type="text" name="tags" class="form-control">
+        </div>
 
-  <div class="mb-3">
-    <label class="form-label">Author Type</label>
-    <input type="text" name="authorType" class="form-control" value="SecureEmployee" required>
-  </div>
+        <div class="mb-3">
+          <label class="form-label">Category</label>
+          <select name="category" class="form-control" required>
+            <option value="">Select Category</option>
+            <% if (categories && categories.length > 0) { %>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat._id %>"><%= cat.name %></option>
+              <% }) %>
+            <% } %>
+          </select>
+        </div>
 
-  <div class="mb-3">
-    <label class="form-label">Author ID</label>
-    <input type="text" name="author" class="form-control" value="<%= user.id %>" required>
-  </div>
+        <div class="mb-3">
+          <label class="form-label">Author Type</label>
+          <input type="text" name="authorType" class="form-control" value="SecureEmployee" required>
+        </div>
 
-  <div class="mb-3">
-    <label class="form-label">Image</label>
-    <input type="file" name="image" class="form-control" accept="image/*">
-  </div>
+        <div class="mb-3">
+          <label class="form-label">Author ID</label>
+          <input type="text" name="author" class="form-control" value="<%= user.id %>" required>
+        </div>
 
-  <button type="submit" class="btn btn-success">Create Blog</button>
-  <a href="/admin/blogs" class="btn btn-secondary">Cancel</a>
-</form>
-       </div>
-    </div>
-  <%- include('common/footer') %>
+        <div class="mb-3">
+          <label class="form-label">Image</label>
+          <input type="file" name="image" class="form-control" accept="image/*">
+        </div>
+
+        <button type="submit" class="btn btn-success">Create Blog</button>
+        <a href="/admin/blogs" class="btn btn-secondary">Cancel</a>
+      </form>
+   </div>
+</div>
+<%- include('common/footer') %>
