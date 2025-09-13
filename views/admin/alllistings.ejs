@@ -4,9 +4,6 @@
   <div class="container-fluid mt-4">
     <h3 class="mb-4">User Listings</h3>
 
-    <!-- Flash Messages -->
-  
-
     <!-- Search Box -->
     <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search listing...">
 
@@ -33,11 +30,11 @@
         <tbody id="listingBody">
           <% if (listings && listings.length > 0) { %>
             <% listings.forEach((listing, index) => { %>
-              <tr>
+              <tr class="listing-row">
                 <td><%= index + 1 %></td>
                 <td><%= listing.name %></td>
                 <td><%= listing.email || '-' %></td>
-                <td><%= listing.contactNumber %></td>
+                <td><%= listing.contactNumber || '-' %></td>
                 <td><%= listing.category ? listing.category.name : '-' %></td>
                 <td><%= listing.state ? listing.state.name : '-' %></td>
                 <td><%= listing.district %></td>
@@ -76,14 +73,54 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="text-center mt-3" style="display:none;">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Loading...</p>
+    </div>
   </div>
 </div>
 
-<!-- ✅ Search filter -->
 <script>
+  const rows = document.querySelectorAll(".listing-row");
+  const listingBody = document.getElementById("listingBody");
+  const loading = document.getElementById("loading");
+
+  let itemsPerPage = 20; // load 20 at a time
+  let currentPage = 1;
+
+  function renderPage() {
+    rows.forEach((row, index) => {
+      if (index < currentPage * itemsPerPage) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  }
+
+  // Initial render
+  renderPage();
+
+  // Lazy load on scroll
+  window.addEventListener("scroll", () => {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+      if (currentPage * itemsPerPage < rows.length) {
+        loading.style.display = "block";
+        setTimeout(() => {
+          currentPage++;
+          renderPage();
+          loading.style.display = "none";
+        }, 500);
+      }
+    }
+  });
+
+  // Search filter
   document.getElementById("searchBox").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#listingBody tr");
+    currentPage = 1;
 
     rows.forEach(row => {
       let text = row.innerText.toLowerCase();
