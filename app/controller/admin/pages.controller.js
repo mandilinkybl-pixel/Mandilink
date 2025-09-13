@@ -10,8 +10,10 @@ const mandirates = require("../../models/mandirates");
 const plan = require("../../models/plan");
 const Subrole = require("../../models/subrole");
 const Ad = require("../../models/topads");
+const listing = require("../../models/lisingSchema");
+const companylisting = require("../../models/companylisting");
 class PagesController {
-      async index(req, res) {
+    async index(req, res) {
 
       const user = req.user; // Access user data from middleware
         const userdetails = await Sechueemploueeschema.findById(user.id);
