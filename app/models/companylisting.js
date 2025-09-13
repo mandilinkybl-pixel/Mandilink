@@ -11,7 +11,7 @@ const companySchema = new mongoose.Schema({
   address: { type: String, required: true, trim: true },
   contactPerson: { type: String, required: true, trim: true },
   contactNumber: { type: String, required: true, trim: true },
-  email: { type: String, required: true, trim: true , unique: true, sparse: true },
+  email: { type: String,  trim: true , unique: true, sparse: true },
   gstNumber: { type: String,  trim: true, unique: true, sparse: true },
   licenseNumber: { type: String, trim: true, unique: true, sparse: true },
   isActive: { type: Boolean, default: true },
