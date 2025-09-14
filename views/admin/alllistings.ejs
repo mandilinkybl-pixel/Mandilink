@@ -4,13 +4,11 @@
   <div class="container-fluid mt-4">
     <h3 class="mb-4">User Listings</h3>
 
-    <!-- Flash Messages -->
-  
-
     <!-- Search Box -->
-    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search listing...">
+    <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search user...">
 
-    <div class="table-responsive">
+    <!-- Scrollable Table -->
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
       <table class="table table-bordered table-hover align-middle">
         <thead class="table-dark">
           <tr>
@@ -30,14 +28,16 @@
             <th>Created At</th>
           </tr>
         </thead>
-        <tbody id="listingBody">
+
+        <!-- Hidden rows (all users) -->
+        <tbody id="userBodyAll" style="display:none;">
           <% if (listings && listings.length > 0) { %>
             <% listings.forEach((listing, index) => { %>
               <tr>
                 <td><%= index + 1 %></td>
                 <td><%= listing.name %></td>
                 <td><%= listing.email || '-' %></td>
-                <td><%= listing.contactNumber %></td>
+                <td><%= listing.contactNumber || '-' %></td>
                 <td><%= listing.category ? listing.category.name : '-' %></td>
                 <td><%= listing.state ? listing.state.name : '-' %></td>
                 <td><%= listing.district %></td>
@@ -70,25 +70,54 @@
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="14" class="text-center">No listings found</td>
+              <td colspan="14" class="text-center">No users found</td>
             </tr>
           <% } %>
         </tbody>
+
+        <!-- Visible rows -->
+        <tbody id="userBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ✅ Search filter -->
+<!-- ✅ Script for Scroll + Lazy Load + Search -->
 <script>
-  document.getElementById("searchBox").addEventListener("keyup", function () {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#listingBody tr");
+  const allRows = Array.from(document.querySelectorAll("#userBodyAll tr"));
+  const displayBody = document.getElementById("userBody");
+  const searchBox = document.getElementById("searchBox");
+  const scrollContainer = document.querySelector(".table-responsive");
 
-    rows.forEach(row => {
-      let text = row.innerText.toLowerCase();
-      row.style.display = text.includes(filter) ? "" : "none";
-    });
+  let itemsPerLoad = 10;
+  let currentIndex = 0;
+  let filteredRows = allRows;
+
+  function loadMoreRows() {
+    let nextIndex = currentIndex + itemsPerLoad;
+    let rowsToAdd = filteredRows.slice(currentIndex, nextIndex);
+    rowsToAdd.forEach(row => displayBody.appendChild(row.cloneNode(true)));
+    currentIndex = nextIndex;
+  }
+
+  // Initial load
+  loadMoreRows();
+
+  // Lazy load on scroll inside table
+  scrollContainer.addEventListener("scroll", function () {
+    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 5) {
+      loadMoreRows();
+    }
+  });
+
+  // Search filter
+  searchBox.addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    displayBody.innerHTML = "";
+    currentIndex = 0;
+
+    filteredRows = allRows.filter(row => row.innerText.toLowerCase().includes(filter));
+    loadMoreRows();
   });
 </script>
 

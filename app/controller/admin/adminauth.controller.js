@@ -44,9 +44,9 @@ class AdminAuthController {
   try {
     const { email, password } = req.body;
 
-    console.log("Admin login attempt:", email);
+    // console.log("Admin login attempt:", email);
     const admin = await SecureEmployee.findOne({ email, role: "admin" });
-    console.log("Admin found:", admin);
+    // console.log("Admin found:", admin);
     if (!admin) {
       return res.redirect("/admin/login");
     }

@@ -1,0 +1,122 @@
+<%- include('common/header') %>
+
+<div class="main-content" id="mainContent">
+  <div class="container mt-4">
+
+    <% if (success_msg) { %>
+      <div class="alert alert-success alert-dismissible fade show">
+        <%= success_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+    <% if (error_msg) { %>
+      <div class="alert alert-danger alert-dismissible fade show">
+        <%= error_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+
+    <h3>Send Push Notification</h3>
+    <form action="/admin/notifications/send" method="POST">
+
+      <!-- Category -->
+      <div class="mb-3">
+        <label>Category</label>
+        <select name="category" class="form-select" required>
+          <option value="all">All Categories</option>
+          <% categories.forEach(c => { %>
+            <option value="<%= c._id %>"><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- States -->
+      <div class="mb-3">
+        <label>States (multi-select)</label>
+        <select id="stateSelect" name="states[]" class="form-select" multiple>
+          <% states.forEach(s => { %>
+            <option value="<%= s._id %>"><%= s.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <!-- Districts -->
+      <div class="mb-3">
+        <label>Districts (multi-select)</label>
+        <select id="districtSelect" name="districts[]" class="form-select" multiple></select>
+      </div>
+
+      <!-- Mandis -->
+      <div class="mb-3">
+        <label>Mandis (multi-select)</label>
+        <select id="mandiSelect" name="mandis[]" class="form-select" multiple></select>
+      </div>
+
+      <!-- Title -->
+      <div class="mb-3">
+        <label>Title</label>
+        <input type="text" name="title" class="form-control" required>
+      </div>
+
+      <!-- Message -->
+      <div class="mb-3">
+        <label>Message</label>
+        <textarea name="body" class="form-control" required></textarea>
+      </div>
+
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="sendToAll" value="true">
+        <label class="form-check-label">Send to ALL users</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  const stateSelect = document.getElementById('stateSelect');
+  const districtSelect = document.getElementById('districtSelect');
+  const mandiSelect = document.getElementById('mandiSelect');
+
+  // Load districts
+  stateSelect.addEventListener('change', async () => {
+    const selectedStates = Array.from(stateSelect.selectedOptions).map(opt => opt.value);
+    districtSelect.innerHTML = "";
+    mandiSelect.innerHTML = "";
+    if (!selectedStates.length) return;
+
+    const res = await fetch(`/admin/notifications/districts?ids=${selectedStates.join(',')}`);
+    const districts = await res.json();
+    districts.forEach(d => {
+      const option = document.createElement('option');
+      option.value = d;
+      option.textContent = d;
+      districtSelect.appendChild(option);
+    });
+  });
+
+  // Load mandis
+  districtSelect.addEventListener('change', async () => {
+    const selectedStates = Array.from(stateSelect.selectedOptions).map(opt => opt.value);
+    const selectedDistricts = Array.from(districtSelect.selectedOptions).map(opt => opt.value);
+    mandiSelect.innerHTML = "";
+    if (!selectedStates.length || !selectedDistricts.length) return;
+
+    const res = await fetch(`/admin/notifications/mandis?states=${selectedStates.join(',')}&districts=${selectedDistricts.join(',')}`);
+    const mandis = await res.json();
+    mandis.forEach(m => {
+      const option = document.createElement('option');
+      option.value = m;
+      option.textContent = m;
+      mandiSelect.appendChild(option);
+    });
+  });
+
+});
+</script>
+
+<%- include('common/footer') %>

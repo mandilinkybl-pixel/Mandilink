@@ -32,10 +32,18 @@ class CompanyController {
       // console.log('State Name Map:', statenameMap);
 
       // Update companies with missing user.id
-      await Company.updateMany(
-        { user: { $exists: false } }, // or { user: null } if some are explicitly null
-        { $set: { user: user.id } }
-      );
+    // Update user if missing
+await Company.updateMany(
+  { user: { $exists: false } },
+  { $set: { user: user.id } }
+);
+
+// Update pushToken if missing
+await Company.updateMany(
+  { pushToken: { $exists: false } },
+  { $set: { pushToken: true } }
+);
+
 
       // Get filter values (prefer req.body for POST, fallback to req.query for GET)
       const { category, state, district, mandi } = req.body || req.query || {};

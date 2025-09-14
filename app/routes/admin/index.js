@@ -27,5 +27,6 @@ app.use('/userlist', require('./listing.js'));
 app.use('/privacypolicy', require('./privacypolicy.js'));
 app.use("/blockunblockcompany",require('./BlockUnblockCompanyController.js'))
 app.use('/blockedlisting', require('./blockedlisting.js'));
+app.use('/notifications', require('./push.js'));
 
 module.exports = app;
