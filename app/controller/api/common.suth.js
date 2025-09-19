@@ -21,7 +21,7 @@ class AuthController {
         district,
         mandi,
         category,
-        licenseNumber      // used for both
+             // used for both
       } = req.body;
 
       if (!userType || !name || !email || !contactNumber || !password || !state || !district || !category) {
@@ -49,7 +49,7 @@ class AuthController {
           district,
           mandi: mandi || "",
           category,
-          licenseNumber,
+          
           isVerified: true,
           Verifybatch: "batch1",
           registrationStep: 4
@@ -65,7 +65,7 @@ class AuthController {
           district,
           mandi: mandi || "",
           category,
-          licenseNumber,
+         
           isVerified: true,
           Verifybatch: "batch1",
           registrationStep: 3
