@@ -1,0 +1,37 @@
+<%- include('common/header') %>
+
+<div class="main-content">
+  <div class="container p-4">
+    <h2>Unsuccessful Complaints</h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Ticket #</th>
+            <th>User / Company</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% complaints.forEach(c => { %>
+            <tr>
+              <td><%= c.ticketNumber %></td>
+              <td><%= c.user?.name || c.company?.name %></td>
+              <td><%= c.subject %></td>
+              <td><%= c.status %></td>
+              <td><%= c.createdAt.toLocaleDateString() %></td>
+              <td>
+                <a href="/admin/support/view/<%= c._id %>" class="btn btn-sm btn-info">View</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('common/footer') %>

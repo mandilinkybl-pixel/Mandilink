@@ -1,0 +1,49 @@
+<%- include('common/header') %>
+
+
+<div class="container mt-4" style="padding-top: 100px;">
+  <h2>Failed / Pending Purchases</h2>
+
+  <!-- Filter/Search -->
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="Search amount/status">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="startDate" value="<%= startDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="endDate" value="<%= endDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Plan</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Payment Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% purchases.forEach(p => { %>
+        <tr>
+          <td><%= p.user?.name || 'N/A' %></td>
+          <td><%= p.plan?.name || 'N/A' %></td>
+          <td>₹<%= p.amount %></td>
+          <td><%= p.status %></td>
+          <td><%= p.paymentStatus %></td>
+          <td><%= new Date(p.createdAt).toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('common/footer') %>

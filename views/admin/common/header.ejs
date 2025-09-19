@@ -442,19 +442,47 @@
     <span class="nav-text flex-grow-1">Support & Complaints</span>
 </a>
 <div class="collapse ms-2" id="supportMenu">
-    <a href="#" class="d-flex align-items-center">
+    <a href="/admin/support/all" class="d-flex align-items-center">
         <i class="fas fa-ticket-alt nav-icon"></i>
         <span class="nav-text">Support Desk</span>
     </a>
-    <a href="#" class="d-flex align-items-center">
+    <a href="/admin/support/users" class="d-flex align-items-center">
         <i class="fas fa-list nav-icon"></i>
         <span class="nav-text">List User Complaints</span>
     </a>
-    <a href="#" class="d-flex align-items-center">
-        <i class="fas fa-tasks nav-icon"></i>
+    <a href="/admin/support/companies" class="d-flex align-items-center">
+        <i class="fas fa-building nav-icon"></i>
         <span class="nav-text">Track Complaints Status</span>
     </a>
+    <!-- successfull/unsuccessfull -->
+    <a href="/admin/support/successful" class="d-flex align-items-center">
+        <i class="fas fa-check nav-icon"></i>
+        <span class="nav-text">Successful Complaints</span>
+    </a>
+    <a href="/admin/support/unsuccessful" class="d-flex align-items-center">
+        <i class="fas fa-times nav-icon"></i>
+        <span class="nav-text">Unsuccessful Complaints</span>
+    </a>
 </div>
+<a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#subscriptionMenu" role="button" aria-expanded="false" aria-controls="subscriptionMenu">
+    <i class="fas fa-box-open nav-icon"></i>
+    <span class="nav-text flex-grow-1">Subscription_Manage</span>
+</a>
+<div class="collapse ms-2" id="subscriptionMenu">
+    <a href="/admin/plans" class="d-flex align-items-center">
+        <i class="fas fa-file-signature nav-icon"></i>
+        <span class="nav-text">Subscription</span>
+    </a>
+    <a href="/admin/subscription/all" class="d-flex align-items-center">
+        <i class="fas fa-users nav-icon"></i>
+        <span class="nav-text">All Subscribed Users</span>
+    </a>
+    <a href="/admin/subscription/failpurchase" class="d-flex align-items-center">
+        <i class="fas fa-receipt nav-icon"></i>
+        <span class="nav-text">Faild & Pending Payments</span>
+    </a>
+</div>
+
         <!-- Ads Tab -->
         <a class="d-flex align-items-center collapsible-btn" data-bs-toggle="collapse" href="#adsMenu" role="button" aria-expanded="false" aria-controls="adsMenu">
             <i class="fas fa-ad nav-icon"></i>

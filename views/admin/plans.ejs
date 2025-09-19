@@ -1,62 +1,355 @@
 <%- include('common/header') %>
+
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-bg: #ffffff;
+    --card-border: #a6aaff;
+    --text-primary: #807b7b;
+    --text-secondary: #a1a1aa;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --surface: #ffffff;
+    --surface-light: #ffffff;
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .enhanced-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .enhanced-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-blue);
+  }
+
+  .card-header-enhanced {
+    background: var(--primary-gradient);
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .card-header-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  }
+
+  .plan-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: rgb(189, 188, 188);
+    letter-spacing: -0.025em;
+  }
+
+  .plan-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 16px 0 8px 0;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .plan-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .feature-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 2px 4px 2px 0;
+    transition: all 0.2s ease;
+  }
+
+  .feature-badge.active {
+    background: linear-gradient(135deg, var(--accent-green), #059669);
+    color: rgb(0, 0, 0);
+  }
+
+  .feature-badge.inactive {
+    background: var(--surface-light);
+    color: var(--text-secondary);
+  }
+
+  .category-badge {
+    background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+    color: rgb(0, 0, 0);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 6px;
+  }
+
+  .chatbot-info {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+
+  .chatbot-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .delay-badge {
+    background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+    color: rgb(0, 0, 0);
+  }
+
+  .credits-badge {
+    background: linear-gradient(135deg, var(--accent-orange), #d97706);
+    color: white;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .btn-enhanced {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-edit {
+    background: linear-gradient(135deg, var(--accent-orange), #d97706);
+    color: white;
+  }
+
+  .btn-edit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  }
+
+  .btn-delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+
+  .btn-delete:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+
+  .search-container {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .search-input {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .create-btn {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 0 4px;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--card-border);
+    background: var(--surface-light);
+  }
+
+  .modal-title {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .form-control {
+    background: var(--surface-light);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 10px 12px;
+  }
+
+  .form-control:focus {
+    background: var(--surface-light);
+    border-color: var(--accent-blue);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .form-check-input:checked {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+  }
+
+  .form-select {
+    background: var(--surface-light);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+  }
+
+  .form-select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+</style>
+
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
   <div class="container-fluid">
-
     <div class="container-fluid p-4">
 
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Plans</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlanModal">
+      <!-- Enhanced header with better typography and spacing -->
+      <div class="page-header">
+        <h1 class="page-title">Subscription Plans</h1>
+        <button class="create-btn" data-bs-toggle="modal" data-bs-target="#createPlanModal">
           + Create Plan
         </button>
       </div>
 
-      <!-- Search -->
-      <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search plans by name...">
+      <!-- Enhanced search with modern styling -->
+      <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search plans by name...">
+      </div>
 
       <div class="row" id="plansContainer">
         <% if(plans.length === 0){ %>
-          <div class="text-center text-muted">No plans found.</div>
+          <div class="text-center" style="color: var(--text-secondary); padding: 40px;">
+            <h4>No plans found</h4>
+            <p>Create your first plan to get started</p>
+          </div>
         <% } %>
         <% plans.forEach(plan => { %>
-          <div class="col-md-4 mb-4 plan-card" data-name="<%= plan.name.toLowerCase() %>">
-            <div 
-              class="h-100"
-              style="border-radius: 22px; overflow: hidden; box-shadow: 0 8px 24px rgba(100,100,255,0.09), 0 1.5px 4.5px rgba(0,0,0,0.08); background: linear-gradient(120deg,#f8fafc 0%,#e0e7ff 100%); border: none; transition: transform 0.18s, box-shadow 0.18s;">
-              <div 
-                style="background:linear-gradient(90deg,#6366f1 0%,#60a5fa 100%);padding:24px 16px 18px 16px;color:#fff;text-align:center;">
-                <h5 style="margin:0;font-size:1.5rem;letter-spacing:.5px;font-weight:700;"><%= plan.name %></h5>
+          <div class="col-lg-4 col-md-6 mb-4 plan-card" data-name="<%= plan.name.toLowerCase() %>">
+            <!-- Complete redesign with modern card styling -->
+            <div class="enhanced-card h-100">
+              <div class="card-header-enhanced">
+                <h3 class="plan-title"><%= plan.name %></h3>
               </div>
-              <div class="card-body" style="padding:24px;">
-                <p style="color:#6b7280;margin-bottom:12px;font-size:1rem;"><%= plan.description || "No description" %></p>
-                <div style="font-size:1.8rem;font-weight:bold;color:#6366f1;margin-bottom:10px;">₹<%= plan.price %></div>
-                <div style="margin-bottom:8px;"><strong>Duration:</strong> <%= plan.duration %> days</div>
-                <div style="margin-bottom:10px;"><strong>Chatbot:</strong>
-                  <span style="background:#38bdf8;color:#fff;border-radius:1rem;padding:4px 12px;font-size:0.95em;margin-right:6px;">Delay <%= plan.chatbot.delay %>s</span>
-                  <span style="background:#fde68a;color:#92400e;border-radius:1rem;padding:4px 12px;font-size:0.95em;">Credits <%= plan.chatbot.credits %></span>
+              
+              <div class="card-body" style="padding: 24px;">
+                <div class="plan-price">₹<%= plan.price %></div>
+                
+                <p class="plan-description"><%= plan.description || "No description available" %></p>
+                
+                <div style="margin-bottom: 16px;">
+                  <strong style="color: var(--text-primary); font-size: 0.9rem;">Duration:</strong>
+                  <span style="color: var(--text-secondary); margin-left: 8px;"><%= plan.duration %> days</span>
                 </div>
-                <div style="margin-bottom:10px;">
-                  <strong>Allowed Subroles:</strong>
-                  <% if(plan.allowedSubroles.length === 0){ %>
-                    <span style="background:#f3f4f6;color:#6b7280;border-radius:1rem;padding:4px 12px;font-size:0.95em;">All</span>
+
+                <!-- Enhanced chatbot info with gradient badges -->
+                <div class="chatbot-info">
+                  <div class="chatbot-badge delay-badge">
+                    Delay <%= plan.chatbot.delay %>s
+                  </div>
+                  <div class="chatbot-badge credits-badge">
+                    <%= plan.chatbot.credits %> Credits
+                  </div>
+                </div>
+
+                <!-- Enhanced categories with gradient styling -->
+                <div style="margin-bottom: 16px;">
+                  <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 8px;">Categories:</strong>
+                  <% if(!plan.categories || plan.categories.length === 0){ %>
+                    <span class="category-badge" style="background: var(--surface-light); color: var(--text-secondary);">All Categories</span>
                   <% } else { %>
-                    <%- plan.allowedSubroles.map(sr => `<span style="background:#e0e7ff;color:#3730a3;border-radius:1rem;padding:4px 12px;font-size:0.95em;margin-right:4px;">${sr.name}</span>`).join(" ") %>
+                    <% plan.categories.forEach(cat => { %>
+                      <span class="category-badge"><%= cat.name %></span>
+                    <% }) %>
                   <% } %>
                 </div>
-                <div style="margin-bottom:18px;">
-                  <% Object.keys(plan.access).forEach(key => { %>
-                    <span style="font-size:0.85rem;margin:2px 4px 2px 0;padding:4px 14px;border-radius:1rem;font-weight:500;
-                      background:<%= plan.access[key] ? '#e0e7ff' : '#f3f4f6' %>;
-                      color:<%= plan.access[key] ? '#064e3b' : '#6b7280' %>;
-                      border:none;display:inline-block;">
-                      <%= key %>
-                    </span>
-                  <% }) %>
+
+                <!-- Enhanced feature badges with better visual hierarchy -->
+                <div style="margin-bottom: 20px;">
+                  <strong style="color: var(--text-primary); font-size: 0.9rem; display: block; margin-bottom: 12px;">Features:</strong>
+                  <div>
+                    <% Object.keys(plan.access).forEach(key => { %>
+                      <span class="feature-badge <%= plan.access[key] ? 'active' : 'inactive' %>">
+                        <%= key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) %>
+                      </span>
+                    <% }) %>
+                  </div>
                 </div>
-                <div style="display:flex;gap:0.5rem;">
+
+                <!-- Enhanced action buttons with gradient styling -->
+                <div class="action-buttons">
                   <button 
-                    class="btn btn-sm btn-warning editBtn" 
+                    class="btn-enhanced btn-edit editBtn" 
                     data-bs-toggle="modal" 
                     data-bs-target="#editPlanModal"
                     data-id="<%= plan._id %>"
@@ -67,11 +360,13 @@
                     data-delay="<%= plan.chatbot.delay %>"
                     data-credits="<%= plan.chatbot.credits %>"
                     data-access='<%- JSON.stringify(plan.access) %>'
-                    data-subroles='<%- JSON.stringify(plan.allowedSubroles.map(sr => sr._id)) %>'
-                    style="border-radius:10px;font-weight:500;"
-                  >Edit</button>
+                    data-categories='<%- JSON.stringify(plan.categories.map(c => c._id)) %>'
+                  >Edit Plan</button>
+                  
                   <form action="/admin/plans/<%= plan._id %>?_method=DELETE" method="POST" class="d-inline">
-                    <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this plan?')" style="border-radius:10px;font-weight:500;">Delete</button>
+                    <button class="btn-enhanced btn-delete" onclick="return confirm('Are you sure you want to delete this plan?')">
+                      Delete
+                    </button>
                   </form>
                 </div>
               </div>
@@ -81,100 +376,207 @@
       </div>
     </div>
 
+    <!-- Enhanced modals with dark theme styling -->
     <!-- CREATE MODAL -->
-    <div class="modal fade" id="createPlanModal" tabindex="-1" style="padding-top: 100px;">
-      <div class="modal-dialog">
+    <div class="modal fade" id="createPlanModal" tabindex="-1" style="padding-top: 60px;">
+      <div class="modal-dialog modal-lg">
         <form action="/admin/plans/Create" method="POST" class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Create Plan</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title">Create New Plan</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-body">
-            <input name="name" class="form-control mb-2" placeholder="Plan Name" required>
-            <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
-            <input type="number" name="price" class="form-control mb-2" placeholder="Price (₹)" required>
-            <input type="number" name="duration" class="form-control mb-2" placeholder="Duration (days)" required>
-            <input type="number" name="chatbotDelay" class="form-control mb-2" placeholder="Chatbot Delay (seconds)">
-            <input type="number" name="chatbotCredits" class="form-control mb-2" placeholder="Chatbot Credits">
-
-            <label class="fw-bold">Access Features</label><br>
-            <% const features = ["chat","contact","postAds","premiumBadge","jobPost","bidding","bidPost","profileHighlight","prioritySupport","unlimitedMessages","analytics","boostAds","multipleLanguages","featuredPlacement"]; %>
-            <% features.forEach(f => { %>
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" name="<%= f %>"> <%= f %>
+          <div class="modal-body" style="padding: 24px;">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Plan Name</label>
+                <input name="name" class="form-control" placeholder="Enter plan name" required>
               </div>
-            <% }) %>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Price (₹)</label>
+                <input type="number" name="price" class="form-control" placeholder="0" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Description</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Plan description"></textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Duration (days)</label>
+                <input type="number" name="duration" class="form-control" placeholder="30" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Chatbot Delay (seconds)</label>
+                <input type="number" name="chatbotDelay" class="form-control" placeholder="5">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Chatbot Credits</label>
+                <input type="number" name="chatbotCredits" class="form-control" placeholder="100">
+              </div>
+            </div>
 
-            <label class="fw-bold mt-2">Allowed Subroles</label>
-            <select name="allowedSubroles" class="form-select" multiple>
-              <% subroles.forEach(sr => { %>
-                <option value="<%= sr._id %>"><%= sr.name %></option>
-              <% }) %>
-            </select>
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500; margin-bottom: 12px;">Access Features</label>
+              <div class="row">
+                <% const features = ["chat","contact","postAds","premiumBadge","jobPost","bidding","bidPost","profileHighlight","prioritySupport","unlimitedMessages","analytics","boostAds","multipleLanguages","featuredPlacement"]; %>
+                <% features.forEach((f, index) => { %>
+                  <div class="col-md-6 col-lg-4 mb-2">
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" name="<%= f %>" id="create<%= f %>">
+                      <label class="form-check-label" for="create<%= f %>" style="color: var(--text-secondary);">
+                        <%= f.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) %>
+                      </label>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Categories</label>
+              <select name="categories" class="form-select" multiple>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat._id %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-success">Save</button>
+          <div class="modal-footer" style="border-top: 1px solid var(--card-border);">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="create-btn">Create Plan</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- EDIT MODAL -->
-    <div class="modal fade" id="editPlanModal" tabindex="-1" style="padding-top: 100px;">
-      <div class="modal-dialog">
+    <div class="modal fade" id="editPlanModal" tabindex="-1" style="padding-top: 60px;">
+      <div class="modal-dialog modal-lg">
         <form method="POST" class="modal-content" id="editPlanForm">
           <input type="hidden" name="_method" value="PUT">
           <div class="modal-header">
             <h5 class="modal-title">Edit Plan</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-body">
-            <input id="editName" name="name" class="form-control mb-2" required>
-            <textarea id="editDescription" name="description" class="form-control mb-2"></textarea>
-            <input id="editPrice" type="number" name="price" class="form-control mb-2" required>
-            <input id="editDuration" type="number" name="duration" class="form-control mb-2" required>
-            <input id="editDelay" type="number" name="chatbotDelay" class="form-control mb-2">
-            <input id="editCredits" type="number" name="chatbotCredits" class="form-control mb-2">
-
-            <label class="fw-bold">Access Features</label><br>
-            <% features.forEach(f => { %>
-              <div class="form-check">
-                <input id="edit<%= f %>" type="checkbox" class="form-check-input" name="<%= f %>"> <%= f %>
+          <div class="modal-body" style="padding: 24px;">
+            <!-- Same structure as create modal but with edit IDs -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Plan Name</label>
+                <input id="editName" name="name" class="form-control" required>
               </div>
-            <% }) %>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Price (₹)</label>
+                <input id="editPrice" type="number" name="price" class="form-control" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Description</label>
+              <textarea id="editDescription" name="description" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Duration (days)</label>
+                <input id="editDuration" type="number" name="duration" class="form-control" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Chatbot Delay (seconds)</label>
+                <input id="editDelay" type="number" name="chatbotDelay" class="form-control">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Chatbot Credits</label>
+                <input id="editCredits" type="number" name="chatbotCredits" class="form-control">
+              </div>
+            </div>
 
-            <label class="fw-bold mt-2">Allowed Subroles</label>
-            <select id="editSubroles" name="allowedSubroles" class="form-select" multiple>
-              <% subroles.forEach(sr => { %>
-                <option value="<%= sr._id %>"><%= sr.name %></option>
-              <% }) %>
-            </select>
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500; margin-bottom: 12px;">Access Features</label>
+              <div class="row">
+                <% features.forEach(f => { %>
+                  <div class="col-md-6 col-lg-4 mb-2">
+                    <div class="form-check">
+                      <input id="edit<%= f %>" type="checkbox" class="form-check-input" name="<%= f %>">
+                      <label class="form-check-label" for="edit<%= f %>" style="color: var(--text-secondary);">
+                        <%= f.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) %>
+                      </label>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" style="color: var(--text-primary); font-weight: 500;">Categories</label>
+              <select id="editCategories" name="categories" class="form-select" multiple>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat._id %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-success">Update</button>
+          <div class="modal-footer" style="border-top: 1px solid var(--card-border);">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="create-btn">Update Plan</button>
           </div>
         </form>
       </div>
     </div>
 
+    <!-- Enhanced JavaScript with better UX -->
     <script>
-      // Search functionality
+      // Enhanced search functionality with debouncing
       const searchInput = document.getElementById("searchInput");
-      searchInput.addEventListener("keyup", function() {
-        const value = this.value.toLowerCase();
-        document.querySelectorAll(".plan-card").forEach(card => {
-          const name = card.dataset.name;
-          card.style.display = name.includes(value) ? "" : "none";
-        });
+      let searchTimeout;
+      
+      searchInput.addEventListener("input", function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          const value = this.value.toLowerCase();
+          const cards = document.querySelectorAll(".plan-card");
+          let visibleCount = 0;
+          
+          cards.forEach(card => {
+            const name = card.dataset.name;
+            const isVisible = name.includes(value);
+            card.style.display = isVisible ? "" : "none";
+            if (isVisible) visibleCount++;
+          });
+          
+          // Show/hide no results message
+          const container = document.getElementById("plansContainer");
+          let noResults = container.querySelector(".no-results");
+          
+          if (visibleCount === 0 && value.trim() !== "") {
+            if (!noResults) {
+              noResults = document.createElement("div");
+              noResults.className = "no-results text-center col-12";
+              noResults.style.cssText = "color: var(--text-secondary); padding: 40px;";
+              noResults.innerHTML = `
+                <h4>No plans found</h4>
+                <p>Try adjusting your search terms</p>
+              `;
+              container.appendChild(noResults);
+            }
+          } else if (noResults) {
+            noResults.remove();
+          }
+        }, 300);
       });
 
-      // Fill edit modal
+      // Enhanced edit modal functionality
       document.querySelectorAll(".editBtn").forEach(btn => {
         btn.addEventListener("click", function() {
           const access = JSON.parse(this.dataset.access);
-          const subroles = JSON.parse(this.dataset.subroles);
+          const categories = JSON.parse(this.dataset.categories);
 
+          // Set form action
           document.getElementById("editPlanForm").action = "/admin/plans/" + this.dataset.id;
+          
+          // Fill form fields
           document.getElementById("editName").value = this.dataset.name;
           document.getElementById("editDescription").value = this.dataset.description;
           document.getElementById("editPrice").value = this.dataset.price;
@@ -188,16 +590,27 @@
             if(el) el.checked = access[key];
           });
 
-          // Set subroles
-          const select = document.getElementById("editSubroles");
+          // Set categories
+          const select = document.getElementById("editCategories");
           for(let i = 0; i < select.options.length; i++){
-            select.options[i].selected = subroles.includes(select.options[i].value);
+            select.options[i].selected = categories.includes(select.options[i].value);
           }
+        });
+      });
+
+      // Add smooth animations for card interactions
+      document.querySelectorAll(".enhanced-card").forEach(card => {
+        card.addEventListener("mouseenter", function() {
+          this.style.transform = "translateY(-4px)";
+        });
+        
+        card.addEventListener("mouseleave", function() {
+          this.style.transform = "translateY(0)";
         });
       });
     </script>
 
   </div>
 </div>
-<!-- EDIT MODAL (for categories, example) -->
- <%- include('common/footer') %>
+
+<%- include('common/footer') %>

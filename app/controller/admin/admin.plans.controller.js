@@ -1,8 +1,7 @@
 const Plan = require("../../models/plan");
-const Subrole = require("../../models/subrole");
+const Category = require("../../models/category.model"); // ✅ use Category instead of Subrole
 
 class PlanController {
-
   // Create Plan
   async create(req, res) {
     try {
@@ -13,7 +12,7 @@ class PlanController {
         duration,
         chatbotDelay,
         chatbotCredits,
-        allowedSubroles = [],
+        categories = [], // ✅ now multiple categories
       } = req.body;
 
       // Access features
@@ -44,7 +43,7 @@ class PlanController {
           delay: chatbotDelay || 5,
           credits: chatbotCredits || 100,
         },
-        allowedSubroles,
+        categories: Array.isArray(categories) ? categories : [categories], // ✅ handle single/multiple
       });
 
       await plan.save();
@@ -66,7 +65,7 @@ class PlanController {
         duration,
         chatbotDelay,
         chatbotCredits,
-        allowedSubroles = [],
+        categories = [],
       } = req.body;
 
       const access = {
@@ -96,7 +95,7 @@ class PlanController {
           delay: chatbotDelay || 5,
           credits: chatbotCredits || 100,
         },
-        allowedSubroles,
+        categories: Array.isArray(categories) ? categories : [categories],
       });
 
       res.redirect("/admin/plans");

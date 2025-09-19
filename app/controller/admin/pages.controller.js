@@ -212,15 +212,28 @@ class PagesController {
             const ads = await Ad.find({ type: "Side" }).populate("createdBy", "name");
             res.render('admin/sideads', { user, userdetails, ads });
           }
-          async plans(req, res) {
-            const user = req.user;
-            const userdetails = await Sechueemploueeschema.findById(user.id);
+async plans(req, res) {
+  try {
+    const user = req.user;
+    const userdetails = await Sechueemploueeschema.findById(user.id);
 
-            const plans = await plan.find().populate("allowedSubroles");
-            const subroles = await Subrole.find();
-            res.render('admin/plans', { user, userdetails, plans, subroles });
-          }
-         
+    // ✅ populate categories instead of subroles
+    const plans = await plan.find().populate("categories");
+
+    // ✅ fetch all categories for dropdown/checkbox list
+    const categories = await categoryModel.find();
+
+    res.render("admin/plans", { 
+      user, 
+      userdetails, 
+      plans, 
+      categories 
+    });
+  } catch (err) {
+    console.error("Error fetching plans:", err);
+    res.redirect("/admin/dashboard");
+  }
+}
           async getAllCommodities(req, res) {
             const commodities = await commodityname.find().sort({ createdAt: -1 }).lean();
             const user = req.user;

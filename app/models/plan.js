@@ -34,8 +34,8 @@ const PlanSchema = new Schema(
       credits: { type: Number, default: 100 }, // number of chatbot interactions per month
     },
 
-    // Restrict plan to certain subroles (optional)
-    allowedSubroles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subrole" }],
+    // 🔹 Multiple categories per plan
+    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
 
     isActive: { type: Boolean, default: true },
   },

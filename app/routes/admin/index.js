@@ -28,5 +28,8 @@ app.use('/privacypolicy', require('./privacypolicy.js'));
 app.use("/blockunblockcompany",require('./BlockUnblockCompanyController.js'))
 app.use('/blockedlisting', require('./blockedlisting.js'));
 app.use('/notifications', require('./push.js'));
+app.use('/support', require('./support.js'));
+app.use('/subscription', require('./subscription.js'));
+app.use("/auctions",require('./bid.js'))
 
 module.exports = app;

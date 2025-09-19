@@ -1,0 +1,43 @@
+<%- include('common/header') %>
+
+<div class="main-content">
+  <div class="container p-4">
+    <h2>Complaint Details</h2>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <p><strong>Ticket:</strong> <%= complaint.ticketNumber %></p>
+        <p><strong>Subject:</strong> <%= complaint.subject %></p>
+        <p><strong>Category:</strong> <%= complaint.category %></p>
+        <p><strong>Status:</strong> <%= complaint.status %></p>
+        <p><strong>Priority:</strong> <%= complaint.priority %></p>
+        <p><strong>Message:</strong> <%= complaint.message %></p>
+        <p><strong>Created At:</strong> <%= complaint.createdAt.toLocaleString() %></p>
+      </div>
+    </div>
+
+    <h4>Conversation</h4>
+    <div class="card mb-3">
+      <div class="card-body">
+        <% complaint.conversation.forEach(c => { %>
+          <p>
+            <strong><%= c.senderType %>:</strong> <%= c.message %>
+            <small class="text-muted">(<%= new Date(c.createdAt).toLocaleString() %>)</small>
+          </p>
+        <% }) %>
+      </div>
+    </div>
+
+    <form action="/admin/support/add-message/<%= complaint._id %>" method="POST">
+      <div class="mb-3">
+        <label>Add Message</label>
+        <textarea class="form-control" name="message" required></textarea>
+        <input type="hidden" name="senderType" value="admin">
+      </div>
+      <button class="btn btn-primary">Send</button>
+    </form>
+  </div>
+</div>
+
+<%- include('common/footer') %>
+

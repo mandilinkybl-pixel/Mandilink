@@ -1,0 +1,212 @@
+<%- include('common/header') %>
+
+<div class="container mt-4">
+  <h2>All Purchases</h2>
+
+  <% if (success_msg) { %>
+    <div class="alert alert-success"><%= success_msg %></div>
+  <% } %>
+  <% if (error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
+  <% } %>
+
+  <div class="mb-3">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#adminPurchaseModal">
+      Create Purchase
+    </button>
+  </div>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="Search amount/status">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="startDate" value="<%= startDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="endDate" value="<%= endDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Plan</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Payment Status</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% purchases.forEach(p => { %>
+        <tr>
+          <td><%= p.user?.name || 'N/A' %></td>
+          <td><%= p.plan?.name || 'N/A' %></td>
+          <td>₹<%= p.amount %></td>
+          <td><%= p.status %></td>
+          <td><%= p.paymentStatus %></td>
+          <td><%= new Date(p.createdAt).toLocaleString() %></td>
+          <td>
+            <% if (p.paymentStatus === "pending") { %>
+              <button class="btn btn-primary payBtn"
+                      data-purchase-id="<%= p._id %>"
+                      data-plan-id="<%= p.plan?._id %>"
+                      data-user-id="<%= p.user?._id %>"
+                      data-user-model="<%= p.userModel %>">
+                Pay Now
+              </button>
+            <% } else { %>
+              Paid
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Admin Purchase Modal -->
+<div class="modal fade" id="adminPurchaseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="adminPurchaseForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Purchase</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label>User Type</label>
+          <select id="userModel" class="form-select" required>
+            <option value="">Select User Type</option>
+            <option value="LISTING">Listing User</option>
+            <option value="Company">Company</option>
+            <option value="SecureEmployee">Employee</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label>User</label>
+          <select id="userId" class="form-select" required>
+            <option value="">Select User</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label>Plan</label>
+          <select id="planId" class="form-select" required>
+            <% plans.forEach(p => { %>
+              <option value="<%= p._id %>"><%= p.name %> - ₹<%= p.price %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Create & Pay</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// Populate user select on user model change
+document.getElementById("userModel").addEventListener("change", async function() {
+  const model = this.value;
+  const userSelect = document.getElementById("userId");
+  userSelect.innerHTML = '<option value="">Loading...</option>';
+  if (!model) return userSelect.innerHTML = '<option value="">Select User</option>';
+
+  const res = await fetch(`/admin/subscription/fetch?model=${model}`);
+  const users = await res.json();
+  userSelect.innerHTML = '<option value="">Select User</option>';
+  users.forEach(u => {
+    userSelect.innerHTML += `<option value="${u._id}">${u.name}</option>`;
+  });
+});
+
+// Pay button in table
+document.querySelectorAll(".payBtn").forEach(btn => {
+  btn.onclick = async function() {
+    const planId = this.dataset.planId;
+    const userId = this.dataset.userId;
+    const userModel = this.dataset.userModel;
+
+    const res = await fetch("/admin/subscription/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId, userId, userModel })
+    });
+    const data = await res.json();
+
+    const options = {
+      key: data.key,
+      amount: data.amount,
+      currency: data.currency,
+      order_id: data.orderId,
+      handler: async function(response) {
+        await fetch("/admin/subscription/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            purchaseId: data.purchaseId
+          })
+        });
+        alert("Payment Successful!");
+        window.location.reload();
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  }
+});
+
+// Admin modal form submit
+document.getElementById("adminPurchaseForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const planId = document.getElementById("planId").value;
+  const userId = document.getElementById("userId").value;
+  const userModel = document.getElementById("userModel").value;
+
+  const res = await fetch("/admin/subscription/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ planId, userId, userModel })
+  });
+  const data = await res.json();
+
+  const options = {
+    key: data.key,
+    amount: data.amount,
+    currency: data.currency,
+    order_id: data.orderId,
+    handler: async function(response) {
+      await fetch("/admin/subscription/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          purchaseId: data.purchaseId
+        })
+      });
+      alert("Payment Successful!");
+      window.location.reload();
+    }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+});
+</script>
+
+<%- include('common/footer') %>

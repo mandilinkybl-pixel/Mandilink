@@ -1,0 +1,136 @@
+<%- include('common/header') %>
+
+<div class="container mt-4">
+  <h2>All Successful Purchases</h2>
+
+  <!-- Filter/Search -->
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="Search by amount/status">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="startDate" value="<%= startDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="endDate" value="<%= endDate %>" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#testPurchaseModal">
+        Test Purchase
+      </button>
+    </div>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Plan</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Payment Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% purchases.forEach(p => { %>
+        <tr>
+          <td><%= p.user?.name || 'N/A' %></td>
+          <td><%= p.plan?.name || 'N/A' %></td>
+          <td>₹<%= p.amount %></td>
+          <td><%= p.status %></td>
+          <td><%= p.paymentStatus %></td>
+          <td><%= new Date(p.createdAt).toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<!-- TEST PURCHASE MODAL -->
+<div class="modal fade" id="testPurchaseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5 class="modal-title mb-3">Admin Test Purchase (Razorpay)</h5>
+
+      <div class="mb-3">
+        <label>User</label>
+        <select id="testUser" class="form-select">
+          <% userdetails ? userdetails : '' %>
+          <% // ideally fetch all users for admin testing %>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label>Plan</label>
+        <select id="testPlan" class="form-select">
+          <% plans.forEach(p => { %>
+            <option value="<%= p._id %>" data-price="<%= p.price %>"><%= p.name %> - ₹<%= p.price %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <button class="btn btn-success" id="payButton">Pay with Razorpay</button>
+      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById("payButton").addEventListener("click", async function () {
+  const userId = document.getElementById("testUser").value;
+  const planSelect = document.getElementById("testPlan");
+  const planId = planSelect.value;
+  const amount = planSelect.selectedOptions[0].dataset.price;
+
+  if (!userId || !planId) return alert("Select user and plan");
+
+  // 1️⃣ Create Razorpay order via AJAX
+  const res = await fetch("/admin/purchase/razorpay/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ planId, userId }),
+  });
+  const data = await res.json();
+
+  if (!data.success) return alert("Failed to create order");
+
+  const options = {
+    key: data.key,
+    amount: data.amount,
+    currency: data.currency,
+    order_id: data.orderId,
+    name: "Admin Test Purchase",
+    description: "Test purchase via admin panel",
+    handler: async function (response) {
+      // 2️⃣ Verify payment
+      const verify = await fetch("/admin/purchase/razorpay/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          purchaseId: data.purchaseId
+        }),
+      });
+      const verifyData = await verify.json();
+      if (verifyData.success) {
+        alert("Payment successful!");
+        location.reload();
+      } else {
+        alert("Payment verification failed");
+      }
+    },
+    prefill: { name: "<%= user?.name %>", email: "<%= user?.email %>" },
+    theme: { color: "#28a745" },
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+});
+</script>
+
+<%- include('common/footer') %>

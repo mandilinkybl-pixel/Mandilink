@@ -43,6 +43,7 @@ app.set('view engine', 'ejs');
 // Routes
 app.use('/admin', require('./app/routes/admin/index.js'));
 app.use('/employees', require('./app/routes/employees/index.js'));
+app.use('/api',require('./app/routes/api/index.js'))
 
 // Server start
 app.listen(process.env.PORT || 3000, () => {

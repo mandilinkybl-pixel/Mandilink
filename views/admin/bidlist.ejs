@@ -1,0 +1,193 @@
+<%- include('common/header') %>
+
+<div class="container-fluid p-4" style="padding-top: 200px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>All Auctions</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAuctionModal">Create Auction</button>
+  </div>
+
+  <!-- Auctions Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Commodity</th>
+          <th>Quantity</th>
+          <th>Current Price</th>
+          <th>Duration</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% auctionsData.forEach(item => { 
+            const auction = item.auction;
+        %>
+          <tr data-id="<%= auction._id %>">
+            <td><%= auction.commodityName %><br><small><%= auction.quality %></small></td>
+            <td><%= auction.quantity.amount %> <%= auction.quantity.unit %></td>
+            <td>₹<%= auction.currentPrice %></td>
+            <td><%= auction.duration %> hr</td>
+            <td><%= auction.status %></td>
+            <td>
+              <button class="btn btn-sm btn-warning editAuctionBtn" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#editAuctionModal" 
+                      data-id="<%= auction._id %>"
+                      data-commodity="<%= auction.commodityName %>"
+                      data-harvest="<%= auction.harvestTiming %>"
+                      data-quality="<%= auction.quality %>"
+                      data-quantity="<%= auction.quantity.amount %>"
+                      data-unit="<%= auction.quantity.unit %>"
+                      data-price="<%= auction.startingPrice %>"
+                      data-duration="<%= auction.duration %>"
+                      >Edit</button>
+              <a href="/admin/auction/delete/<%= auction._id %>" class="btn btn-sm btn-danger"
+                 onclick="return confirm('Delete this auction?')">Delete</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Auction Modal -->
+<div class="modal fade" id="createAuctionModal" tabindex="-1" aria-labelledby="createAuctionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form id="createAuctionForm" action="/admin/auctions/create" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createAuctionModalLabel">Create Auction</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Commodity Name</label>
+            <input type="text" class="form-control" name="commodityName" required>
+          </div>
+          <div class="mb-3">
+            <label>Harvest Timing</label>
+            <input type="text" class="form-control" name="harvestTiming" required>
+          </div>
+          <div class="mb-3">
+            <label>Quality</label>
+            <input type="text" class="form-control" name="quality" required>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              <label>Quantity</label>
+              <input type="number" class="form-control" name="quantityAmount" required>
+            </div>
+            <div class="col">
+              <label>Unit</label>
+              <select class="form-select" name="quantityUnit" required>
+                <option value="kg">kg</option>
+                <option value="quintal">quintal</option>
+                <option value="bag">bag</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Starting Price</label>
+            <input type="number" class="form-control" name="startingPrice" required>
+          </div>
+          <div class="mb-3">
+            <label>Duration (Hours)</label>
+            <input type="number" class="form-control" name="duration" required>
+          </div>
+          <div class="mb-3">
+            <label>Image (optional)</label>
+            <input type="file" class="form-control" name="image">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Create</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Auction Modal -->
+<div class="modal fade" id="editAuctionModal" tabindex="-1" aria-labelledby="editAuctionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form id="editAuctionForm" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Auction</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="editAuctionId">
+          <div class="mb-3">
+            <label>Commodity Name</label>
+            <input type="text" class="form-control" name="commodityName" id="editCommodityName" required>
+          </div>
+          <div class="mb-3">
+            <label>Harvest Timing</label>
+            <input type="text" class="form-control" name="harvestTiming" id="editHarvestTiming" required>
+          </div>
+          <div class="mb-3">
+            <label>Quality</label>
+            <input type="text" class="form-control" name="quality" id="editQuality" required>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              <label>Quantity</label>
+              <input type="number" class="form-control" name="quantityAmount" id="editQuantityAmount" required>
+            </div>
+            <div class="col">
+              <label>Unit</label>
+              <select class="form-select" name="quantityUnit" id="editQuantityUnit" required>
+                <option value="kg">kg</option>
+                <option value="quintal">quintal</option>
+                <option value="bag">bag</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Starting Price</label>
+            <input type="number" class="form-control" name="startingPrice" id="editStartingPrice" required>
+          </div>
+          <div class="mb-3">
+            <label>Duration (Hours)</label>
+            <input type="number" class="form-control" name="duration" id="editDuration" required>
+          </div>
+          <div class="mb-3">
+            <label>Image (optional)</label>
+            <input type="file" class="form-control" name="image">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Update</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Populate edit modal fields
+  document.querySelectorAll('.editAuctionBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      document.getElementById('editAuctionId').value = id;
+      document.getElementById('editCommodityName').value = btn.dataset.commodity;
+      document.getElementById('editHarvestTiming').value = btn.dataset.harvest;
+      document.getElementById('editQuality').value = btn.dataset.quality;
+      document.getElementById('editQuantityAmount').value = btn.dataset.quantity;
+      document.getElementById('editQuantityUnit').value = btn.dataset.unit;
+      document.getElementById('editStartingPrice').value = btn.dataset.price;
+      document.getElementById('editDuration').value = btn.dataset.duration;
+      document.getElementById('editAuctionForm').action = '/admin/auctions/update/' + id;
+    });
+  });
+</script>
+
+<%- include('common/footer') %>
