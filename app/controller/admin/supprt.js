@@ -68,7 +68,7 @@ class SupportController {
       const user = req.user;
       const userdetails = await SecureEmployee.findById(req.user.id);
 
-      return res.render("admin/allComplaints", { user, userdetails, complaints, q: q||"", startDate: startDate||"", endDate: endDate||"", status: status||"", success_msg: req.flash?.("success_msg"), error_msg: req.flash?.("error_msg") });
+      return res.render("admin/allComplaints", { user, userdetails, complaints, q: q||"", startDate: startDate||"", endDate: endDate||"", status: status||"", success_msg: req.flash?.("success_msg"), error_msg: req.flash?.("error_msg") ,});
     } catch (err) {
       console.error("getAll error:", err);
       return res.status(500).send("Server error");

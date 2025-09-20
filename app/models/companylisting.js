@@ -10,7 +10,7 @@ const companySchema = new mongoose.Schema({
 
   name: { type: String, required: true, trim: true },
   address: { type: String, required: true, trim: true },
-  contactPerson: { type: String, required: true, trim: true },
+  contactPerson: { type: String, trim: true },
   contactNumber: { type: String, required: true, trim: true },
   email: { type: String, trim: true, index: { unique: true, partialFilterExpression: { email: { $exists: true, $ne: "" } } } },
   gstNumber: { type: String, trim: true, index: { unique: true, partialFilterExpression: { gstNumber: { $exists: true, $ne: "" } } } },
