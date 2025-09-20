@@ -1,136 +1,182 @@
 <%- include('common/header') %>
+<div class="main-content" id="mainContent">
+  <div class="container-fluid">
 
-<div class="container mt-4">
-  <h2>All Successful Purchases</h2>
-
-  <!-- Filter/Search -->
-  <form method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
-      <input type="text" name="q" value="<%= q %>" class="form-control" placeholder="Search by amount/status">
-    </div>
-    <div class="col-md-3">
-      <input type="date" name="startDate" value="<%= startDate %>" class="form-control">
-    </div>
-    <div class="col-md-3">
-      <input type="date" name="endDate" value="<%= endDate %>" class="form-control">
-    </div>
-    <div class="col-md-3">
-      <button type="submit" class="btn btn-primary">Filter</button>
-      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#testPurchaseModal">
-        Test Purchase
-      </button>
-    </div>
-  </form>
-
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Plan</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Payment Status</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% purchases.forEach(p => { %>
-        <tr>
-          <td><%= p.user?.name || 'N/A' %></td>
-          <td><%= p.plan?.name || 'N/A' %></td>
-          <td>₹<%= p.amount %></td>
-          <td><%= p.status %></td>
-          <td><%= p.paymentStatus %></td>
-          <td><%= new Date(p.createdAt).toLocaleString() %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
-
-<!-- TEST PURCHASE MODAL -->
-<div class="modal fade" id="testPurchaseModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content p-3">
-      <h5 class="modal-title mb-3">Admin Test Purchase (Razorpay)</h5>
-
-      <div class="mb-3">
-        <label>User</label>
-        <select id="testUser" class="form-select">
-          <% userdetails ? userdetails : '' %>
-          <% // ideally fetch all users for admin testing %>
-        </select>
+    <!-- Page Heading + Search + Add Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">All Complaints</h4>
+      <div class="d-flex">
+        <!-- Search Form -->
+        <form class="d-flex me-2" method="GET" action="/admin/support/all">
+          <input type="text" class="form-control form-control-sm" name="q" placeholder="Search Ticket / Subject" value="<%= q %>">
+          <button type="submit" class="btn btn-sm btn-secondary ms-1">Search</button>
+        </form>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addComplaintModal">
+          <i class="bi bi-plus-circle"></i> Add Complaint
+        </button>
       </div>
-
-      <div class="mb-3">
-        <label>Plan</label>
-        <select id="testPlan" class="form-select">
-          <% plans.forEach(p => { %>
-            <option value="<%= p._id %>" data-price="<%= p.price %>"><%= p.name %> - ₹<%= p.price %></option>
-          <% }) %>
-        </select>
-      </div>
-
-      <button class="btn btn-success" id="payButton">Pay with Razorpay</button>
-      <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
     </div>
+
+    <!-- Flash Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= success_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+
+    <!-- Complaints Table -->
+    <div class="card shadow-sm">
+      <div class="card-body table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Ticket #</th>
+              <th>Subject</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Origin</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (complaints && complaints.length > 0) { %>
+              <% complaints.forEach(c => { %>
+                <tr>
+                  <td><%= c.ticketNumber %></td>
+                  <td><%= c.subject %></td>
+                  <td><%= c.category %></td>
+                  <td>
+                    <span class="badge bg-<%= c.priority === 'urgent' ? 'danger' : c.priority === 'high' ? 'warning' : c.priority === 'medium' ? 'info' : 'secondary' %>">
+                      <%= c.priority %>
+                    </span>
+                  </td>
+                  <td>
+                    <form action="/admin/support/update-status/<%= c._id %>" method="POST" class="statusForm">
+                      <select name="status" class="form-select form-select-sm autoSubmit">
+                        <option value="open" <%= c.status === 'open' ? 'selected' : '' %>>Open</option>
+                        <option value="in-progress" <%= c.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+                        <option value="resolved" <%= c.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+                        <option value="closed" <%= c.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                      </select>
+                    </form>
+                  </td>
+                  <td>
+                    <% if (c.user) { %>
+                      User: <%= c.user.name %> (<%= c.user.email %>)
+                    <% } else if (c.company) { %>
+                      Company: <%= c.company.name %>
+                    <% } else { %>
+                      Admin
+                    <% } %>
+                  </td>
+                  <td><%= new Date(c.createdAt).toLocaleString() %></td>
+                  <td>
+                    <a href="/admin/support/view/<%= c._id %>" class="btn btn-sm btn-info">View</a>
+                    <form action="/admin/support/delete/<%= c._id %>" method="POST" class="d-inline deleteForm">
+                      <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center text-muted">No complaints found.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Complaint Modal -->
+    <div class="modal fade" id="addComplaintModal" tabindex="-1" aria-labelledby="addComplaintModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <form action="/admin/support/create" method="POST" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addComplaintModalLabel">Add New Complaint</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Subject</label>
+              <input type="text" name="subject" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea name="message" rows="3" class="form-control" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <select name="category" class="form-select">
+                <option value="account">Account</option>
+                <option value="payment">Payment</option>
+                <option value="subscription">Subscription</option>
+                <option value="technical">Technical</option>
+                <option value="complaint">Complaint</option>
+                <option value="other" selected>Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Priority</label>
+              <select name="priority" class="form-select">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Origin Type</label>
+              <select name="originType" class="form-select">
+                <option value="user">User</option>
+                <option value="company">Company</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">User ID / Company ID (if applicable)</label>
+              <input type="text" name="userId" class="form-control" placeholder="User ID">
+              <input type="text" name="companyId" class="form-control mt-2" placeholder="Company ID">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Submit Complaint</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Scripts -->
 <script>
-document.getElementById("payButton").addEventListener("click", async function () {
-  const userId = document.getElementById("testUser").value;
-  const planSelect = document.getElementById("testPlan");
-  const planId = planSelect.value;
-  const amount = planSelect.selectedOptions[0].dataset.price;
-
-  if (!userId || !planId) return alert("Select user and plan");
-
-  // 1️⃣ Create Razorpay order via AJAX
-  const res = await fetch("/admin/purchase/razorpay/create-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ planId, userId }),
+  // Auto-submit status form on change
+  document.querySelectorAll('.autoSubmit').forEach(select => {
+    select.addEventListener('change', function () {
+      this.closest('form').submit();
+    });
   });
-  const data = await res.json();
 
-  if (!data.success) return alert("Failed to create order");
-
-  const options = {
-    key: data.key,
-    amount: data.amount,
-    currency: data.currency,
-    order_id: data.orderId,
-    name: "Admin Test Purchase",
-    description: "Test purchase via admin panel",
-    handler: async function (response) {
-      // 2️⃣ Verify payment
-      const verify = await fetch("/admin/purchase/razorpay/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-          purchaseId: data.purchaseId
-        }),
-      });
-      const verifyData = await verify.json();
-      if (verifyData.success) {
-        alert("Payment successful!");
-        location.reload();
-      } else {
-        alert("Payment verification failed");
+  // Confirm before delete
+  document.querySelectorAll('.deleteForm').forEach(form => {
+    form.addEventListener('submit', function (e) {
+      if (!confirm("Are you sure you want to delete this complaint?")) {
+        e.preventDefault();
       }
-    },
-    prefill: { name: "<%= user?.name %>", email: "<%= user?.email %>" },
-    theme: { color: "#28a745" },
-  };
-
-  const rzp = new Razorpay(options);
-  rzp.open();
-});
+    });
+  });
 </script>
+
 
 <%- include('common/footer') %>
