@@ -8,75 +8,72 @@
 
   <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search jobs...">
 
-<table class="table table-bordered table-hover" id="jobsTable">
-  <thead class="table-dark">
-    <tr>
-      <th>Title</th>
-      <th>Company</th>
-      <th>Location</th>
-      <th>Salary</th>
-      <th>Type</th>
-      <th>Requirements</th>
-      <th>Description</th>
-      <th>Contact</th>
-      <th>Email</th>
-      <th>Posted By</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% jobs.forEach(job => { %>
+<div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+  <table class="table table-bordered table-hover" id="jobsTable">
+    <thead class="table-dark">
       <tr>
-        <td><%= job.title %></td>
-        <td><%= job.companyName %></td>
-        <td><%= job.location %></td>
-        <td><%= job.salary || "N/A" %></td>
-        <td><%= job.jobType %></td>
-        <td>
-          <% if (job.requirements && job.requirements.length > 0) { %>
-            <ul class="mb-0">
-              <% job.requirements.forEach(req => { %>
-                <li><%= req %></li>
-              <% }) %>
-            </ul>
-          <% } else { %>
-            N/A
-          <% } %>
-        </td>
-        <td><%= job.description || "N/A" %></td>
-        <td><%= job.contactNumber %></td>
-        <td><%= job.contactEmail %></td>
-        <td><%= job.postedBy ? job.postedBy.name : "Unknown" %></td>
-        <td>
-          <!-- Edit Button opens modal -->
-          <button 
-            class="btn btn-sm btn-warning editBtn"
-            data-id="<%= job._id %>"
-            data-title="<%= job.title %>"
-            data-company="<%= job.companyName %>"
-            data-location="<%= job.location %>"
-            data-salary="<%= job.salary || '' %>"
-            data-type="<%= job.jobType %>"
-            data-requirements="<%= job.requirements ? job.requirements.join(',') : '' %>"
-            data-description="<%= job.description %>"
-            data-contact="<%= job.contactNumber %>"
-            data-email="<%= job.contactEmail %>"
-            data-bs-toggle="modal"
-            data-bs-target="#editJobModal"
-          >
-            Edit
-          </button>
-          <a href="/admin/jobs/delete/<%= job._id %>" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</a>
-        </td>
+        <th>Title</th>
+        <th>Company</th>
+        <th>Location</th>
+        <th>Salary</th>
+        <th>Type</th>
+        <th>Requirements</th>
+        <th>Description</th>
+        <th>Contact</th>
+        <th>Email</th>
+        <th>Posted By</th>
+        <th>Actions</th>
       </tr>
-    <% }) %>
-  </tbody>
-  <tfoot style="display:none;">
-    <tr>
-      <td colspan="11" class="text-center text-muted">No jobs found</td>
-    </tr>
-  </tfoot>
-</table>
+    </thead>
+    <tbody>
+      <% jobs.forEach(job => { %>
+        <tr>
+          <td><%= job.title %></td>
+          <td><%= job.companyName %></td>
+          <td><%= job.location %></td>
+          <td><%= job.salary || "N/A" %></td>
+          <td><%= job.jobType %></td>
+          <td>
+            <% if (job.requirements && job.requirements.length > 0) { %>
+              <ul class="mb-0">
+                <% job.requirements.forEach(req => { %>
+                  <li><%= req %></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              N/A
+            <% } %>
+          </td>
+          <td><%= job.description || "N/A" %></td>
+          <td><%= job.contactNumber %></td>
+          <td><%= job.contactEmail %></td>
+          <td><%= job.postedBy ? job.postedBy.name : "Unknown" %></td>
+          <td>
+            <button 
+              class="btn btn-sm btn-warning editBtn"
+              data-id="<%= job._id %>"
+              data-title="<%= job.title %>"
+              data-company="<%= job.companyName %>"
+              data-location="<%= job.location %>"
+              data-salary="<%= job.salary || '' %>"
+              data-type="<%= job.jobType %>"
+              data-requirements="<%= job.requirements ? job.requirements.join(',') : '' %>"
+              data-description="<%= job.description %>"
+              data-contact="<%= job.contactNumber %>"
+              data-email="<%= job.contactEmail %>"
+              data-bs-toggle="modal"
+              data-bs-target="#editJobModal"
+            >
+              Edit
+            </button>
+            <a href="/admin/jobs/delete/<%= job._id %>" onclick="return confirm('Are you sure?')" class="btn btn-sm btn-danger">Delete</a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
 
 </div>
    </div>

@@ -1,3 +1,4 @@
+// app/models/chatbotConversation.js
 const mongoose = require("mongoose");
 
 const chatbotConversationSchema = new mongoose.Schema(
@@ -9,24 +10,14 @@ const chatbotConversationSchema = new mongoose.Schema(
     },
     messages: [
       {
-        sender: {
-          type: String,
-          enum: ["user", "bot"],
-          required: true,
-        },
-        text: {
-          type: String,
-          required: true,
-        },
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
+        sender: { type: String, enum: ["user", "bot"], required: true },
+        text: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
       },
     ],
     topic: {
       type: String,
-      default: "agriculture", // default chatbot topic
+      default: "agriculture",
     },
   },
   { timestamps: true }

@@ -43,11 +43,19 @@ const jobSchema = new mongoose.Schema(
       enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
       default: "Full-Time",
     },
+
+    // 🔹 Allow multiple user types to post jobs
     postedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "SecureEmployee", // Who created the job (Admin/Company User)
       required: true,
+      refPath: "postedByModel",   // dynamic reference
     },
+    postedByModel: {
+      type: String,
+      required: true,
+      enum: ["SecureEmployee", "Company", "LISTING"], // multiple user types
+    },
+
     isActive: {
       type: Boolean,
       default: true,

@@ -1,6 +1,7 @@
 const BlogPost = require("../../models/blog");
-const User = require("../../models/user");
+const User = require("../../models/lisingSchema");
 const SecureEmployee = require("../../models/adminEmployee");
+const Company = require("../../models/companylisting");
 const Category = require("../../models/category.model");
 const fs = require("fs").promises;
 const path = require("path");
@@ -29,7 +30,7 @@ class AdminBlogController {
   // ✅ Create blog
   async createBlog(req, res) {
     try {
-      const { title, content, tags, authorType, author, category, image } = req.body;
+      const { title, content, tags, authorType, author, category } = req.body;
 
       if (!title || !content || !category) {
         return res.redirect("/admin/blogs?error=Title, content, and category are required");
@@ -37,8 +38,9 @@ class AdminBlogController {
 
       // Validate author
       let authorDoc;
-      if (authorType === "User") authorDoc = await User.findById(author);
+      if (authorType === "LISTING") authorDoc = await User.findById(author);
       else if (authorType === "SecureEmployee") authorDoc = await SecureEmployee.findById(author);
+      else if (authorType === "Company") authorDoc = await Company.findById(author);
 
       if (!authorDoc) return res.redirect("/admin/blogs?error=Invalid author ID");
 
@@ -46,7 +48,11 @@ class AdminBlogController {
       const categoryDoc = await Category.findById(category);
       if (!categoryDoc) return res.redirect("/admin/blogs?error=Invalid category ID");
 
-      const imageUrl = req.file ? req.file.url : (image && image.startsWith("http") ? image : null);
+      // Handle image: save relative path
+      let imageUrl = null;
+      if (req.file) {
+        imageUrl = path.join("/uploads/blogs", req.file.filename);
+      }
 
       const blog = new BlogPost({
         title,
@@ -78,8 +84,12 @@ class AdminBlogController {
   async getBlogById(req, res) {
     try {
       const blog = await BlogPost.findById(req.params.id)
-        .populate("author_doc", "name email")
-        .populate("category", "name status");
+        .populate("category", "name")
+        .populate({
+          path: "author_doc",
+          select: "name email",
+          model: doc => doc.authorType
+        });
 
       if (!blog) return res.status(404).json({ message: "Blog not found" });
       res.json(blog);
@@ -93,7 +103,7 @@ class AdminBlogController {
   // ✅ Update blog
   async updateBlog(req, res) {
     try {
-      const { title, content, tags, category, image } = req.body;
+      const { title, content, tags, category } = req.body;
       const blog = await BlogPost.findById(req.params.id);
       if (!blog) return res.redirect("/admin/blogs?error=Blog not found");
 
@@ -105,14 +115,18 @@ class AdminBlogController {
       const categoryDoc = await Category.findById(category);
       if (!categoryDoc) return res.redirect("/admin/blogs?error=Invalid category ID");
 
-      const imageUrl = req.file ? req.file.url : (image && image.startsWith("http") ? image : null);
-      if (imageUrl && blog.image && blog.image !== imageUrl) await this.deleteImage(blog.image);
+      // Handle image update (relative path)
+      let imageUrl = blog.image; // default to existing image
+      if (req.file) {
+        if (blog.image) await this.deleteImage(blog.image); // delete old file
+        imageUrl = path.join("/uploads/blogs", req.file.filename);
+      }
 
       blog.title = title;
       blog.content = content;
       blog.tags = tags ? tags.split(",").map(tag => tag.trim()).filter(tag => tag) : blog.tags;
-      blog.image = imageUrl !== null ? imageUrl : blog.image;
       blog.category = category;
+      blog.image = imageUrl;
 
       await blog.save();
 

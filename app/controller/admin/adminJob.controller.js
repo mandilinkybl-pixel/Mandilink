@@ -2,8 +2,11 @@ const Job = require("../../models/job");
 
 class JobController {
   // Show job list page
+  // (Assume handled in routes/view, not included here)
 
+  // ----------------------
   // Create new job
+  // ----------------------
   async create(req, res) {
     try {
       const {
@@ -23,12 +26,16 @@ class JobController {
         companyName,
         location,
         description,
-        requirements: requirements.split(",").map((r) => r.trim()), // multiple reqs
+        requirements: requirements
+          ? requirements.split(",").map((r) => r.trim())
+          : [],
         salary,
         contactNumber,
         contactEmail,
         jobType,
-        postedBy: req.user.id || null,
+        postedBy: req.user.id,           // Set postedBy from logged-in user
+        postedByModel: "SecureEmployee", // Set model type as SecureEmployee
+        isActive: true,
       });
 
       await job.save();
@@ -39,7 +46,9 @@ class JobController {
     }
   }
 
+  // ----------------------
   // Render edit form
+  // ----------------------
   async editForm(req, res) {
     try {
       const job = await Job.findById(req.params.id);
@@ -51,38 +60,56 @@ class JobController {
     }
   }
 
+  // ----------------------
   // Update job
-async update(req, res) {
-  try {
-    const { id } = req.params;
-    const { title, companyName, location, description, salary, contactNumber, contactEmail, jobType } = req.body;
+  // ----------------------
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const {
+        title,
+        companyName,
+        location,
+        description,
+        salary,
+        contactNumber,
+        contactEmail,
+        jobType,
+        requirements,
+      } = req.body;
 
-    const requirements = req.body.requirements
-      ? req.body.requirements.split(",").map(r => r.trim())
-      : [];
+      const updatedRequirements = requirements
+        ? requirements.split(",").map((r) => r.trim())
+        : [];
 
-    await Job.findByIdAndUpdate(id, {
-      title,
-      companyName,
-      location,
-      description,
-      requirements,
-      salary,
-      contactNumber,
-      contactEmail,
-      jobType,
-    });
+      await Job.findByIdAndUpdate(
+        id,
+        {
+          title,
+          companyName,
+          location,
+          description,
+          requirements: updatedRequirements,
+          salary,
+          contactNumber,
+          contactEmail,
+          jobType,
+          postedBy: req.user.id,           // Ensure postedBy stays updated
+          postedByModel: "SecureEmployee", // Keep postedByModel
+        },
+        { new: true, runValidators: true }
+      );
 
-    res.redirect("/admin/jobs");
-  } catch (error) {
-    // console.error(error);
-    res.redirect("/admin/jobs"); // fallback
+      res.redirect("/admin/jobs");
+    } catch (error) {
+      console.error(error);
+      res.redirect("/admin/jobs"); // fallback
+    }
   }
-}
 
-
-
+  // ----------------------
   // Delete job
+  // ----------------------
   async delete(req, res) {
     try {
       await Job.findByIdAndDelete(req.params.id);
