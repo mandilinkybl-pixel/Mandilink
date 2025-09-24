@@ -2,7 +2,9 @@ const Plan = require("../../models/plan");
 
 
 class PlanController {
-  // Get all plans
+  // Get all plans.
+
+
   async getAllPlans(req, res) {
     try {
       const plans = await Plan.find().populate("categories", "name");
