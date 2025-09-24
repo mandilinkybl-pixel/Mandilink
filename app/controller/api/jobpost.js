@@ -3,6 +3,7 @@ const Job = require("../../models/job");
 class JobController {
   // ----------------------
   // Create a Job
+  
   // ----------------------
   async createJob(req, res) {
     try {

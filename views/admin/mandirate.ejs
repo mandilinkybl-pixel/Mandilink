@@ -10,28 +10,22 @@
         <select id="filterState" class="form-select">
           <option value="">Select State</option>
           <% states.forEach(state => { %>
-            <option value="<%= state._id %>" <%= selectedState === state._id.toString() ? 'selected' : '' %>><%= state.name %></option>
+            <option value="<%= state._id %>"><%= state.name %></option>
           <% }) %>
         </select>
       </div>
       <div class="col-md-3">
         <select id="filterDistrict" class="form-select">
           <option value="">Select District</option>
-          <% if (selectedDistrict) { %>
-            <option value="<%= selectedDistrict %>" selected><%= selectedDistrict %></option>
-          <% } %>
         </select>
       </div>
       <div class="col-md-3">
         <select id="filterMandi" class="form-select">
           <option value="">Select Mandi</option>
-          <% if (selectedMandi) { %>
-            <option value="<%= selectedMandi %>" selected><%= rates.find(r => r.mandi?._id.toString() === selectedMandi)?.mandi?.name %></option>
-          <% } %>
         </select>
       </div>
       <div class="col-md-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by Mandi Name or any field..." value="">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search...">
       </div>
     </div>
 
@@ -44,19 +38,11 @@
       </div>
     </div>
 
-    <!-- Report buttons for 10 and 30 days -->
-    <div class="row mb-3">
-      <div class="col-auto">
-        <button id="report10Days" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reportModal" data-days="10">10 Days Report</button>
-        <button id="report30Days" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reportModal" data-days="30">30 Days Report</button>
-      </div>
-    </div>
-
     <!-- Form for adding/updating rates -->
     <form id="mandiRateForm" action="/admin/mandirate/add" method="POST">
-      <input type="hidden" name="state" id="formState" value="<%= selectedState %>">
-      <input type="hidden" name="district" id="formDistrict" value="<%= selectedDistrict %>">
-      <input type="hidden" name="mandi" id="formMandi" value="<%= selectedMandi %>">
+      <input type="hidden" name="state" id="formState">
+      <input type="hidden" name="district" id="formDistrict">
+      <input type="hidden" name="mandi" id="formMandi">
       <div class="mb-3">
         <label for="existingMandiRate" class="form-label">Add to Existing Mandi Rate (Optional)</label>
         <select id="existingMandiRate" class="form-select" onchange="updateFormAction()">
@@ -175,39 +161,6 @@
     </form>
   </div>
 
-  <!-- Report Modal -->
-  <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="reportModalLabel">Mandi Rates Report</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <table class="table table-bordered" id="reportTable">
-            <thead>
-              <tr>
-                <th>Sl No</th>
-                <th>Mandi Name</th>
-                <th>Address</th>
-                <th>Commodity</th>
-                <th>Min Price</th>
-                <th>Max Price</th>
-                <th>Est. Qty</th>
-                <th>Last Updated</th>
-              </tr>
-            </thead>
-            <tbody id="reportTableBody"></tbody>
-          </table>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="downloadReportPDF">Download PDF</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
   <script>
@@ -219,17 +172,13 @@
       const mandiRateRows = document.getElementById("mandiRateRows");
       const mandiRateForm = document.getElementById("mandiRateForm");
       const existingMandiRate = document.getElementById("existingMandiRate");
-      const reportModal = document.getElementById("reportModal");
-      const reportTableBody = document.getElementById("reportTableBody");
-      const reportModalLabel = document.getElementById("reportModalLabel");
       let mandis = [];
-      let currentReportDays = null;
 
       // Update form action based on existingMandiRate selection
       function updateFormAction() {
         const mandiRateId = existingMandiRate.value;
         mandiRateForm.action = mandiRateId
-          ? `/admin/mandirate/add-multiple-commodities/${mandiRateId}`
+          ? `/admin/mandirate/add-commodities/${mandiRateId}`
           : "/admin/mandirate/add";
       }
 
@@ -243,22 +192,16 @@
           updateAddRowFields();
           return;
         }
-        try {
-          const res = await fetch(`/admin/mandirate/districts/${this.value}`);
-          if (!res.ok) throw new Error("Failed to fetch districts");
-          const districts = await res.json();
-          districts.forEach(d => {
-            const opt = document.createElement("option");
-            opt.value = d;
-            opt.textContent = d;
-            filterDistrict.appendChild(opt);
-          });
-          filterTable();
-          updateAddRowFields();
-        } catch (err) {
-          console.error("Error fetching districts:", err);
-          alert("Error fetching districts");
-        }
+        const res = await fetch(`/admin/mandirate/districts/${this.value}`);
+        const districts = await res.json();
+        districts.forEach(d => {
+          const opt = document.createElement("option");
+          opt.value = d;
+          opt.textContent = d;
+          filterDistrict.appendChild(opt);
+        });
+        filterTable();
+        updateAddRowFields();
       });
 
       filterDistrict.addEventListener("change", async function() {
@@ -269,37 +212,20 @@
           updateAddRowFields();
           return;
         }
-        try {
-          const res = await fetch(`/admin/mandirate/mandis/${this.value}`);
-          if (!res.ok) throw new Error("Failed to fetch mandis");
-          mandis = await res.json();
-          mandis.forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m.id;
-            opt.textContent = m.name;
-            filterMandi.appendChild(opt);
-          });
-          filterTable();
-          updateAddRowFields();
-        } catch (err) {
-          console.error("Error fetching mandis:", err);
-          alert("Error fetching mandis");
-        }
+        const res = await fetch(`/admin/mandirate/mandis/${this.value}`);
+        mandis = await res.json();
+        mandis.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.name;
+          filterMandi.appendChild(opt);
+        });
+        filterTable();
+        updateAddRowFields();
       });
 
-      filterMandi.addEventListener("change", async function() {
+      filterMandi.addEventListener("change", function() {
         document.getElementById("formMandi").value = this.value;
-        if (this.value) {
-          const mandi = mandis.find(m => m.id === this.value);
-          if (mandi && mandi.state) {
-            document.getElementById("formState").value = mandi.state;
-            const stateOption = filterState.querySelector(`option[value="${mandi.state}"]`);
-            if (stateOption) {
-              filterState.value = mandi.state;
-              filterState.dispatchEvent(new Event("change"));
-            }
-          }
-        }
         filterTable();
         updateAddRowFields();
       });
@@ -347,9 +273,7 @@
           const tbody = mandiRateRows;
           const addRow = e.target.closest(".addRow");
           const newRow = addRow.cloneNode(true);
-          newRow.querySelectorAll("input, select").forEach(el => {
-            if (el.type !== "text" || !el.readOnly) el.value = "";
-          });
+          newRow.querySelectorAll("input, select").forEach(el => el.value = "");
           newRow.querySelector(".addRowBtn").style.display = "none";
           newRow.querySelector(".removeRowBtn").style.display = "";
           updateAddRowFields();
@@ -413,95 +337,32 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ minimum, maximum, estimatedArrival })
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.error) {
-                alert(data.error);
-              } else {
-                window.location.reload();
-              }
-            })
-            .catch(err => {
-              console.error("Error updating commodity:", err);
-              alert("Error updating commodity");
-            });
+          }).then(() => window.location.reload());
         }
       });
 
-      // Function to get current filters
-      function getFilters() {
-        return {
-          state: filterState.value,
-          district: filterDistrict.value,
-          mandi: filterMandi.value
-        };
-      }
-
       // Export buttons
       document.getElementById('downloadCSV').addEventListener('click', function () {
-        const query = new URLSearchParams(getFilters()).toString();
+        const state = filterState.value;
+        const district = filterDistrict.value;
+        const mandi = filterMandi.value;
+        const query = new URLSearchParams({ state, district, mandi }).toString();
         window.location.href = `/admin/mandirate/export/csv?${query}`;
       });
 
       document.getElementById('downloadExcel').addEventListener('click', function () {
-        const query = new URLSearchParams(getFilters()).toString();
+        const state = filterState.value;
+        const district = filterDistrict.value;
+        const mandi = filterMandi.value;
+        const query = new URLSearchParams({ state, district, mandi }).toString();
         window.location.href = `/admin/mandirate/export/excel?${query}`;
       });
 
       document.getElementById('downloadPDF').addEventListener('click', function () {
-        const query = new URLSearchParams(getFilters()).toString();
-        window.location.href = `/admin/mandirate/export/pdf?${query}`;
-      });
-
-      // Report modal handling
-      reportModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        currentReportDays = button.getAttribute('data-days');
-        const filters = getFilters();
-        filters.days = currentReportDays;
-        const query = new URLSearchParams(filters).toString();
-        reportModalLabel.textContent = `Mandi Rates Report (${currentReportDays} Days)`;
-        reportTableBody.innerHTML = '<tr><td colspan="8" class="text-center">Loading...</td></tr>';
-
-        fetch(`/admin/mandirate/report/${currentReportDays}?${query}`)
-          .then(res => res.json())
-          .then(data => {
-            reportTableBody.innerHTML = '';
-            if (data.error) {
-              reportTableBody.innerHTML = `<tr><td colspan="8" class="text-center">${data.error}</td></tr>`;
-              return;
-            }
-            if (data.length === 0) {
-              reportTableBody.innerHTML = '<tr><td colspan="8" class="text-center">No data available</td></tr>';
-              return;
-            }
-            data.forEach(row => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td>${row.sno}</td>
-                <td>${row.mandiName}</td>
-                <td>${row.address}</td>
-                <td>${row.commodity}</td>
-                <td>${row.minimum}</td>
-                <td>${row.maximum}</td>
-                <td>${row.estimatedArrival}</td>
-                <td>${row.lastUpdated}</td>
-              `;
-              reportTableBody.appendChild(tr);
-            });
-          })
-          .catch(err => {
-            console.error("Error fetching report data:", err);
-            reportTableBody.innerHTML = '<tr><td colspan="8" class="text-center">Error loading report</td></tr>';
-          });
-      });
-
-      // Download report as PDF
-      document.getElementById('downloadReportPDF').addEventListener('click', function () {
-        const filters = getFilters();
-        filters.days = currentReportDays;
-        const query = new URLSearchParams(filters).toString();
+        const state = filterState.value;
+        const district = filterDistrict.value;
+        const mandi = filterMandi.value;
+        const query = new URLSearchParams({ state, district, mandi }).toString();
         window.location.href = `/admin/mandirate/export/pdf?${query}`;
       });
 

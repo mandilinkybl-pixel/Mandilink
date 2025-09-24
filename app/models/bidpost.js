@@ -21,6 +21,7 @@ const BidSchema = new mongoose.Schema(
     endTime: { type: Date }, // auto-set before save
 
     image: { type: String },
+    
 
     // Auction creator (SecureEmployee / Company / LISTING)
     createdBy: {

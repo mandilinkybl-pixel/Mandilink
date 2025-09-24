@@ -35,6 +35,9 @@ async applyJob(req, res) {
 }
 
 
+
+
+
   // 2️⃣ Get all applications
   async getAllApplications(req, res) {
     try {

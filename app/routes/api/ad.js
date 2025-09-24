@@ -9,3 +9,5 @@ router.get("/", adController.getAllAds);
 router.get("/:id", adController.getAdById);
 
 module.exports = router;
+
+

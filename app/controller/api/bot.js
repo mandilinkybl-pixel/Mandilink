@@ -130,6 +130,7 @@ class BotController {
       } else {
         answerText = await askHuggingFace(question);
       }
+      
 
       conversation.messages.push({ sender: 'bot', text: answerText });
       await conversation.save();

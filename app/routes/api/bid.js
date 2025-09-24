@@ -12,6 +12,7 @@ router.post("/bid/:bidId", bidController.placeBid);
 router.get("/", bidController.getAllBids);
 
 // Get single auction by ID
+
 router.get("/:id", bidController.getBidById);
 
 module.exports = router;

@@ -109,6 +109,7 @@ class JobController {
 
   // ----------------------
   // Delete job
+  
   // ----------------------
   async delete(req, res) {
     try {

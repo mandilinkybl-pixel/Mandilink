@@ -16,6 +16,9 @@ const LikeSchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+
+
+
 // Share schema: Any user type can share
 const ShareSchema = new Schema({
   user: { type: Schema.Types.ObjectId, required: true },

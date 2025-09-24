@@ -68,6 +68,7 @@ class BidController {
     }
   }
 
+  
   // ----------------------
   // Get all auctions
   // ----------------------

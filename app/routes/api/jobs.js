@@ -3,6 +3,7 @@ const router = express.Router();
 const JobApplicationController = require("../../controller/api/applyjob");
 const uploadDocs = require("../../multer/jobapply"); 
 
+
 // Apply for a job (resume optional)
 router.post(
   "/:jobId/apply",
