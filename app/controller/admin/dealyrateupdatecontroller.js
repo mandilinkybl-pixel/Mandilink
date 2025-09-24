@@ -7,11 +7,32 @@ const mongoose = require("mongoose");
 const { Parser } = require("json2csv"); // CSV
 const ExcelJS = require("exceljs"); // Excel
 const PDFDocument = require("pdfkit-table"); // PDF
+const cron = require("node-cron");
 
 /**
  * Controller for managing Mandi Rates
  */
 class MandiRateController {
+  constructor() {
+    this.setupCron();
+  }
+
+  /**
+   * Setup cron job to delete mandi rates older than 30 days
+   */
+  setupCron() {
+    cron.schedule("0 0 * * *", async () => {
+      try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        await MandiRate.deleteMany({ updatedAt: { $lt: thirtyDaysAgo } });
+        console.log("Deleted mandi rates older than 30 days");
+      } catch (err) {
+        console.error("Error in cron job for deleting old mandi rates:", err);
+      }
+    });
+  }
+
   /**
    * Utility: validate numeric fields
    */
@@ -61,7 +82,7 @@ class MandiRateController {
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
-        .populate("mandi", "name")
+        .populate("mandi", "name state")
         .populate("rates.commodity", "name")
         .sort({ "mandi.name": 1 })
         .lean();
@@ -249,110 +270,6 @@ class MandiRateController {
       res.redirect("/admin/mandirate");
     }
   };
-  /**
-   * Add multiple commodities to an existing mandi rate
-   */
-  addMultipleCommodities = async (req, res) => {
-    const { mandiRateId } = req.params;
-    const { commodity_ids, minimums, maximums, arrivals } = req.body;
-
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        req.flash("error_msg", "Unauthorized user");
-        return res.redirect("/admin/mandirate");
-      }
-
-      if (!mongoose.isValidObjectId(mandiRateId)) {
-        req.flash("error_msg", "Invalid Mandi Rate ID");
-        return res.redirect("/admin/mandirate");
-      }
-
-      if (!commodity_ids || !minimums || !maximums) {
-        req.flash("error_msg", "Commodity IDs, minimums, and maximums are required");
-        return res.redirect("/admin/mandirate");
-      }
-
-      const commoditiesArr = Array.isArray(commodity_ids) ? commodity_ids : [commodity_ids];
-      const minsArr = Array.isArray(minimums) ? minimums : [minimums];
-      const maxArr = Array.isArray(maximums) ? maximums : [maximums];
-      const arrArr = Array.isArray(arrivals) ? arrivals : [arrivals];
-
-      if (
-        commoditiesArr.length !== minsArr.length ||
-        commoditiesArr.length !== maxArr.length ||
-        commoditiesArr.length !== arrArr.length
-      ) {
-        req.flash("error_msg", "Mismatched input arrays");
-        return res.redirect("/admin/mandirate");
-      }
-
-      const mandiRate = await MandiRate.findOne({ _id: mandiRateId, user_id: user.id });
-      if (!mandiRate) {
-        req.flash("error_msg", "Mandi Rate not found or not authorized");
-        return res.redirect("/admin/mandirate");
-      }
-
-      const commodityIds = commoditiesArr.filter(id => mongoose.isValidObjectId(id));
-      const commodities = await Commodity.find({ _id: { $in: commodityIds } });
-      if (commodities.length !== commodityIds.length) {
-        req.flash("error_msg", "One or more commodities not found");
-        return res.redirect("/admin/mandirate");
-      }
-
-      for (let i = 0; i < commoditiesArr.length; i++) {
-        if (!mongoose.isValidObjectId(commoditiesArr[i])) {
-          req.flash("error_msg", `Invalid commodity ID at index ${i}`);
-          return res.redirect("/admin/mandirate");
-        }
-
-        const minPrice = Number(minsArr[i]);
-        const maxPrice = Number(maxArr[i]);
-        const estArrival = arrArr[i] ? Number(arrArr[i]) : null;
-
-        if (isNaN(minPrice) || isNaN(maxPrice) || minPrice < 0 || maxPrice < 0) {
-          req.flash("error_msg", `Invalid price values for commodity at index ${i}`);
-          return res.redirect("/admin/mandirate");
-        }
-
-        if (minPrice > maxPrice) {
-          req.flash("error_msg", `Minimum price cannot be greater than maximum price at index ${i}`);
-          return res.redirect("/admin/mandirate");
-        }
-
-        if (estArrival !== null && (isNaN(estArrival) || estArrival < 0)) {
-          req.flash("error_msg", `Invalid estimated arrival for commodity at index ${i}`);
-          return res.redirect("/admin/mandirate");
-        }
-
-        if (mandiRate.rates.some(r => String(r.commodity) === String(commoditiesArr[i]))) {
-          req.flash("error_msg", `Commodity at index ${i} already exists in this mandi rate`);
-          return res.redirect("/admin/mandirate");
-        }
-
-        mandiRate.rates.push({
-          commodity: commoditiesArr[i],
-          minimum: minPrice,
-          maximum: maxPrice,
-          estimatedArrival: estArrival,
-          updatedAt: new Date(),
-        });
-      }
-
-      if (!mandiRate.rates.length) {
-        req.flash("error_msg", "No valid commodities added");
-        return res.redirect("/admin/mandirate");
-      }
-
-      await mandiRate.save();
-      req.flash("success_msg", "Commodities added successfully");
-      res.redirect("/admin/mandirate");
-    } catch (err) {
-      console.error("Error in addMultipleCommodities:", err);
-      req.flash("error_msg", "Error adding commodities");
-      res.redirect("/admin/mandirate");
-    }
-  };
 
   /**
    * Edit a single commodity rate for a mandi
@@ -419,7 +336,6 @@ class MandiRateController {
    */
   deleteCommodity = async (req, res) => {
     const { mandiRateId, commodityId } = req.params;
-    // console.log("Deleting commodity:", { mandiRateId, commodityId });
 
     try {
       const user = req.user;
@@ -432,10 +348,6 @@ class MandiRateController {
         req.flash("error_msg", "Invalid Mandi Rate ID or Commodity ID");
         return res.redirect("/admin/mandirate");
       }
-
-
-
-      
 
       const mandiRate = await MandiRate.findOne({ _id: mandiRateId, user_id: user.id });
       if (!mandiRate) {
@@ -535,12 +447,69 @@ class MandiRateController {
       }
 
       const mandis = await Mandi.find({ district: district.trim(), user_id: userId })
-        .select("_id name")
+        .select("_id name state")
         .lean();
-      res.json(mandis.map(m => ({ id: m._id, name: m.name })));
+      res.json(mandis.map(m => ({ id: m._id, name: m.name, state: m.state })));
     } catch (err) {
       console.error("Error in getMandis:", err);
       res.status(500).json({ error: "Error fetching mandis" });
+    }
+  };
+
+  /**
+   * Get report data for modal (AJAX)
+   */
+  getReportData = async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || !mongoose.isValidObjectId(user.id)) {
+        return res.status(401).json({ error: "Unauthorized user" });
+      }
+
+      const { days, state, district, mandi } = req.query || {};
+      let query = { user_id: user.id };
+      if (state && mongoose.isValidObjectId(state)) query.state = state;
+      if (district) query.district = district.trim();
+      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+      const daysNum = parseInt(days) || null;
+      if (daysNum) {
+        const threshold = new Date();
+        threshold.setDate(threshold.getDate() - daysNum);
+        query.updatedAt = { $gte: threshold };
+      }
+
+      const rates = await MandiRate.find(query)
+        .populate("state", "name")
+        .populate("mandi", "name")
+        .populate("rates.commodity", "name")
+        .sort({ "mandi.name": 1 })
+        .lean();
+
+      const data = rates.flatMap((rate, index) =>
+        rate.rates.map(item => ({
+          sno: index + 1,
+          mandiName: rate.mandi?.name || "",
+          address: `${rate.state?.name || ""}/${rate.district || ""}/${rate.mandi?.name || ""}`,
+          commodity: item.commodity?.name || "",
+          minimum: item.minimum || 0,
+          maximum: item.maximum || 0,
+          estimatedArrival: item.estimatedArrival ?? "",
+          lastUpdated: item.updatedAt
+            ? new Date(item.updatedAt).toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "",
+        }))
+      );
+
+      res.json(data);
+    } catch (err) {
+      console.error("Error in getReportData:", err);
+      res.status(500).json({ error: "Error fetching report data" });
     }
   };
 
@@ -554,11 +523,17 @@ class MandiRateController {
         return res.status(401).json({ error: "Unauthorized user" });
       }
 
-      const { state, district, mandi } = req.query || {};
+      const { state, district, mandi, days } = req.query || {};
       let query = { user_id: user.id };
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+      const daysNum = parseInt(days) || null;
+      if (daysNum) {
+        const threshold = new Date();
+        threshold.setDate(threshold.getDate() - daysNum);
+        query.updatedAt = { $gte: threshold };
+      }
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
@@ -624,11 +599,17 @@ class MandiRateController {
         return res.status(401).json({ error: "Unauthorized user" });
       }
 
-      const { state, district, mandi } = req.query || {};
+      const { state, district, mandi, days } = req.query || {};
       let query = { user_id: user.id };
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+      const daysNum = parseInt(days) || null;
+      if (daysNum) {
+        const threshold = new Date();
+        threshold.setDate(threshold.getDate() - daysNum);
+        query.updatedAt = { $gte: threshold };
+      }
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
@@ -696,11 +677,17 @@ class MandiRateController {
         return res.status(401).json({ error: "Unauthorized user" });
       }
 
-      const { state, district, mandi } = req.query || {};
+      const { state, district, mandi, days } = req.query || {};
       let query = { user_id: user.id };
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+      const daysNum = parseInt(days) || null;
+      if (daysNum) {
+        const threshold = new Date();
+        threshold.setDate(threshold.getDate() - daysNum);
+        query.updatedAt = { $gte: threshold };
+      }
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
@@ -710,10 +697,10 @@ class MandiRateController {
 
       const doc = new PDFDocument({ size: "A4", margin: 20 });
       res.header("Content-Type", "application/pdf");
-      res.attachment("mandi_rates.pdf");
+      res.attachment(`mandi_rates_${days || 'all'}_days.pdf`);
       doc.pipe(res);
 
-      doc.fontSize(16).text("Mandi Rates Report", { align: "center" });
+      doc.fontSize(16).text(`Mandi Rates Report (${days || 'All'} Days)`, { align: "center" });
       doc.moveDown();
 
       const table = {

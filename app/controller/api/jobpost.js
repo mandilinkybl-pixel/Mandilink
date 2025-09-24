@@ -49,46 +49,72 @@ class JobController {
   // ----------------------
   // Get all Jobs
   // ----------------------
-  async getJobs(req, res) {
-    try {
-      const jobs = await Job.find()
-        .populate({
-          path: "postedBy",
-          select: "name email",
-          model: function(doc) {
-            return doc.postedByModel; // dynamically choose model
-          }
-        });
+async getJobs(req, res) {
+  try {
+    const jobs = await Job.find();
 
-      res.status(200).json({ success: true, data: jobs });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
+    // Manually populate postedBy based on postedByModel
+    const populatedJobs = await Promise.all(jobs.map(async (job) => {
+      let Model;
+      if (job.postedByModel === "LISTING") Model = require("../../models/lisingSchema");
+      else if (job.postedByModel === "Company") Model = require("../../models/companylisting");
+      else if (job.postedByModel === "SecureEmployee") Model = require("../../models/adminEmployee");
+
+      let postedByData = null;
+      if (Model) {
+        postedByData = await Model.findById(job.postedBy).select("name email");
+      }
+
+      return {
+        ...job.toObject(),
+        postedBy: postedByData
+      };
+    }));
+
+    res.status(200).json({ success: true, data: populatedJobs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
+}
+
 
   // ----------------------
   // Get a single Job by ID
   // ----------------------
-  async getJobById(req, res) {
-    try {
-      const job = await Job.findById(req.params.id)
-        .populate({
-          path: "postedBy",
-          select: "name email",
-          model: function(doc) {
-            return doc.postedByModel; // dynamically populate correct model
-          }
-        });
-
-      if (!job) {
-        return res.status(404).json({ success: false, error: "Job not found" });
-      }
-
-      res.status(200).json({ success: true, data: job });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+ async getJobById(req, res) {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) {
+      return res.status(404).json({ success: false, error: "Job not found" });
     }
+
+    // Dynamically load the correct model
+    let Model;
+    if (job.postedByModel === "LISTING") {
+      Model = require("../../models/lisingSchema");
+    } else if (job.postedByModel === "Company") {
+      Model = require("../../models/companylisting");
+    } else if (job.postedByModel === "SecureEmployee") {
+      Model = require("../../models/adminEmployee");
+    }
+
+    let postedByData = null;
+    if (Model) {
+      postedByData = await Model.findById(job.postedBy).select("name email");
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...job.toObject(),
+        postedBy: postedByData
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
+}
+
 
   // ----------------------
   // Update a Job

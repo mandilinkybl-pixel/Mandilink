@@ -8,6 +8,7 @@ app.use("/blog",require("./blog"))
 app.use("/ad",require("./ad"))
 app.use("/bid",require("./bid"))
 app.use("/bot",require("./bot"))
+app.use("/applyjob",require("./jobs"))
 
 
 module.exports = app;

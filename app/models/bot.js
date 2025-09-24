@@ -1,12 +1,15 @@
-// app/models/chatbotConversation.js
 const mongoose = require("mongoose");
 
 const chatbotConversationSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
       required: true,
+    },
+    userModel: {
+      type: String,
+      required: true,
+      enum: ["LISTING", "Company", "SecureEmployee"],
     },
     messages: [
       {
