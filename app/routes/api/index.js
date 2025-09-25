@@ -10,7 +10,10 @@ app.use("/bid",require("./bid"))
 app.use("/bot",require("./bot"))
 app.use("/applyjob",require("./jobs"))
 app.use("/plans",require("./plans"))
-
+app.use("/mandirates",require("./mandirate"))
+app.use("/mandis",require("./mandi"))
+app.use('/categories',require("./categories"))
+app.use("/users",require("./categorywise"))
 
 module.exports = app;
 
