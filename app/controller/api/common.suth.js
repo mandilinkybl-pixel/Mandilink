@@ -2,29 +2,41 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/lisingSchema"); // your user model
 const Company = require("../../models/companylisting");   // ✅ fixed import
-
+const crypto = require("crypto");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
-
+const OTP_SECRET ="cbaisbckjbaskcbjkjabsckjbaskc"
 class AuthController {
-  // Signup
+
   async signup(req, res) {
     try {
       const {
-        userType, name, email, contactNumber, password,
-        address, state, district, mandi, category
+        userType,
+        name,
+        email,
+        contactNumber,
+        password,
+        address,
+        state,
+        district,
+        mandi,
+        category,
+        contactPerson,
+        gstNumber,
+        licenseNumber
       } = req.body;
 
+      // Required fields validation
       if (!userType || !name || !email || !contactNumber || !password || !state || !district || !category) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      // check duplicates across both models
+      // Check duplicates across both User and Company
       const existing =
         (await User.findOne({ $or: [{ email }, { contactNumber }] })) ||
-        (await Company.findOne({ $or: [{ email }, { contactNumber }] }));
+        (await Company.findOne({ $or: [{ email }, { contactNumber }, { gstNumber }, { licenseNumber }] }));
 
       if (existing) {
-        return res.status(400).json({ message: "Email or phone already exists" });
+        return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -41,6 +53,9 @@ class AuthController {
           district,
           mandi: mandi || "",
           category,
+          contactPerson: contactPerson || "",
+          gstNumber: gstNumber || "",
+          licenseNumber: licenseNumber || "",
           isVerified: true,
           Verifybatch: "batch1",
           registrationStep: 4,
@@ -63,12 +78,15 @@ class AuthController {
       }
 
       await account.save();
+
       return res.status(201).json({ message: `${userType} registered successfully`, user: account });
     } catch (err) {
       console.error("Signup error:", err);
       res.status(500).json({ message: "Server error" });
     }
   }
+
+
 
   // Login
   async login(req, res) {
@@ -96,44 +114,61 @@ class AuthController {
   }
 
   // Forgot Password
-  async forgotPassword(req, res) {
+ async forgotPassword(req, res) {
     try {
       const { identifier } = req.body;
-      let account =
+
+      const account =
         (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
         (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
 
       if (!account) return res.status(404).json({ message: "Account not found" });
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString(); // ✅ random 6 digit OTP
-      account.resetOtp = otp;
-      account.resetOtpExpire = Date.now() + 5 * 60 * 1000;
-      await account.save();
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expire = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-      res.json({ message: "OTP sent successfully", otp }); // In production, send OTP via SMS/email instead of returning it
+      // Create HMAC token: otp + expiry
+      const token = crypto
+        .createHmac("sha256", OTP_SECRET)
+        .update(otp + expire)
+        .digest("hex");
+
+      // For testing, send OTP + token to client
+      // In production, send OTP via SMS/email and token to client
+      res.json({ message: "OTP generated", otp, token, expire });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  // Reset Password
+  // 2️⃣ Reset Password with OTP + token
   async resetPassword(req, res) {
     try {
-      const { identifier, otp, newPassword } = req.body;
+      const { identifier, otp, token, newPassword, expire } = req.body;
 
-      let account =
+      const account =
         (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
         (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
 
       if (!account) return res.status(404).json({ message: "Account not found" });
-      if (account.resetOtp !== otp || Date.now() > account.resetOtpExpire) {
-        return res.status(400).json({ message: "Invalid or expired OTP" });
+
+      // Verify OTP and expiry
+      if (Date.now() > expire) {
+        return res.status(400).json({ message: "OTP expired" });
       }
 
+      const hash = crypto
+        .createHmac("sha256", OTP_SECRET)
+        .update(otp + expire)
+        .digest("hex");
+
+      if (hash !== token) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // OTP valid → reset password
       account.passwordHash = await bcrypt.hash(newPassword, 10);
-      account.resetOtp = undefined;
-      account.resetOtpExpire = undefined;
       await account.save();
 
       res.json({ message: "Password reset successful" });

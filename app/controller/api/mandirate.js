@@ -98,6 +98,69 @@ class MandiRateController {
       res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  // Search mandi rates by mandi name
+async searchMandiRates(req, res) {
+  try {
+    console.log("Query params received:", req.query);
+    const { mandiName } = req.query;
+
+    if (!mandiName) {
+      return res
+        .status(400)
+        .json({ success: false, message: "mandiName query param is required" });
+    }
+
+    // Find matching mandis by name (case-insensitive)
+    const mandis = await Mandi.find({
+      name: { $regex: mandiName.trim(), $options: "i" }
+    }).select("_id name district");
+
+    console.log("mandis", mandis);
+
+    if (!mandis.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No mandi found for given name"
+      });
+    }
+
+    const mandiIds = mandis.map(m => m._id);
+
+    // Fetch mandi rates linked to those mandi IDs
+    const rates = await MandiRate.find({ mandi: { $in: mandiIds } })
+      .populate("mandi", "name district")
+      .populate("state", "name")
+      .populate("rates.commodity", "name")
+      .lean();
+
+    // Map mandis and attach rates if they exist
+    const result = mandis.map(mandi => {
+      const rate = rates.find(r => r.mandi._id.toString() === mandi._id.toString());
+      return {
+        mandi: mandi.name,
+        district: mandi.district,
+        state: rate?.state?.name || "",
+        commodities: rate?.rates?.map(r => ({
+          commodity: r.commodity?.name || "Unknown",
+          minimum: r.minimum,
+          maximum: r.maximum,
+          estimatedArrival: r.estimatedArrival,
+          updatedAt: r.updatedAt
+        })) || [] // empty array if no rates
+      };
+    });
+
+    res.status(200).json({ success: true, mandiRates: result });
+  } catch (error) {
+    console.error("Error in searchMandiRates:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+
+
+
 }
 
 module.exports = new MandiRateController();
