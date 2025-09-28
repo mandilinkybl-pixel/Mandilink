@@ -8,7 +8,7 @@ const SecureEmployee = require("../../models/adminEmployee");
 const mongoose = require("mongoose");
 const axios = require("axios");
 
-const FCM_API_KEY = process.env.FIREBASEAPI_KEY;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 class NotificationController {
 
@@ -42,7 +42,7 @@ class NotificationController {
     }
   }
 
-  // Send notification
+  // Send notification using Brevo only
   async sendNotification(req, res) {
     try {
       const { title, body, category, target } = req.body;
@@ -52,7 +52,7 @@ class NotificationController {
       if (!Array.isArray(districts)) districts = districts ? [districts] : [];
       if (!Array.isArray(mandis)) mandis = mandis ? [mandis] : [];
 
-      states = states.map(s =>new mongoose.Types.ObjectId(s));
+      states = states.map(s => new mongoose.Types.ObjectId(s));
 
       const filter = {};
       if (target !== "all") {
@@ -62,26 +62,37 @@ class NotificationController {
         if (mandis.length) filter.mandi = { $in: mandis };
       }
 
-      const users = await Listing.find(filter);
-      const companies = await Company.find(filter);
+      // Get users and companies based on filter
+      const users = await Listing.find(filter).lean();
+      const companies = await Company.find(filter).lean();
 
-      const fcmTokens = [
-        ...users.map(u => u.pushToken).filter(Boolean),
-        ...companies.map(c => c.pushToken).filter(Boolean),
-      ];
+      // Send emails via Brevo
+      const recipients = [...users, ...companies]
+        .filter(u => u.email) // only users with emails
+        .map(u => ({ email: u.email, name: u.name }));
 
-      if (!fcmTokens.length) {
-        req.session.error_msg = "No users/companies found with push tokens.";
+      if (recipients.length) {
+        await axios.post(
+          "https://api.brevo.com/v3/smtp/email",
+          {
+            sender: { name: "Mandilink", email: "no-reply@mandilink.com" },
+            to: recipients,
+            subject: title,
+            htmlContent: `<p>${body}</p>`,
+          },
+          {
+            headers: {
+              "api-key": BREVO_API_KEY,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        req.session.error_msg = "No users/companies with email found.";
         return res.redirect("/admin/notifications");
       }
 
-      await axios.post("https://fcm.googleapis.com/fcm/send", {
-        registration_ids: fcmTokens,
-        notification: { title, body },
-      }, {
-        headers: { Authorization: `key=${FCM_API_KEY}`, "Content-Type": "application/json" },
-      });
-
+      // Save notification record in DB
       await Notification.create({
         title,
         message: body,
@@ -94,14 +105,13 @@ class NotificationController {
         sentToCompanies: companies.map(c => c._id),
       });
 
-      req.session.success_msg = `Sent to ${users.length} users & ${companies.length} companies.`;
+      req.session.success_msg = `Sent to ${users.length} users & ${companies.length} companies via email.`;
       req.session.sent_users = [...users, ...companies];
       res.redirect("/admin/notifications");
 
     } catch (err) {
-      console.log("Notification send error:", err);
-      console.error(err.response?.data || err.message);
-      req.session.error_msg = "Failed to send notification.";
+      console.error("Notification send error:", err.response?.data || err.message);
+      req.session.error_msg = "Failed to send notification via Brevo.";
       res.redirect("/admin/notifications");
     }
   }
@@ -122,13 +132,13 @@ class NotificationController {
   // AJAX: get mandis by states + districts
   async getMandis(req, res) {
     try {
-      const stateIds = req.query.states.split(",").map(id =>new mongoose.Types.ObjectId(id));
+      const stateIds = req.query.states.split(",").map(id => new mongoose.Types.ObjectId(id));
       const districts = req.query.districts.split(",");
 
       const mandis = await Mandi.find({
         state: { $in: stateIds },
-        district: { $in: districts }
-      });
+        district: { $in: districts },
+      }).lean();
 
       res.json(mandis.map(m => m.name));
     } catch (err) {
@@ -136,7 +146,6 @@ class NotificationController {
       res.status(500).json([]);
     }
   }
-
 }
 
 module.exports = new NotificationController();
