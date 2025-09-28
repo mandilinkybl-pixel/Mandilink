@@ -3,7 +3,6 @@ const Job = require("../../models/job");
 class JobController {
   // ----------------------
   // Create a Job
-  
   // ----------------------
   async createJob(req, res) {
     try {
@@ -18,11 +17,14 @@ class JobController {
         contactEmail,
         jobType,
         postedBy,
-        postedByModel, // MUST include this
+        postedByModel,
       } = req.body;
 
       if (!postedBy || !postedByModel) {
-        return res.status(400).json({ success: false, error: "`postedBy` and `postedByModel` are required" });
+        return res.status(400).json({
+          success: false,
+          error: "`postedBy` and `postedByModel` are required",
+        });
       }
 
       const job = new Job({
@@ -40,8 +42,10 @@ class JobController {
         isActive: true,
       });
 
-      const savedJob = await job.save();
-      res.status(201).json({ success: true, data: savedJob });
+      await job.save();
+      await job.populate({ path: "postedBy", select: "name email contactNumber" });
+
+      res.status(201).json({ success: true, data: job });
     } catch (error) {
       res.status(400).json({ success: false, error: error.message });
     }
@@ -50,72 +54,38 @@ class JobController {
   // ----------------------
   // Get all Jobs
   // ----------------------
-async getJobs(req, res) {
-  try {
-    const jobs = await Job.find();
+  async getJobs(req, res) {
+    try {
+      const jobs = await Job.find().populate({
+        path: "postedBy",
+        select: "name email contactNumber",
+      });
 
-    // Manually populate postedBy based on postedByModel
-    const populatedJobs = await Promise.all(jobs.map(async (job) => {
-      let Model;
-      if (job.postedByModel === "LISTING") Model = require("../../models/lisingSchema");
-      else if (job.postedByModel === "Company") Model = require("../../models/companylisting");
-      else if (job.postedByModel === "SecureEmployee") Model = require("../../models/adminEmployee");
-
-      let postedByData = null;
-      if (Model) {
-        postedByData = await Model.findById(job.postedBy).select("name email");
-      }
-
-      return {
-        ...job.toObject(),
-        postedBy: postedByData
-      };
-    }));
-
-    res.status(200).json({ success: true, data: populatedJobs });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+      res.status(200).json({ success: true, data: jobs });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
   }
-}
-
 
   // ----------------------
   // Get a single Job by ID
   // ----------------------
- async getJobById(req, res) {
-  try {
-    const job = await Job.findById(req.params.id);
-    if (!job) {
-      return res.status(404).json({ success: false, error: "Job not found" });
-    }
+  async getJobById(req, res) {
+    try {
+      const job = await Job.findById(req.params.id).populate({
+        path: "postedBy",
+        select: "name email contactNumber",
+      });
 
-    // Dynamically load the correct model
-    let Model;
-    if (job.postedByModel === "LISTING") {
-      Model = require("../../models/lisingSchema");
-    } else if (job.postedByModel === "Company") {
-      Model = require("../../models/companylisting");
-    } else if (job.postedByModel === "SecureEmployee") {
-      Model = require("../../models/adminEmployee");
-    }
-
-    let postedByData = null;
-    if (Model) {
-      postedByData = await Model.findById(job.postedBy).select("name email");
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        ...job.toObject(),
-        postedBy: postedByData
+      if (!job) {
+        return res.status(404).json({ success: false, error: "Job not found" });
       }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-}
 
+      res.status(200).json({ success: true, data: job });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 
   // ----------------------
   // Update a Job
@@ -126,7 +96,10 @@ async getJobs(req, res) {
         req.params.id,
         { $set: req.body },
         { new: true, runValidators: true }
-      );
+      ).populate({
+        path: "postedBy",
+        select: "name email contactNumber",
+      });
 
       if (!updatedJob) {
         return res.status(404).json({ success: false, error: "Job not found" });
@@ -155,8 +128,13 @@ async getJobs(req, res) {
 
       job.isActive = false;
       await job.save();
+      await job.populate({ path: "postedBy", select: "name email contactNumber" });
 
-      res.status(200).json({ success: true, data: job, message: "Job deactivated successfully" });
+      res.status(200).json({
+        success: true,
+        data: job,
+        message: "Job deactivated successfully",
+      });
     } catch (error) {
       res.status(400).json({ success: false, error: error.message });
     }

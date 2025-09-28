@@ -80,23 +80,33 @@ class AdminBlogController {
       else if (userModel === "SecureEmployee") Model = SecureEmployee;
       else if (userModel === "Company") Model = Company;
       if (!Model) return null;
-      return await Model.findById(userId).select("name email");
+
+      // Exclude password + __v
+      return await Model.findById(userId).select("-password -__v");
     };
 
-    blog.comments = await Promise.all(blog.comments.map(async c => ({
-      ...c.toObject(),
-      user: await populateUser(c.user, c.userModel)
-    })));
+    blog = blog.toObject();
 
-    blog.likes = await Promise.all(blog.likes.map(async l => ({
-      ...l.toObject(),
-      user: await populateUser(l.user, l.userModel)
-    })));
+    blog.comments = await Promise.all(
+      blog.comments.map(async c => ({
+        ...c,
+        user: await populateUser(c.user, c.userModel)
+      }))
+    );
 
-    blog.shares = await Promise.all(blog.shares.map(async s => ({
-      ...s.toObject(),
-      user: await populateUser(s.user, s.userModel)
-    })));
+    blog.likes = await Promise.all(
+      blog.likes.map(async l => ({
+        ...l,
+        user: await populateUser(l.user, l.userModel)
+      }))
+    );
+
+    blog.shares = await Promise.all(
+      blog.shares.map(async s => ({
+        ...s,
+        user: await populateUser(s.user, s.userModel)
+      }))
+    );
 
     return blog;
   }
@@ -106,7 +116,7 @@ class AdminBlogController {
     try {
       let blogs = await BlogPost.find()
         .populate("category", "name")
-        .populate("author_doc", "name email");
+        .populate("author_doc", "-password -__v");
 
       blogs = await Promise.all(blogs.map(blog => this.populateInteractions(blog)));
 
@@ -122,7 +132,7 @@ class AdminBlogController {
     try {
       let blog = await BlogPost.findById(req.params.id)
         .populate("category", "name")
-        .populate("author_doc", "name email");
+        .populate("author_doc", "-password -__v");
 
       if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
 
@@ -177,40 +187,34 @@ class AdminBlogController {
   }
 
   // ---------------- Add Comment ----------------
-// ---------------- Add Comment ----------------
-async addComment(req, res) {
-  try {
-    const { user, text } = req.body;
+  async addComment(req, res) {
+    try {
+      const { user, text } = req.body;
+      if (!user || !text) {
+        return res.status(400).json({ success: false, message: "user and text are required" });
+      }
 
-    if (!user || !text) {
-      return res.status(400).json({ success: false, message: "user and text are required" });
+      const blog = await BlogPost.findById(req.params.id);
+      if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
+
+      // Detect user type automatically
+      let userModel = null;
+      if (await User.exists({ _id: user })) userModel = "LISTING";
+      else if (await Company.exists({ _id: user })) userModel = "Company";
+      else if (await SecureEmployee.exists({ _id: user })) userModel = "SecureEmployee";
+      if (!userModel) return res.status(400).json({ success: false, message: "Invalid user ID" });
+
+      blog.comments.push({ user, userModel, text });
+      await blog.save();
+
+      const populatedBlog = await this.populateInteractions(blog);
+
+      res.json({ success: true, message: "Comment added", blog: populatedBlog });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: "Error adding comment", error: err.message });
     }
-
-    const blog = await BlogPost.findById(req.params.id);
-    if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
-
-    // Determine userModel automatically
-    let userModel = null;
-    if (await User.exists({ _id: user })) userModel = "LISTING";
-    else if (await Company.exists({ _id: user })) userModel = "Company";
-    else if (await SecureEmployee.exists({ _id: user })) userModel = "SecureEmployee";
-    if (!userModel) return res.status(400).json({ success: false, message: "Invalid user ID" });
-
-    // Push comment
-    blog.comments.push({ user, userModel, text });
-    await blog.save();
-
-    // Populate user info for comments, likes, shares
-    const populatedBlog = await this.populateInteractions(blog);
-
-    res.json({ success: true, message: "Comment added", blog: populatedBlog });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Error adding comment", error: err.message });
   }
-}
-
-
 
   // ---------------- Delete Comment ----------------
   async deleteComment(req, res) {
