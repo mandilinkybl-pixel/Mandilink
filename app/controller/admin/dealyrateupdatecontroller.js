@@ -57,54 +57,62 @@ class MandiRateController {
   /**
    * Render the Mandi Rates page with filters
    */
-  getRatesPage = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        req.flash("error_msg", "Invalid user session");
-        return res.redirect("/admin/login");
-      }
-
-      const userdetails = await SecureEmployee.findById(user.id).lean();
-      if (!userdetails) {
-        req.flash("error_msg", "User not found");
-        return res.redirect("/admin/login");
-      }
-
-      const states = await State.find().sort({ name: 1 }).lean();
-      const commodities = await Commodity.find().sort({ name: 1 }).lean();
-
-      const { state, district, mandi } = req.query || {};
-      let query = { user_id: user.id };
-      if (state && mongoose.isValidObjectId(state)) query.state = state;
-      if (district) query.district = district.trim();
-      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-
-      const rates = await MandiRate.find(query)
-        .populate("state", "name")
-        .populate("mandi", "name state")
-        .populate("rates.commodity", "name")
-        .sort({ "mandi.name": 1 })
-        .lean();
-
-      res.render("admin/mandirate", {
-        user,
-        userdetails,
-        states,
-        commodities,
-        rates,
-        selectedState: state || "",
-        selectedDistrict: district || "",
-        selectedMandi: mandi || "",
-        success_msg: req.flash("success_msg"),
-        error_msg: req.flash("error_msg"),
-      });
-    } catch (err) {
-      console.error("Error in getRatesPage:", err);
-      req.flash("error_msg", "Error loading Mandi Rates page");
-      res.redirect("/admin/mandirate");
+getRatesPage = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      req.flash("error_msg", "Invalid user session");
+      return res.redirect("/admin/login");
     }
-  };
+
+    const userdetails = await SecureEmployee.findById(user.id).lean();
+    if (!userdetails) {
+      req.flash("error_msg", "User not found");
+      return res.redirect("/admin/login");
+    }
+
+    const states = await State.find().sort({ name: 1 }).lean();
+    const commodities = await Commodity.find().sort({ name: 1 }).lean();
+
+    const { state, district, mandi } = req.query || {};
+    let query = {}; // ✅ removed user_id filter
+
+    if (state && mongoose.isValidObjectId(state)) query.state = state;
+    if (district) query.district = district.trim();
+    if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
+    let rates = await MandiRate.find(query)
+      .populate("state", "name")
+      .populate("mandi", "name state")
+      .populate("rates.commodity", "name")
+      .lean();
+
+    // ✅ Sort by mandi name after populate
+    rates.sort((a, b) => {
+      const nameA = a.mandi?.name?.toLowerCase() || "";
+      const nameB = b.mandi?.name?.toLowerCase() || "";
+      return nameA.localeCompare(nameB);
+    });
+
+    res.render("admin/mandirate", {
+      user,
+      userdetails,
+      states,
+      commodities,
+      rates,
+      selectedState: state || "",
+      selectedDistrict: district || "",
+      selectedMandi: mandi || "",
+      success_msg: req.flash("success_msg"),
+      error_msg: req.flash("error_msg"),
+    });
+  } catch (err) {
+    console.error("Error in getRatesPage:", err);
+    req.flash("error_msg", "Error loading Mandi Rates page");
+    res.redirect("/admin/mandirate");
+  }
+};
+
 
   /**
    * Add or update rates for a mandi

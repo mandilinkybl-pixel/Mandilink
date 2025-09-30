@@ -72,44 +72,60 @@ class AdminBlogController {
   }
 
   // ---------------- Helper: populate comments/likes/shares ----------------
-  async populateInteractions(blog) {
-    const populateUser = async (userId, userModel) => {
-      if (!userId) return null;
-      let Model;
-      if (userModel === "LISTING") Model = User;
-      else if (userModel === "SecureEmployee") Model = SecureEmployee;
-      else if (userModel === "Company") Model = Company;
-      if (!Model) return null;
+// ---------------- Helper: populate comments/likes/shares ----------------
+async populateInteractions(blog) {
+  const populateUser = async (userId, userModel) => {
+    if (!userId) return null;
+    let Model;
+    if (userModel === "LISTING") Model = User;
+    else if (userModel === "SecureEmployee") Model = SecureEmployee;
+    else if (userModel === "Company") Model = Company;
+    if (!Model) return null;
 
-      // Exclude password + __v
-      return await Model.findById(userId).select("-password -__v");
-    };
+    return await Model.findById(userId).select("-password -__v");
+  };
 
-    blog = blog.toObject();
+  blog = blog.toObject();
 
-    blog.comments = await Promise.all(
-      blog.comments.map(async c => ({
-        ...c,
-        user: await populateUser(c.user, c.userModel)
-      }))
-    );
+  // Replace user field with actual user document
+  blog.comments = await Promise.all(
+    blog.comments.map(async c => {
+      const userDetails = await populateUser(c.user, c.userModel);
+      return {
+        _id: c._id,
+        text: c.text,
+        createdAt: c.createdAt,
+        user: userDetails
+      };
+    })
+  );
 
-    blog.likes = await Promise.all(
-      blog.likes.map(async l => ({
-        ...l,
-        user: await populateUser(l.user, l.userModel)
-      }))
-    );
+  blog.likes = await Promise.all(
+    blog.likes.map(async l => {
+      const userDetails = await populateUser(l.user, l.userModel);
+      return {
+        _id: l._id,
+        user: userDetails
+      };
+    })
+  );
 
-    blog.shares = await Promise.all(
-      blog.shares.map(async s => ({
-        ...s,
-        user: await populateUser(s.user, s.userModel)
-      }))
-    );
+  blog.shares = await Promise.all(
+    blog.shares.map(async s => {
+      const userDetails = await populateUser(s.user, s.userModel);
+      return {
+        _id: s._id,
+        user: userDetails
+      };
+    })
+  );
 
-    return blog;
-  }
+  // ✅ Populate author details too
+  blog.author = await populateUser(blog.author, blog.authorType);
+
+  return blog;
+}
+
 
   // ---------------- Get All Blogs ----------------
   async getAllBlogs(req, res) {
