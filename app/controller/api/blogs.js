@@ -73,69 +73,62 @@ class AdminBlogController {
 
   // ---------------- Helper: populate comments/likes/shares ----------------
 // ---------------- Helper: populate comments/likes/shares ----------------
-async populateInteractions(blog) {
-  const populateUser = async (userId, userModel) => {
+// ---------------- Helper: populate all user details ----------------
+  async populateUser(userId, userModel) {
     if (!userId) return null;
+
     let Model;
     if (userModel === "LISTING") Model = User;
     else if (userModel === "SecureEmployee") Model = SecureEmployee;
     else if (userModel === "Company") Model = Company;
+
     if (!Model) return null;
 
     return await Model.findById(userId).select("-password -__v");
-  };
+  }
 
-  blog = blog.toObject();
+  // ---------------- Populate interactions ----------------
+  async populateInteractions(blog) {
+    if (!blog) return null;
+    const blogObj = typeof blog.toObject === "function" ? blog.toObject() : blog;
 
-  // Replace user field with actual user document
-  blog.comments = await Promise.all(
-    blog.comments.map(async c => {
-      const userDetails = await populateUser(c.user, c.userModel);
-      return {
-        _id: c._id,
-        text: c.text,
-        createdAt: c.createdAt,
-        user: userDetails
-      };
-    })
-  );
+    // Populate author
+    blogObj.authorDetails = await this.populateUser(blogObj.author, blogObj.authorType);
 
-  blog.likes = await Promise.all(
-    blog.likes.map(async l => {
-      const userDetails = await populateUser(l.user, l.userModel);
-      return {
-        _id: l._id,
-        user: userDetails
-      };
-    })
-  );
+    // Populate comments
+    blogObj.comments = await Promise.all(
+      (blogObj.comments || []).map(async (c) => ({
+        ...c,
+        userDetails: await this.populateUser(c.user, c.userModel),
+      }))
+    );
 
-  blog.shares = await Promise.all(
-    blog.shares.map(async s => {
-      const userDetails = await populateUser(s.user, s.userModel);
-      return {
-        _id: s._id,
-        user: userDetails
-      };
-    })
-  );
+    // Populate likes
+    blogObj.likes = await Promise.all(
+      (blogObj.likes || []).map(async (l) => ({
+        ...l,
+        userDetails: await this.populateUser(l.user, l.userModel),
+      }))
+    );
 
-  // ✅ Populate author details too
-  blog.author = await populateUser(blog.author, blog.authorType);
+    // Populate shares
+    blogObj.shares = await Promise.all(
+      (blogObj.shares || []).map(async (s) => ({
+        ...s,
+        userDetails: await this.populateUser(s.user, s.userModel),
+      }))
+    );
 
-  return blog;
-}
+    return blogObj;
+  }
+
 
 
   // ---------------- Get All Blogs ----------------
   async getAllBlogs(req, res) {
     try {
-      let blogs = await BlogPost.find()
-        .populate("category", "name")
-        .populate("author_doc", "-password -__v");
-
+      let blogs = await BlogPost.find().populate("category", "name").sort({ createdAt: -1 });
       blogs = await Promise.all(blogs.map(blog => this.populateInteractions(blog)));
-
       res.json({ success: true, blogs });
     } catch (err) {
       console.error(err);
@@ -146,14 +139,10 @@ async populateInteractions(blog) {
   // ---------------- Get Blog by ID ----------------
   async getBlogById(req, res) {
     try {
-      let blog = await BlogPost.findById(req.params.id)
-        .populate("category", "name")
-        .populate("author_doc", "-password -__v");
-
+      let blog = await BlogPost.findById(req.params.id).populate("category", "name");
       if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
 
       blog = await this.populateInteractions(blog);
-
       res.json({ success: true, blog });
     } catch (err) {
       console.error(err);
@@ -250,42 +239,72 @@ async populateInteractions(blog) {
   }
 
   // ---------------- Add Like ----------------
-  async addLike(req, res) {
-    try {
-      const { user, userModel } = req.body;
-      const blog = await BlogPost.findById(req.params.id);
-      if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
-
-      if (!blog.likes.some(l => l.user.toString() === user)) {
-        blog.likes.push({ user, userModel });
-        await blog.save();
-      }
-
-      const populatedBlog = await this.populateInteractions(blog);
-      res.json({ success: true, message: "Liked", blog: populatedBlog });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: "Error adding like", error: err.message });
+// ---------------- Add Like ----------------
+// ---------------- Add Like ----------------
+async addLike(req, res) {
+  try {
+    const userId = req.body.user || req.body.userId; // ✅ support both
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-  }
 
-  // ---------------- Remove Like ----------------
-  async removeLike(req, res) {
-    try {
-      const { user } = req.body;
-      const blog = await BlogPost.findById(req.params.id);
-      if (!blog) return res.status(404).json({ success: false, message: "Blog not found" });
+    const blog = await BlogPost.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    }
 
-      blog.likes = blog.likes.filter(l => l.user.toString() !== user);
+    // Auto-detect user model
+    let userModel = null;
+    if (await User.exists({ _id: userId })) userModel = "LISTING";
+    else if (await SecureEmployee.exists({ _id: userId })) userModel = "SecureEmployee";
+    else if (await Company.exists({ _id: userId })) userModel = "Company";
+
+    if (!userModel) {
+      return res.status(400).json({ success: false, message: "User model not found" });
+    }
+
+    // Prevent duplicate likes
+    const alreadyLiked = blog.likes.some(l => l.user.toString() === userId.toString());
+    if (!alreadyLiked) {
+      blog.likes.push({ user: userId, userModel });
       await blog.save();
-
-      const populatedBlog = await this.populateInteractions(blog);
-      res.json({ success: true, message: "Like removed", blog: populatedBlog });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: "Error removing like", error: err.message });
     }
+
+    const populatedBlog = await this.populateInteractions(blog);
+    res.json({ success: true, message: "Liked", blog: populatedBlog });
+  } catch (err) {
+    console.error("Error in addLike:", err);
+    res.status(500).json({ success: false, message: "Error adding like", error: err.message });
   }
+}
+
+
+
+async removeLike(req, res) {
+  try {
+    const userId = req.user?.id || req.body.user || req.body.userId; // ✅ support both
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const blog = await BlogPost.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    }
+
+    // Remove like
+    blog.likes = blog.likes.filter(l => l.user.toString() !== userId.toString());
+    await blog.save();
+
+    const populatedBlog = await this.populateInteractions(blog);
+    res.json({ success: true, message: "Like removed", blog: populatedBlog });
+  } catch (err) {
+    console.error("Error in removeLike:", err);
+    res.status(500).json({ success: false, message: "Error removing like", error: err.message });
+  }
+}
+
+
 
   // ---------------- Add Share ----------------
   async addShare(req, res) {

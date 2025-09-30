@@ -1,5 +1,7 @@
 const Job = require("../../models/job");
 
+const JobApplication =require("../../models/jobapplymodel")
+
 class JobController {
   // ----------------------
   // Create a Job
@@ -137,6 +139,48 @@ class JobController {
       });
     } catch (error) {
       res.status(400).json({ success: false, error: error.message });
+    }
+  }
+
+   async getMyPostedJobs(req, res) {
+    try {
+      const { userId } = req.params;
+
+      const jobs = await Job.find({ postedBy: userId })
+        .populate({
+          path: "postedBy",
+          select: "name email contactNumber",
+        })
+        .lean();
+
+      if (!jobs.length) {
+        return res.status(404).json({ success: false, error: "No jobs found for this user" });
+      }
+
+      res.status(200).json({ success: true, data: jobs });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  // ----------------------
+  // Get Applicants for a specific Job
+  // ----------------------
+  async getJobApplicants(req, res) {
+    try {
+      const { jobId } = req.params;
+
+      const applicants = await JobApplication.find({ job: jobId })
+        .populate("job", "title companyName location")
+        .lean();
+
+      if (!applicants.length) {
+        return res.status(404).json({ success: false, error: "No applicants found for this job" });
+      }
+
+      res.status(200).json({ success: true, data: applicants });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 }

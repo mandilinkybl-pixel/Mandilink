@@ -16,6 +16,11 @@ router.put("/:id", (req, res) => JobController.updateJob(req, res));
 
 // PATCH -> Deactivate Job
 router.patch("/:id/deactivate", (req, res) => JobController.deactivateJob(req, res));
+// My posted jobs
+router.get("/myposted/:userId", JobController.getMyPostedJobs);
+
+// Applicants of a job
+router.get("/:jobId/applicants", JobController.getJobApplicants);
 
 module.exports = router;
 // // {

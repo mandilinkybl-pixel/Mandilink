@@ -16,4 +16,13 @@ router.get("/user/:userId", (req, res) =>
   mandiRateController.getUserLocationRates(req, res)
 );
 
+// ✅ Get state-wise mandi rates
+router.get("/state/:stateId", mandiRateController.getStateWiseRates);
+
+// ✅ Get district-wise mandi rates
+router.get("/district/:districtName", mandiRateController.getDistrictWiseRates);
+
+// ✅ Get all mandi rates (full details)
+router.get("/", mandiRateController.getAllMandiRates);
+
 module.exports = router;

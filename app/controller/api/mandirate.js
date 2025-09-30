@@ -157,7 +157,120 @@ async searchMandiRates(req, res) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 }
+async getStateWiseRates(req, res) {
+    try {
+      const { stateId } = req.params;
 
+      const rates = await MandiRate.find({ state: stateId })
+        .populate("mandi", "name district")
+        .populate("state", "name")
+        .populate("rates.commodity", "name")
+        .lean();
+
+      if (!rates.length) {
+        return res.status(404).json({ success: false, message: "No mandi rates found for this state" });
+      }
+
+      const result = rates.map(rate => ({
+        mandi: rate.mandi?.name || "Unknown",
+        district: rate.mandi?.district || "",
+        state: rate.state?.name || "",
+        commodities: rate.rates.map(r => ({
+          commodity: r.commodity?.name || "Unknown",
+          minimum: r.minimum,
+          maximum: r.maximum,
+          estimatedArrival: r.estimatedArrival,
+          updatedAt: r.updatedAt
+        }))
+      }));
+
+      res.status(200).json({ success: true, stateRates: result });
+    } catch (error) {
+      console.error("Error in getStateWiseRates:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  /**
+   * GET /api/mandirates/district/:districtName
+   * Fetch mandi rates district-wise
+   */
+  async getDistrictWiseRates(req, res) {
+    try {
+      const { districtName } = req.params;
+
+      const mandis = await Mandi.find({ district: districtName }).select("_id name district state");
+      if (!mandis.length) {
+        return res.status(404).json({ success: false, message: "No mandis found in this district" });
+      }
+
+      const mandiIds = mandis.map(m => m._id);
+
+      const rates = await MandiRate.find({ mandi: { $in: mandiIds } })
+        .populate("mandi", "name district")
+        .populate("state", "name")
+        .populate("rates.commodity", "name")
+        .lean();
+
+      if (!rates.length) {
+        return res.status(404).json({ success: false, message: "No mandi rates found in this district" });
+      }
+
+      const result = rates.map(rate => ({
+        mandi: rate.mandi?.name || "Unknown",
+        district: rate.mandi?.district || "",
+        state: rate.state?.name || "",
+        commodities: rate.rates.map(r => ({
+          commodity: r.commodity?.name || "Unknown",
+          minimum: r.minimum,
+          maximum: r.maximum,
+          estimatedArrival: r.estimatedArrival,
+          updatedAt: r.updatedAt
+        }))
+      }));
+
+      res.status(200).json({ success: true, districtRates: result });
+    } catch (error) {
+      console.error("Error in getDistrictWiseRates:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+
+  /**
+   * GET /api/mandirates
+   * Fetch all mandi rates with full details
+   */
+  async getAllMandiRates(req, res) {
+    try {
+      const rates = await MandiRate.find()
+        .populate("mandi", "name district")
+        .populate("state", "name")
+        .populate("rates.commodity", "name")
+        .lean();
+
+      if (!rates.length) {
+        return res.status(404).json({ success: false, message: "No mandi rates found" });
+      }
+
+      const result = rates.map(rate => ({
+        mandi: rate.mandi?.name || "Unknown",
+        district: rate.mandi?.district || "",
+        state: rate.state?.name || "",
+        commodities: rate.rates.map(r => ({
+          commodity: r.commodity?.name || "Unknown",
+          minimum: r.minimum,
+          maximum: r.maximum,
+          estimatedArrival: r.estimatedArrival,
+          updatedAt: r.updatedAt
+        }))
+      }));
+
+      res.status(200).json({ success: true, mandiRates: result });
+    } catch (error) {
+      console.error("Error in getAllMandiRates:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 
 
 
