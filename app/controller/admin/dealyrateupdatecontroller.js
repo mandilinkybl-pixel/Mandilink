@@ -6,7 +6,8 @@ const SecureEmployee = require("../../models/adminEmployee");
 const mongoose = require("mongoose");
 const { Parser } = require("json2csv"); // CSV
 const ExcelJS = require("exceljs"); // Excel
-const PDFDocument = require("pdfkit-table"); // PDF
+const PDFDocument = require("pdfkit");
+require("pdfkit-table");// PDF
 const cron = require("node-cron");
 
 /**
