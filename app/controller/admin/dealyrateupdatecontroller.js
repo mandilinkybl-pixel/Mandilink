@@ -847,6 +847,8 @@ editCommodity = async (req, res) => {
 /**
  * Export mandi rates as Grouped PDF (similar to exportPDF but clearly grouped)
  */
+
+
 exportGroupedPDF = async (req, res) => {
   try {
     const { groups, days } = await getGroupedMandiRates(req.query);
@@ -865,35 +867,41 @@ exportGroupedPDF = async (req, res) => {
     const headers = ["Sl No", "Mandi Name", "Address (State/District/Mandi)", "Commodity", "Min Price", "Max Price", "Est. Qty", "Last Updated"];
 
     for (const stateName in groups) {
-      // Add a small space before new state
+      doc.addPage(); // Start a new page for each state (optional)
+      doc.font("Helvetica-Bold").fontSize(12).text(`State: ${stateName}`, { underline: true });
       doc.moveDown(0.5);
+
       for (const distName in groups[stateName]) {
-        doc.moveDown(0.5);
+        doc.font("Helvetica-Bold").fontSize(10).text(`District: ${distName}`);
+        doc.moveDown(0.2);
+
         for (const mandiName in groups[stateName][distName]) {
+          doc.font("Helvetica-Bold").fontSize(10).text(`Mandi: ${mandiName}`);
+          doc.moveDown(0.2);
+
           const rows = groups[stateName][distName][mandiName].map(item => [
             item.sno,
             item.mandi?.name || "",
             item.address,
             item.commodityName,
-            item.minimum || 0,
-            item.maximum || 0,
+            item.minimum ?? 0,
+            item.maximum ?? 0,
             item.estimatedArrival ?? "",
             item.lastUpdated
           ]);
 
           const table = {
-            title: `State: ${stateName} | District: ${distName} | Mandi: ${mandiName}`,
             headers,
             rows
           };
 
-          // Draw the table and allow page breaks
+          // Draw the table
           await doc.table(table, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, i) => doc.font("Helvetica").fontSize(8),
             padding: 2,
             columnsSize: [30, 80, 120, 80, 50, 50, 50, 80],
-            rowPageBreak: true, // important to allow breaking across pages
+            rowPageBreak: true, // allows table to continue to next page automatically
           });
 
           doc.moveDown(0.5);
@@ -907,6 +915,7 @@ exportGroupedPDF = async (req, res) => {
     res.status(500).json({ error: "Error exporting grouped PDF" });
   }
 };
+
 }
 
 module.exports = new MandiRateController();
