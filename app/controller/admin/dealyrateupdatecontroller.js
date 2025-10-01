@@ -25,7 +25,10 @@ class MandiRateController {
       try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        await MandiRate.deleteMany({ updatedAt: { $lt: thirtyDaysAgo } });
+        await MandiRate.updateMany({}, {
+          $pull: { rates: { updatedAt: { $lt: thirtyDaysAgo } } }
+        });
+        await MandiRate.deleteMany({ "rates.0": { $exists: false } });
         console.log("Deleted mandi rates older than 30 days");
       } catch (err) {
         console.error("Error in cron job for deleting old mandi rates:", err);
@@ -37,9 +40,9 @@ class MandiRateController {
    * Utility: validate numeric fields
    */
   validateRateInput(min, max, arrival, index) {
-    const minPrice = Number(min);
-    const maxPrice = Number(max);
-    const estArrival = arrival !== undefined && arrival !== null && arrival !== "" ? Number(arrival) : null;
+    const minPrice = Number(min || 0);
+    const maxPrice = Number(max || 0);
+    const estArrival = Number(arrival || 0);
 
     if (isNaN(minPrice) || isNaN(maxPrice) || minPrice < 0 || maxPrice < 0) {
       throw new Error(`Invalid price values for commodity at index ${index}`);
@@ -47,7 +50,7 @@ class MandiRateController {
     if (minPrice > maxPrice) {
       throw new Error(`Minimum price cannot be greater than maximum price at index ${index}`);
     }
-    if (estArrival !== null && (isNaN(estArrival) || estArrival < 0)) {
+    if (isNaN(estArrival) || estArrival < 0) {
       throw new Error(`Invalid estimated arrival for commodity at index ${index}`);
     }
 
@@ -57,62 +60,61 @@ class MandiRateController {
   /**
    * Render the Mandi Rates page with filters
    */
-getRatesPage = async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user || !mongoose.isValidObjectId(user.id)) {
-      req.flash("error_msg", "Invalid user session");
-      return res.redirect("/admin/login");
+  getRatesPage = async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || !mongoose.isValidObjectId(user.id)) {
+        req.flash("error_msg", "Invalid user session");
+        return res.redirect("/admin/login");
+      }
+
+      const userdetails = await SecureEmployee.findById(user.id).lean();
+      if (!userdetails) {
+        req.flash("error_msg", "User not found");
+        return res.redirect("/admin/login");
+      }
+
+      const states = await State.find().sort({ name: 1 }).lean();
+      const commodities = await Commodity.find().sort({ name: 1 }).lean();
+
+      const { state, district, mandi } = req.query || {};
+      let query = {}; // ✅ removed user_id filter
+
+      if (state && mongoose.isValidObjectId(state)) query.state = state;
+      if (district) query.district = district.trim();
+      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
+      let rates = await MandiRate.find(query)
+        .populate("state", "name")
+        .populate("mandi", "name state")
+        .populate("rates.commodity", "name")
+        .lean();
+
+      // ✅ Sort by mandi name after populate
+      rates.sort((a, b) => {
+        const nameA = a.mandi?.name?.toLowerCase() || "";
+        const nameB = b.mandi?.name?.toLowerCase() || "";
+        return nameA.localeCompare(nameB);
+      });
+
+      res.render("admin/mandirate", {
+        user,
+        userdetails,
+        states,
+        commodities,
+        rates,
+        selectedState: state || "",
+        selectedDistrict: district || "",
+        selectedMandi: mandi || "",
+        success_msg: req.flash("success_msg"),
+        error_msg: req.flash("error_msg"),
+      });
+    } catch (err) {
+      console.error("Error in getRatesPage:", err);
+      req.flash("error_msg", "Error loading Mandi Rates page");
+      res.redirect("/admin/mandirate");
     }
-
-    const userdetails = await SecureEmployee.findById(user.id).lean();
-    if (!userdetails) {
-      req.flash("error_msg", "User not found");
-      return res.redirect("/admin/login");
-    }
-
-    const states = await State.find().sort({ name: 1 }).lean();
-    const commodities = await Commodity.find().sort({ name: 1 }).lean();
-
-    const { state, district, mandi } = req.query || {};
-    let query = {}; // ✅ removed user_id filter
-
-    if (state && mongoose.isValidObjectId(state)) query.state = state;
-    if (district) query.district = district.trim();
-    if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-
-    let rates = await MandiRate.find(query)
-      .populate("state", "name")
-      .populate("mandi", "name state")
-      .populate("rates.commodity", "name")
-      .lean();
-
-    // ✅ Sort by mandi name after populate
-    rates.sort((a, b) => {
-      const nameA = a.mandi?.name?.toLowerCase() || "";
-      const nameB = b.mandi?.name?.toLowerCase() || "";
-      return nameA.localeCompare(nameB);
-    });
-
-    res.render("admin/mandirate", {
-      user,
-      userdetails,
-      states,
-      commodities,
-      rates,
-      selectedState: state || "",
-      selectedDistrict: district || "",
-      selectedMandi: mandi || "",
-      success_msg: req.flash("success_msg"),
-      error_msg: req.flash("error_msg"),
-    });
-  } catch (err) {
-    console.error("Error in getRatesPage:", err);
-    req.flash("error_msg", "Error loading Mandi Rates page");
-    res.redirect("/admin/mandirate");
-  }
-};
-
+  };
 
   /**
    * Add or update rates for a mandi
@@ -269,6 +271,7 @@ getRatesPage = async (req, res) => {
         }
       }
 
+      mandiRate.updatedAt = new Date();
       await mandiRate.save();
       req.flash("success_msg", "Commodities added/updated successfully");
       res.redirect("/admin/mandirate");
@@ -282,62 +285,71 @@ getRatesPage = async (req, res) => {
   /**
    * Edit a single commodity rate for a mandi
    */
-  editCommodity = async (req, res) => {
-    const { mandiRateId, commodityId } = req.params;
-    const { minimum, maximum, estimatedArrival } = req.body;
+editCommodity = async (req, res) => {
+  const { mandiRateId, commodityId } = req.params;
+  const { minimum, maximum, estimatedArrival } = req.body;
 
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        return res.status(401).json({ error: "Unauthorized user" });
-      }
-
-      if (!mongoose.isValidObjectId(mandiRateId) || !mongoose.isValidObjectId(commodityId)) {
-        return res.status(400).json({ error: "Invalid Mandi Rate ID or Commodity ID" });
-      }
-
-      if (minimum === undefined || maximum === undefined) {
-        return res.status(400).json({ error: "Minimum and Maximum prices are required" });
-      }
-
-      const minPrice = Number(minimum);
-      const maxPrice = Number(maximum);
-      const estArrival = estimatedArrival !== undefined ? Number(estimatedArrival) : null;
-
-      if (isNaN(minPrice) || isNaN(maxPrice) || minPrice < 0 || maxPrice < 0) {
-        return res.status(400).json({ error: "Minimum and Maximum prices must be non-negative numbers" });
-      }
-
-      if (minPrice > maxPrice) {
-        return res.status(400).json({ error: "Minimum price cannot be greater than Maximum price" });
-      }
-
-      if (estArrival !== null && (isNaN(estArrival) || estArrival < 0)) {
-        return res.status(400).json({ error: "Estimated arrival must be a non-negative number or null" });
-      }
-
-      const mandiRate = await MandiRate.findOne({ _id: mandiRateId, user_id: user.id });
-      if (!mandiRate) {
-        return res.status(404).json({ error: "Mandi Rate not found or not authorized" });
-      }
-
-      const rate = mandiRate.rates.find(r => String(r.commodity) === String(commodityId));
-      if (!rate) {
-        return res.status(404).json({ error: "Commodity not found in Mandi Rate" });
-      }
-
-      rate.minimum = minPrice;
-      rate.maximum = maxPrice;
-      rate.estimatedArrival = estArrival;
-      rate.updatedAt = new Date();
-
-      await mandiRate.save();
-      return res.status(200).json({ message: "Commodity rate updated successfully" });
-    } catch (err) {
-      console.error("Error in editCommodity:", err);
-      return res.status(500).json({ error: "Error updating commodity rate" });
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
     }
-  };
+
+    if (!mongoose.isValidObjectId(mandiRateId) || !mongoose.isValidObjectId(commodityId)) {
+      return res.status(400).json({ error: "Invalid IDs" });
+    }
+
+    const minPrice = Number(minimum || 0);
+    const maxPrice = Number(maximum || 0);
+    const estArrival = Number(estimatedArrival || 0);
+
+    if (isNaN(minPrice) || isNaN(maxPrice) || minPrice < 0 || maxPrice < 0) {
+      return res.status(400).json({ error: "Minimum and Maximum must be non-negative numbers" });
+    }
+    if (minPrice > maxPrice) {
+      return res.status(400).json({ error: "Minimum cannot be greater than Maximum" });
+    }
+    if (isNaN(estArrival) || estArrival < 0) {
+      return res.status(400).json({ error: "Estimated arrival must be non-negative" });
+    }
+
+    const mandiRate = await MandiRate.findById(mandiRateId);
+    if (!mandiRate) return res.status(404).json({ error: "Mandi Rate not found" });
+
+    // Filter entries for this commodity and sort by updatedAt descending
+    const commodityRates = mandiRate.rates
+      .filter(r => String(r.commodity) === commodityId)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    if (commodityRates.length === 0) {
+      return res.status(404).json({ error: "Commodity not found" });
+    }
+
+    // Update the most recent one
+    const rate = commodityRates[0];
+    rate.minimum = minPrice;
+    rate.maximum = maxPrice;
+    rate.estimatedArrival = estArrival;
+    rate.updatedAt = new Date();
+
+    mandiRate.updatedAt = new Date();
+
+    // Remove entries older than 30 days
+    const now = new Date();
+    mandiRate.rates = mandiRate.rates.filter(r => (now - new Date(r.updatedAt)) / (1000 * 60 * 60 * 24) <= 30);
+
+    await mandiRate.save({ validateBeforeSave: false });
+
+    return res.status(200).json({ success: true, message: "Commodity rate updated successfully", data: rate });
+  } catch (err) {
+    console.error("Error in editCommodity:", err);
+    return res.status(500).json({ error: err.message || "Error updating commodity rate" });
+  }
+};
+
+
+
+
 
   /**
    * Delete a commodity rate for a mandi
@@ -377,6 +389,7 @@ getRatesPage = async (req, res) => {
         return res.redirect("/admin/mandirate");
       }
 
+      mandiRate.updatedAt = new Date();
       await mandiRate.save();
       req.flash("success_msg", "Commodity rate deleted successfully");
       return res.redirect("/admin/mandirate");
@@ -467,59 +480,74 @@ getRatesPage = async (req, res) => {
   /**
    * Get report data for modal (AJAX)
    */
-  getReportData = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        return res.status(401).json({ error: "Unauthorized user" });
-      }
-
-      const { days, state, district, mandi } = req.query || {};
-      let query = { user_id: user.id };
-      if (state && mongoose.isValidObjectId(state)) query.state = state;
-      if (district) query.district = district.trim();
-      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-      const daysNum = parseInt(days) || null;
-      if (daysNum) {
-        const threshold = new Date();
-        threshold.setDate(threshold.getDate() - daysNum);
-        query.updatedAt = { $gte: threshold };
-      }
-
-      const rates = await MandiRate.find(query)
-        .populate("state", "name")
-        .populate("mandi", "name")
-        .populate("rates.commodity", "name")
-        .sort({ "mandi.name": 1 })
-        .lean();
-
-      const data = rates.flatMap((rate, index) =>
-        rate.rates.map(item => ({
-          sno: index + 1,
-          mandiName: rate.mandi?.name || "",
-          address: `${rate.state?.name || ""}/${rate.district || ""}/${rate.mandi?.name || ""}`,
-          commodity: item.commodity?.name || "",
-          minimum: item.minimum || 0,
-          maximum: item.maximum || 0,
-          estimatedArrival: item.estimatedArrival ?? "",
-          lastUpdated: item.updatedAt
-            ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "",
-        }))
-      );
-
-      res.json(data);
-    } catch (err) {
-      console.error("Error in getReportData:", err);
-      res.status(500).json({ error: "Error fetching report data" });
+getReportData = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
     }
-  };
+
+    const { days, state, district, mandi } = req.query || {};
+    let query = { user_id: user.id };
+    if (state && mongoose.isValidObjectId(state)) query.state = state;
+    if (district) query.district = district.trim();
+    if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
+    const daysNum = parseInt(days) || null;
+    const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
+
+    const mandiRates = await MandiRate.find(query)
+      .populate("state", "name")
+      .populate("mandi", "name")
+      .populate("rates.commodity", "name")
+      .lean();
+
+    // Flatten all rates
+    const allRates = mandiRates.flatMap(mr =>
+      mr.rates
+        .filter(r => !threshold || new Date(r.updatedAt) >= threshold) // optional 30-day filter
+        .map(r => ({
+          mandi: mr.mandi,
+          state: mr.state,
+          district: mr.district,
+          commodity: r.commodity,
+          minimum: r.minimum,
+          maximum: r.maximum,
+          estimatedArrival: r.estimatedArrival,
+          updatedAt: r.updatedAt || mr.updatedAt,
+        }))
+    );
+
+    // Sort descending by updatedAt
+    allRates.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    // Map to response format
+    const data = allRates.map((item, idx) => ({
+      sno: idx + 1,
+      mandiName: item.mandi?.name || "",
+      address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
+      commodity: item.commodity?.name || "",
+      minimum: item.minimum ?? 0,
+      maximum: item.maximum ?? 0,
+      estimatedArrival: item.estimatedArrival ?? "",
+      lastUpdated: item.updatedAt
+        ? new Date(item.updatedAt).toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+    }));
+
+    return res.json(data);
+  } catch (err) {
+    console.error("Error in getReportData:", err);
+    return res.status(500).json({ error: "Error fetching report data" });
+  }
+};
+
 
   /**
    * Export mandi rates as CSV
@@ -536,12 +564,9 @@ getRatesPage = async (req, res) => {
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
       const daysNum = parseInt(days) || null;
-      if (daysNum) {
-        const threshold = new Date();
-        threshold.setDate(threshold.getDate() - daysNum);
-        query.updatedAt = { $gte: threshold };
-      }
+      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
@@ -549,41 +574,52 @@ getRatesPage = async (req, res) => {
         .populate("rates.commodity", "name")
         .lean();
 
-      const fields = [
-        { label: "Sl No", value: (row, field, index) => index + 1 },
-        { label: "Mandi Name", value: row => row.mandi?.name || "" },
-        {
-          label: "Address (State/District/Mandi)",
-          value: row => `${row.state?.name || ""}/${row.district || ""}/${row.mandi?.name || ""}`,
-        },
-        { label: "Commodity", value: row => row.commodity?.name || "" },
-        { label: "Min Price", value: row => row.minimum || 0 },
-        { label: "Max Price", value: row => row.maximum || 0 },
-        { label: "Est. Qty", value: row => row.estimatedArrival ?? "" },
-        {
-          label: "Last Updated",
-          value: row =>
-            row.updatedAt
-              ? new Date(row.updatedAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "",
-        },
-      ];
-
-      const data = rates.flatMap((rate, index) =>
-        rate.rates.map(item => ({
-          ...item,
-          state: rate.state,
-          district: rate.district,
-          mandi: rate.mandi,
-          updatedAt: item.updatedAt || rate.updatedAt,
-        }))
+      let filteredRates = rates.flatMap(rate =>
+        rate.rates
+          .filter(item => !threshold || item.updatedAt >= threshold)
+          .map(item => ({
+            mandi: rate.mandi,
+            state: rate.state,
+            district: rate.district,
+            commodity: item.commodity,
+            minimum: item.minimum,
+            maximum: item.maximum,
+            estimatedArrival: item.estimatedArrival,
+            updatedAt: item.updatedAt || rate.updatedAt
+          }))
       );
+
+      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
+
+      const data = filteredRates.map((item, index) => ({
+        sno: index + 1,
+        mandiName: item.mandi?.name || "",
+        address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
+        commodity: item.commodity?.name || "",
+        minimum: item.minimum || 0,
+        maximum: item.maximum || 0,
+        estimatedArrival: item.estimatedArrival ?? "",
+        lastUpdated: item.updatedAt
+          ? new Date(item.updatedAt).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "",
+      }));
+
+      const fields = [
+        { label: "Sl No", value: "sno" },
+        { label: "Mandi Name", value: "mandiName" },
+        { label: "Address (State/District/Mandi)", value: "address" },
+        { label: "Commodity", value: "commodity" },
+        { label: "Min Price", value: "minimum" },
+        { label: "Max Price", value: "maximum" },
+        { label: "Est. Qty", value: "estimatedArrival" },
+        { label: "Last Updated", value: "lastUpdated" },
+      ];
 
       const json2csv = new Parser({ fields });
       const csv = json2csv.parse(data);
@@ -612,18 +648,32 @@ getRatesPage = async (req, res) => {
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
       const daysNum = parseInt(days) || null;
-      if (daysNum) {
-        const threshold = new Date();
-        threshold.setDate(threshold.getDate() - daysNum);
-        query.updatedAt = { $gte: threshold };
-      }
+      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
         .populate("mandi", "name")
         .populate("rates.commodity", "name")
         .lean();
+
+      let filteredRates = rates.flatMap(rate =>
+        rate.rates
+          .filter(item => !threshold || item.updatedAt >= threshold)
+          .map(item => ({
+            mandi: rate.mandi,
+            state: rate.state,
+            district: rate.district,
+            commodity: item.commodity,
+            minimum: item.minimum,
+            maximum: item.maximum,
+            estimatedArrival: item.estimatedArrival,
+            updatedAt: item.updatedAt || rate.updatedAt
+          }))
+      );
+
+      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Mandi Rates");
@@ -639,28 +689,26 @@ getRatesPage = async (req, res) => {
         { header: "Last Updated", key: "lastUpdated", width: 20 },
       ];
 
-      rates.forEach((rate, index) =>
-        rate.rates.forEach(item => {
-          worksheet.addRow({
-            sno: index + 1,
-            mandiName: rate.mandi?.name || "",
-            address: `${rate.state?.name || ""}/${rate.district || ""}/${rate.mandi?.name || ""}`,
-            commodity: item.commodity?.name || "",
-            minimum: item.minimum || 0,
-            maximum: item.maximum || 0,
-            estimatedArrival: item.estimatedArrival ?? "",
-            lastUpdated: item.updatedAt
-              ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "",
-          });
-        })
-      );
+      filteredRates.forEach((item, index) => {
+        worksheet.addRow({
+          sno: index + 1,
+          mandiName: item.mandi?.name || "",
+          address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
+          commodity: item.commodity?.name || "",
+          minimum: item.minimum || 0,
+          maximum: item.maximum || 0,
+          estimatedArrival: item.estimatedArrival ?? "",
+          lastUpdated: item.updatedAt
+            ? new Date(item.updatedAt).toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "",
+        });
+      });
 
       res.header(
         "Content-Type",
@@ -690,18 +738,32 @@ getRatesPage = async (req, res) => {
       if (state && mongoose.isValidObjectId(state)) query.state = state;
       if (district) query.district = district.trim();
       if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
       const daysNum = parseInt(days) || null;
-      if (daysNum) {
-        const threshold = new Date();
-        threshold.setDate(threshold.getDate() - daysNum);
-        query.updatedAt = { $gte: threshold };
-      }
+      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
 
       const rates = await MandiRate.find(query)
         .populate("state", "name")
         .populate("mandi", "name")
         .populate("rates.commodity", "name")
         .lean();
+
+      let filteredRates = rates.flatMap(rate =>
+        rate.rates
+          .filter(item => !threshold || item.updatedAt >= threshold)
+          .map(item => ({
+            mandi: rate.mandi,
+            state: rate.state,
+            district: rate.district,
+            commodity: item.commodity,
+            minimum: item.minimum,
+            maximum: item.maximum,
+            estimatedArrival: item.estimatedArrival,
+            updatedAt: item.updatedAt || rate.updatedAt
+          }))
+      );
+
+      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
 
       const doc = new PDFDocument({ size: "A4", margin: 20 });
       res.header("Content-Type", "application/pdf");
@@ -722,26 +784,24 @@ getRatesPage = async (req, res) => {
           "Est. Qty",
           "Last Updated",
         ],
-        rows: rates.flatMap((rate, index) =>
-          rate.rates.map(item => [
-            index + 1,
-            rate.mandi?.name || "",
-            `${rate.state?.name || ""}/${rate.district || ""}/${rate.mandi?.name || ""}`,
-            item.commodity?.name || "",
-            item.minimum || 0,
-            item.maximum || 0,
-            item.estimatedArrival ?? "",
-            item.updatedAt
-              ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "",
-          ])
-        ),
+        rows: filteredRates.map((item, index) => [
+          index + 1,
+          item.mandi?.name || "",
+          `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
+          item.commodity?.name || "",
+          item.minimum || 0,
+          item.maximum || 0,
+          item.estimatedArrival ?? "",
+          item.updatedAt
+            ? new Date(item.updatedAt).toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "",
+        ]),
       };
 
       await doc.table(table, {

@@ -161,11 +161,24 @@ class JobController {
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
-  }
 
-  // ----------------------
-  // Get Applicants for a specific Job
-  // ----------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  }
   async getJobApplicants(req, res) {
     try {
       const { jobId } = req.params;
