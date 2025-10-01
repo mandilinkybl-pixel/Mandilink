@@ -36,7 +36,10 @@ router.get("/export/excel", adminAuth, mandirateController.exportExcel);
 // Export mandi rates as PDF
 router.get("/export/pdf", adminAuth, mandirateController.exportPDF);
 
+// Export mandi rates as Grouped PDF
+router.get("/export/grouped-pdf", adminAuth, mandirateController.exportGroupedPDF);
+
 // Get report data for modal (AJAX)
-router.get("/report/:days", adminAuth, mandirateController.getReportData);
+router.get("/report", adminAuth, mandirateController.getReportData);
 
 module.exports = router;

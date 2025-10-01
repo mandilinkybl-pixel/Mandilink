@@ -12,6 +12,138 @@ const cron = require("node-cron");
 /**
  * Controller for managing Mandi Rates
  */
+
+ /**
+ * Helper to fetch and prepare grouped mandi rates data
+ */
+const getGroupedMandiRates = async (user, queryParams) => {
+  const { state, district, mandi, days } = queryParams || {};
+  let query = { user_id: user.id };
+  if (state && mongoose.isValidObjectId(state)) query.state = state;
+  if (district) query.district = district.trim();
+  if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+
+  const daysNum = parseInt(days) || null;
+  const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
+
+  // Fetch rates with explicit population
+  const rates = await MandiRate.find(query)
+    .populate({
+      path: "state",
+      select: "name",
+    })
+    .populate({
+      path: "mandi",
+      select: "name",
+    })
+    .populate({
+      path: "rates.commodity",
+      select: "name",
+    })
+    .lean();
+
+  if (!rates || rates.length === 0) {
+    console.warn("No mandi rates found for user:", user.id);
+    return { groups: {}, days: days || "All" };
+  }
+
+  let filteredRates = rates.flatMap(rate => {
+    if (!rate.rates || rate.rates.length === 0) {
+      console.warn(`Mandi ${rate.mandi?.name || rate.mandi} in ${rate.district} has no commodities`);
+      return [];
+    }
+
+    return rate.rates
+      .filter(item => {
+        const isValidDate = !threshold || (item.updatedAt && new Date(item.updatedAt) >= threshold);
+        const hasCommodity = item.commodity && item.commodity.name;
+        const validPrices =
+          item.minimum != null && !isNaN(item.minimum) && item.minimum >= 0 &&
+          item.maximum != null && !isNaN(item.maximum) && item.maximum >= 0 &&
+          item.minimum <= item.maximum;
+
+        // Warn about unrealistic prices (e.g., > 1,000,000 rupees)
+        if (validPrices && (item.minimum / 100 > 1000000 || item.maximum / 100 > 1000000)) {
+          console.warn(
+            `Unrealistic prices for commodity ${item.commodity?.name || item.commodity} ` +
+            `in mandi ${rate.mandi?.name || rate.mandi}: min=${item.minimum / 100}, max=${item.maximum / 100}`
+          );
+        }
+
+        if (!hasCommodity) {
+          console.warn(`Commodity missing for rate in mandi ${rate.mandi?.name || rate.mandi}`);
+        }
+        if (!validPrices) {
+          console.warn(
+            `Invalid prices for commodity ${item.commodity?.name || item.commodity} ` +
+            `in mandi ${rate.mandi?.name || rate.mandi}: min=${item.minimum}, max=${item.maximum}`
+          );
+        }
+
+        return isValidDate && hasCommodity && validPrices;
+      })
+      .map(item => ({
+        mandi: rate.mandi || { name: "Unknown" },
+        state: rate.state || { name: "Unknown" },
+        district: rate.district || "Unknown",
+        commodity: item.commodity || { name: "Unknown" },
+        minimum: (item.minimum && !isNaN(item.minimum) ? item.minimum / 100 : 0).toFixed(2),
+        maximum: (item.maximum && !isNaN(item.maximum) ? item.maximum / 100 : 0).toFixed(2),
+        estimatedArrival: item.estimatedArrival ?? "N/A",
+        updatedAt: item.updatedAt || rate.updatedAt,
+      }));
+  });
+
+  // Sort rates
+  filteredRates.sort((a, b) => {
+    const stateA = a.state?.name || "";
+    const stateB = b.state?.name || "";
+    const distA = a.district || "";
+    const distB = b.district || "";
+    const mandiA = a.mandi?.name || "";
+    const mandiB = b.mandi?.name || "";
+    const commA = a.commodity?.name || "";
+    const commB = b.commodity?.name || "";
+    return (
+      stateA.localeCompare(stateB) ||
+      distA.localeCompare(distB) ||
+      mandiA.localeCompare(mandiB) ||
+      commA.localeCompare(commB)
+    );
+  });
+
+  const groups = {};
+  let globalIndex = 1;
+
+  filteredRates.forEach(item => {
+    const stateName = item.state?.name || "Unknown";
+    const distName = item.district || "Unknown";
+    const mandiName = item.mandi?.name || "Unknown";
+
+    if (!groups[stateName]) groups[stateName] = {};
+    if (!groups[stateName][distName]) groups[stateName][distName] = {};
+    if (!groups[stateName][distName][mandiName]) groups[stateName][distName][mandiName] = [];
+
+    groups[stateName][distName][mandiName].push({
+      ...item,
+      sno: globalIndex++,
+      address: `${stateName}/${distName}/${mandiName}`,
+      commodityName: item.commodity?.name || "Unknown",
+      lastUpdated: item.updatedAt
+        ? new Date(item.updatedAt).toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }).replace(",", "")
+        : "N/A",
+    });
+  });
+
+  return { groups, days: days || "All" };
+};
 class MandiRateController {
   constructor() {
     this.setupCron();
@@ -480,343 +612,348 @@ editCommodity = async (req, res) => {
   /**
    * Get report data for modal (AJAX)
    */
-getReportData = async (req, res) => {
+
+
+/**
+ * Get mandi rates data
+ */ 
+ getReportData = async (req, res) => {
   try {
     const user = req.user;
     if (!user || !mongoose.isValidObjectId(user.id)) {
       return res.status(401).json({ error: "Unauthorized user" });
     }
 
-    const { days, state, district, mandi } = req.query || {};
-    let query = { user_id: user.id };
-    if (state && mongoose.isValidObjectId(state)) query.state = state;
-    if (district) query.district = district.trim();
-    if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
+    const { groups, days } = await getGroupedMandiRates(user, req.query);
 
-    const daysNum = parseInt(days) || null;
-    const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
+    const groupedData = [];
+    for (const stateName in groups) {
+      const stateGroup = { state: stateName, stateId: null, districts: [] };
+      for (const distName in groups[stateName]) {
+        const districtGroup = { district: distName, mandis: [] };
+        for (const mandiName in groups[stateName][distName]) {
+          const mandiGroup = {
+            mandi: mandiName,
+            mandiId: groups[stateName][distName][mandiName][0].mandi?._id || "",
+            commodities: groups[stateName][distName][mandiName].map(item => ({
+              sno: item.sno,
+              mandiName: item.mandi?.name || "",
+              address: item.address,
+              commodity: item.commodityName,
+              minimum: item.minimum || 0,
+              maximum: item.maximum || 0,
+              estimatedArrival: item.estimatedArrival ?? "",
+              lastUpdated: item.lastUpdated
+            }))
+          };
+          districtGroup.mandis.push(mandiGroup);
+        }
+        stateGroup.districts.push(districtGroup);
+      }
+      groupedData.push(stateGroup);
+    }
 
-    const mandiRates = await MandiRate.find(query)
-      .populate("state", "name")
-      .populate("mandi", "name")
-      .populate("rates.commodity", "name")
-      .lean();
-
-    // Flatten all rates
-    const allRates = mandiRates.flatMap(mr =>
-      mr.rates
-        .filter(r => !threshold || new Date(r.updatedAt) >= threshold) // optional 30-day filter
-        .map(r => ({
-          mandi: mr.mandi,
-          state: mr.state,
-          district: mr.district,
-          commodity: r.commodity,
-          minimum: r.minimum,
-          maximum: r.maximum,
-          estimatedArrival: r.estimatedArrival,
-          updatedAt: r.updatedAt || mr.updatedAt,
-        }))
-    );
-
-    // Sort descending by updatedAt
-    allRates.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-
-    // Map to response format
-    const data = allRates.map((item, idx) => ({
-      sno: idx + 1,
-      mandiName: item.mandi?.name || "",
-      address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
-      commodity: item.commodity?.name || "",
-      minimum: item.minimum ?? 0,
-      maximum: item.maximum ?? 0,
-      estimatedArrival: item.estimatedArrival ?? "",
-      lastUpdated: item.updatedAt
-        ? new Date(item.updatedAt).toLocaleString("en-IN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "",
-    }));
-
-    return res.json(data);
+    return res.json({ days, data: groupedData });
   } catch (err) {
     console.error("Error in getReportData:", err);
     return res.status(500).json({ error: "Error fetching report data" });
   }
 };
 
-
-  /**
-   * Export mandi rates as CSV
-   */
-  exportCSV = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        return res.status(401).json({ error: "Unauthorized user" });
-      }
-
-      const { state, district, mandi, days } = req.query || {};
-      let query = { user_id: user.id };
-      if (state && mongoose.isValidObjectId(state)) query.state = state;
-      if (district) query.district = district.trim();
-      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-
-      const daysNum = parseInt(days) || null;
-      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
-
-      const rates = await MandiRate.find(query)
-        .populate("state", "name")
-        .populate("mandi", "name")
-        .populate("rates.commodity", "name")
-        .lean();
-
-      let filteredRates = rates.flatMap(rate =>
-        rate.rates
-          .filter(item => !threshold || item.updatedAt >= threshold)
-          .map(item => ({
-            mandi: rate.mandi,
-            state: rate.state,
-            district: rate.district,
-            commodity: item.commodity,
-            minimum: item.minimum,
-            maximum: item.maximum,
-            estimatedArrival: item.estimatedArrival,
-            updatedAt: item.updatedAt || rate.updatedAt
-          }))
-      );
-
-      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
-
-      const data = filteredRates.map((item, index) => ({
-        sno: index + 1,
-        mandiName: item.mandi?.name || "",
-        address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
-        commodity: item.commodity?.name || "",
-        minimum: item.minimum || 0,
-        maximum: item.maximum || 0,
-        estimatedArrival: item.estimatedArrival ?? "",
-        lastUpdated: item.updatedAt
-          ? new Date(item.updatedAt).toLocaleString("en-IN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "",
-      }));
-
-      const fields = [
-        { label: "Sl No", value: "sno" },
-        { label: "Mandi Name", value: "mandiName" },
-        { label: "Address (State/District/Mandi)", value: "address" },
-        { label: "Commodity", value: "commodity" },
-        { label: "Min Price", value: "minimum" },
-        { label: "Max Price", value: "maximum" },
-        { label: "Est. Qty", value: "estimatedArrival" },
-        { label: "Last Updated", value: "lastUpdated" },
-      ];
-
-      const json2csv = new Parser({ fields });
-      const csv = json2csv.parse(data);
-
-      res.header("Content-Type", "text/csv");
-      res.attachment("mandi_rates.csv");
-      res.send(csv);
-    } catch (err) {
-      console.error("Error in exportCSV:", err);
-      res.status(500).json({ error: "Error exporting CSV" });
+/**
+ * Export mandi rates as CSV (grouped by state, district, and mandi)
+ */
+ exportCSV = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
     }
-  };
 
-  /**
-   * Export mandi rates as Excel
-   */
-  exportExcel = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        return res.status(401).json({ error: "Unauthorized user" });
+    const { groups, days } = await getGroupedMandiRates(user, req.query);
+
+    const fields = [
+      { label: "Sl No", value: "sno" },
+      { label: "Mandi Name", value: "mandiName" },
+      { label: "Address (State/District/Mandi)", value: "address" },
+      { label: "Commodity", value: "commodity" },
+      { label: "Min Price", value: "minimum" },
+      { label: "Max Price", value: "maximum" },
+      { label: "Est. Qty", value: "estimatedArrival" },
+      { label: "Last Updated", value: "lastUpdated" }
+    ];
+
+    const json2csv = new Parser({ fields });
+    let csvData = [`Grouped Mandi Rates Report (${days} Days)`];
+    csvData.push(""); // Spacer
+
+    for (const stateName in groups) {
+      csvData.push(`*** State: ${stateName} ***,,,,,,,`);
+      for (const distName in groups[stateName]) {
+        csvData.push(`--- District: ${distName} ---,,,,,,,`);
+        for (const mandiName in groups[stateName][distName]) {
+          csvData.push(`Mandi: ${mandiName},,,,,,,`);
+          const mandiRows = groups[stateName][distName][mandiName].map(item => ({
+            sno: item.sno,
+            mandiName: item.mandi?.name || "",
+            address: item.address,
+            commodity: item.commodityName,
+            minimum: item.minimum || 0,
+            maximum: item.maximum || 0,
+            estimatedArrival: item.estimatedArrival ?? "",
+            lastUpdated: item.lastUpdated
+          }));
+          csvData.push(...json2csv.parse(mandiRows));
+          csvData.push(""); // Spacer
+        }
       }
-
-      const { state, district, mandi, days } = req.query || {};
-      let query = { user_id: user.id };
-      if (state && mongoose.isValidObjectId(state)) query.state = state;
-      if (district) query.district = district.trim();
-      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-
-      const daysNum = parseInt(days) || null;
-      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
-
-      const rates = await MandiRate.find(query)
-        .populate("state", "name")
-        .populate("mandi", "name")
-        .populate("rates.commodity", "name")
-        .lean();
-
-      let filteredRates = rates.flatMap(rate =>
-        rate.rates
-          .filter(item => !threshold || item.updatedAt >= threshold)
-          .map(item => ({
-            mandi: rate.mandi,
-            state: rate.state,
-            district: rate.district,
-            commodity: item.commodity,
-            minimum: item.minimum,
-            maximum: item.maximum,
-            estimatedArrival: item.estimatedArrival,
-            updatedAt: item.updatedAt || rate.updatedAt
-          }))
-      );
-
-      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
-
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Mandi Rates");
-
-      worksheet.columns = [
-        { header: "Sl No", key: "sno", width: 10 },
-        { header: "Mandi Name", key: "mandiName", width: 20 },
-        { header: "Address (State/District/Mandi)", key: "address", width: 30 },
-        { header: "Commodity", key: "commodity", width: 20 },
-        { header: "Min Price", key: "minimum", width: 15 },
-        { header: "Max Price", key: "maximum", width: 15 },
-        { header: "Est. Qty", key: "estimatedArrival", width: 15 },
-        { header: "Last Updated", key: "lastUpdated", width: 20 },
-      ];
-
-      filteredRates.forEach((item, index) => {
-        worksheet.addRow({
-          sno: index + 1,
-          mandiName: item.mandi?.name || "",
-          address: `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
-          commodity: item.commodity?.name || "",
-          minimum: item.minimum || 0,
-          maximum: item.maximum || 0,
-          estimatedArrival: item.estimatedArrival ?? "",
-          lastUpdated: item.updatedAt
-            ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "",
-        });
-      });
-
-      res.header(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
-      res.attachment("mandi_rates.xlsx");
-      await workbook.xlsx.write(res);
-      res.end();
-    } catch (err) {
-      console.error("Error in exportExcel:", err);
-      res.status(500).json({ error: "Error exporting Excel" });
     }
-  };
 
-  /**
-   * Export mandi rates as PDF
-   */
-  exportPDF = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user || !mongoose.isValidObjectId(user.id)) {
-        return res.status(401).json({ error: "Unauthorized user" });
+    const csv = csvData.join("\n");
+
+    res.header("Content-Type", "text/csv");
+    res.attachment(`grouped_mandi_rates_${days}_days.csv`);
+    res.send(csv);
+  } catch (err) {
+    console.error("Error in exportCSV:", err);
+    res.status(500).json({ error: "Error exporting CSV" });
+  }
+};
+
+/**
+ * Export mandi rates as Excel (grouped by state, district, and mandi)
+ */
+ exportExcel = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
+    }
+
+    const { groups, days } = await getGroupedMandiRates(user, req.query);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Mandi Rates");
+
+    const columns = [
+      { header: "Sl No", key: "sno", width: 10 },
+      { header: "Mandi Name", key: "mandiName", width: 20 },
+      { header: "Address (State/District/Mandi)", key: "address", width: 30 },
+      { header: "Commodity", key: "commodity", width: 20 },
+      { header: "Min Price", key: "minimum", width: 15 },
+      { header: "Max Price", key: "maximum", width: 15 },
+      { header: "Est. Qty", key: "estimatedArrival", width: 15 },
+      { header: "Last Updated", key: "lastUpdated", width: 20 }
+    ];
+    worksheet.columns = columns;
+
+    worksheet.addRow([]);
+    const titleRow = worksheet.addRow([`Grouped Mandi Rates Report (${days} Days)`]);
+    titleRow.font = { size: 16, bold: true };
+    worksheet.mergeCells(titleRow.number, 1, titleRow.number, 8);
+    worksheet.addRow([]);
+
+    for (const stateName in groups) {
+      const stateRow = worksheet.addRow([`*** State: ${stateName} ***`]);
+      stateRow.font = { size: 14, bold: true, color: { argb: "FF0000" } };
+      worksheet.mergeCells(stateRow.number, 1, stateRow.number, 8);
+
+      for (const distName in groups[stateName]) {
+        const distRow = worksheet.addRow([`--- District: ${distName} ---`]);
+        distRow.font = { size: 12, italic: true, color: { argb: "FF0000FF" } };
+        worksheet.mergeCells(distRow.number, 1, distRow.number, 8);
+
+        for (const mandiName in groups[stateName][distName]) {
+          const mandiRow = worksheet.addRow([`Mandi: ${mandiName}`]);
+          mandiRow.font = { size: 10, bold: true };
+          worksheet.mergeCells(mandiRow.number, 1, mandiRow.number, 8);
+
+          groups[stateName][distName][mandiName].forEach(item => {
+            worksheet.addRow({
+              sno: item.sno,
+              mandiName: item.mandi?.name || "",
+              address: item.address,
+              commodity: item.commodityName,
+              minimum: item.minimum || 0,
+              maximum: item.maximum || 0,
+              estimatedArrival: item.estimatedArrival ?? "",
+              lastUpdated: item.lastUpdated
+            });
+          });
+          worksheet.addRow([]);
+        }
       }
-
-      const { state, district, mandi, days } = req.query || {};
-      let query = { user_id: user.id };
-      if (state && mongoose.isValidObjectId(state)) query.state = state;
-      if (district) query.district = district.trim();
-      if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
-
-      const daysNum = parseInt(days) || null;
-      const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
-
-      const rates = await MandiRate.find(query)
-        .populate("state", "name")
-        .populate("mandi", "name")
-        .populate("rates.commodity", "name")
-        .lean();
-
-      let filteredRates = rates.flatMap(rate =>
-        rate.rates
-          .filter(item => !threshold || item.updatedAt >= threshold)
-          .map(item => ({
-            mandi: rate.mandi,
-            state: rate.state,
-            district: rate.district,
-            commodity: item.commodity,
-            minimum: item.minimum,
-            maximum: item.maximum,
-            estimatedArrival: item.estimatedArrival,
-            updatedAt: item.updatedAt || rate.updatedAt
-          }))
-      );
-
-      filteredRates.sort((a, b) => b.updatedAt - a.updatedAt);
-
-      const doc = new PDFDocument({ size: "A4", margin: 20 });
-      res.header("Content-Type", "application/pdf");
-      res.attachment(`mandi_rates_${days || 'all'}_days.pdf`);
-      doc.pipe(res);
-
-      doc.fontSize(16).text(`Mandi Rates Report (${days || 'All'} Days)`, { align: "center" });
-      doc.moveDown();
-
-      const table = {
-        headers: [
-          "Sl No",
-          "Mandi Name",
-          "Address (State/District/Mandi)",
-          "Commodity",
-          "Min Price",
-          "Max Price",
-          "Est. Qty",
-          "Last Updated",
-        ],
-        rows: filteredRates.map((item, index) => [
-          index + 1,
-          item.mandi?.name || "",
-          `${item.state?.name || ""}/${item.district || ""}/${item.mandi?.name || ""}`,
-          item.commodity?.name || "",
-          item.minimum || 0,
-          item.maximum || 0,
-          item.estimatedArrival ?? "",
-          item.updatedAt
-            ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "",
-        ]),
-      };
-
-      await doc.table(table, {
-        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
-        prepareRow: () => doc.font("Helvetica").fontSize(8),
-        padding: 2,
-        columnWidths: [30, 80, 120, 80, 50, 50, 50, 80],
-      });
-
-      doc.end();
-    } catch (err) {
-      console.error("Error in exportPDF:", err);
-      res.status(500).json({ error: "Error exporting PDF" });
     }
-  };
+
+    res.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.attachment(`grouped_mandi_rates_${days}_days.xlsx`);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("Error in exportExcel:", err);
+    res.status(500).json({ error: "Error exporting Excel" });
+  }
+};
+
+/**
+ * Export mandi rates as PDF (grouped by state, district, and mandi)
+ */
+ exportPDF = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
+    }
+
+    const { groups, days } = await getGroupedMandiRates(user, req.query);
+
+    const doc = new PDFDocument({ size: "A4", margin: 20 });
+    res.header("Content-Type", "application/pdf");
+    res.attachment(`grouped_mandi_rates_${days}_days.pdf`);
+    doc.pipe(res);
+
+    doc.font("Helvetica-Bold").fontSize(16).text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
+    doc.moveDown(1);
+
+    const headers = [
+      "Sl No",
+      "Mandi Name",
+      "Address (State/District/Mandi)",
+      "Commodity",
+      "Min Price",
+      "Max Price",
+      "Est. Qty",
+      "Last Updated"
+    ];
+
+    for (const stateName in groups) {
+      doc.font("Helvetica-Bold").fontSize(14).text(`State: ${stateName}`, { underline: true });
+      doc.moveDown(0.5);
+
+      for (const distName in groups[stateName]) {
+        doc.font("Helvetica").fontSize(12).text(`District: ${distName}`);
+        doc.moveDown(0.5);
+
+        for (const mandiName in groups[stateName][distName]) {
+          doc.font("Helvetica").fontSize(10).text(`Mandi: ${mandiName}`);
+          doc.moveDown(0.5);
+
+          const rows = groups[stateName][distName][mandiName].map(item => [
+            item.sno,
+            item.mandi?.name || "",
+            item.address,
+            item.commodityName,
+            item.minimum || 0,
+            item.maximum || 0,
+            item.estimatedArrival ?? "",
+            item.lastUpdated
+          ]);
+
+          const table = { headers, rows };
+          await doc.table(table, {
+            prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+            prepareRow: () => doc.font("Helvetica").fontSize(8),
+            padding: 2,
+            columnsSize: [30, 80, 120, 80, 50, 50, 50, 80]
+          });
+
+          doc.moveDown(1);
+        }
+      }
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error("Error in exportPDF:", err);
+    res.status(500).json({ error: "Error exporting PDF" });
+  }
+};
+
+
+/**
+ * Export mandi rates as Grouped PDF (same as exportPDF for consistency)
+ */
+
+ exportGroupedPDF = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || !mongoose.isValidObjectId(user.id)) {
+      return res.status(401).json({ error: "Unauthorized user" });
+    }
+
+    const { groups, days } = await getGroupedMandiRates(user, req.query);
+
+    const doc = new PDFDocument({ size: "A4", margin: 20 });
+    res.header("Content-Type", "application/pdf");
+    res.attachment(`grouped_mandi_rates_${days}_days.pdf`);
+    doc.pipe(res);
+
+    doc.fontSize(16).text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
+    doc.moveDown();
+
+    const headers = [
+      "Sl No",
+      "Mandi Name",
+      "Address (State/District/Mandi)",
+      "Commodity",
+      "Min Price",
+      "Max Price",
+      "Est. Qty",
+      "Last Updated",
+    ];
+
+    let globalIndex = 1;
+
+    for (const stateName in groups) {
+      doc.fontSize(14).text(`State: ${stateName}`, { underline: true });
+      doc.moveDown(0.5);
+
+      for (const distName in groups[stateName]) {
+        doc.fontSize(12).text(`District: ${distName}`);
+        doc.moveDown(0.5);
+
+        for (const mandiName in groups[stateName][distName]) {
+          doc.fontSize(10).text(`Mandi: ${mandiName}`);
+          doc.moveDown(0.5);
+
+          const rows = groups[stateName][distName][mandiName].map(item => [
+            globalIndex++,
+            item.mandi?.name || "",
+            `${stateName}/${distName}/${item.mandi?.name || ""}`,
+            item.commodity?.name || "",
+            item.minimum || 0,
+            item.maximum || 0,
+            item.estimatedArrival ?? "",
+            item.updatedAt
+              ? new Date(item.updatedAt).toLocaleString("en-IN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "",
+          ]);
+
+          const table = { headers, rows };
+          await doc.table(table, {
+            prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+            prepareRow: () => doc.font("Helvetica").fontSize(8),
+            padding: 2,
+            columnWidths: [30, 80, 120, 80, 50, 50, 50, 80],
+          });
+
+          doc.moveDown(1);
+        }
+      }
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error("Error in exportGroupedPDF:", err);
+    res.status(500).json({ error: "Error exporting Grouped PDF" });
+  }
+};
 }
 
 module.exports = new MandiRateController();
