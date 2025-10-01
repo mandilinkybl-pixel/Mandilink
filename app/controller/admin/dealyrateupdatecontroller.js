@@ -850,12 +850,15 @@ exportGroupedPDF = async (req, res) => {
   try {
     const { groups, days } = await getGroupedMandiRates(req.query);
 
-    const doc = new PDFDocument({ size: "A4", margin: 20 });
+    const doc = new PDFDocument({ size: "A4", margin: 20, bufferPages: true });
     res.header("Content-Type", "application/pdf");
     res.attachment(`grouped_mandi_rates_${days}_days.pdf`);
     doc.pipe(res);
 
-    doc.font("Helvetica-Bold").fontSize(16).text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
+    // PDF Title
+    doc.font("Helvetica-Bold")
+      .fontSize(16)
+      .text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
     doc.moveDown(1);
 
     const headers = ["Sl No", "Mandi Name", "Address (State/District/Mandi)", "Commodity", "Min Price", "Max Price", "Est. Qty", "Last Updated"];
@@ -884,11 +887,18 @@ exportGroupedPDF = async (req, res) => {
           ]);
 
           const table = { headers, rows };
+
+          // This ensures the table splits across multiple pages
           await doc.table(table, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
-            prepareRow: () => doc.font("Helvetica").fontSize(8),
+            prepareRow: (row, i) => doc.font("Helvetica").fontSize(8),
             padding: 2,
-            columnsSize: [30, 80, 120, 80, 50, 50, 50, 80]
+            columnsSize: [30, 80, 120, 80, 50, 50, 50, 80],
+            // enable breaking across pages
+            columnSpacing: 5,
+            width: 500,
+            x: doc.page.margins.left,
+            y: doc.y
           });
 
           doc.moveDown(1);
