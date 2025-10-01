@@ -16,9 +16,10 @@ const cron = require("node-cron");
  /**
  * Helper to fetch and prepare grouped mandi rates data
  */
-const getGroupedMandiRates = async (user, queryParams) => {
-  const { state, district, mandi, days } = queryParams || {};
-  let query = { user_id: user.id };
+// Fetch grouped mandi rates (NOT user-specific)
+const getGroupedMandiRates = async (queryParams = {}) => {
+  const { state, district, mandi, days } = queryParams;
+  let query = {};
   if (state && mongoose.isValidObjectId(state)) query.state = state;
   if (district) query.district = district.trim();
   if (mandi && mongoose.isValidObjectId(mandi)) query.mandi = mandi;
@@ -26,32 +27,16 @@ const getGroupedMandiRates = async (user, queryParams) => {
   const daysNum = parseInt(days) || null;
   const threshold = daysNum ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
 
-  // Fetch rates with explicit population
   const rates = await MandiRate.find(query)
-    .populate({
-      path: "state",
-      select: "name",
-    })
-    .populate({
-      path: "mandi",
-      select: "name",
-    })
-    .populate({
-      path: "rates.commodity",
-      select: "name",
-    })
+    .populate({ path: "state", select: "name" })
+    .populate({ path: "mandi", select: "name" })
+    .populate({ path: "rates.commodity", select: "name" })
     .lean();
 
-  if (!rates || rates.length === 0) {
-    console.warn("No mandi rates found for user:", user.id);
-    return { groups: {}, days: days || "All" };
-  }
+  if (!rates || rates.length === 0) return { groups: {}, days: days || "All" };
 
   let filteredRates = rates.flatMap(rate => {
-    if (!rate.rates || rate.rates.length === 0) {
-      console.warn(`Mandi ${rate.mandi?.name || rate.mandi} in ${rate.district} has no commodities`);
-      return [];
-    }
+    if (!rate.rates || rate.rates.length === 0) return [];
 
     return rate.rates
       .filter(item => {
@@ -62,39 +47,26 @@ const getGroupedMandiRates = async (user, queryParams) => {
           item.maximum != null && !isNaN(item.maximum) && item.maximum >= 0 &&
           item.minimum <= item.maximum;
 
-        // Warn about unrealistic prices (e.g., > 1,000,000 rupees)
-        if (validPrices && (item.minimum / 100 > 1000000 || item.maximum / 100 > 1000000)) {
-          console.warn(
-            `Unrealistic prices for commodity ${item.commodity?.name || item.commodity} ` +
-            `in mandi ${rate.mandi?.name || rate.mandi}: min=${item.minimum / 100}, max=${item.maximum / 100}`
-          );
-        }
-
-        if (!hasCommodity) {
-          console.warn(`Commodity missing for rate in mandi ${rate.mandi?.name || rate.mandi}`);
-        }
-        if (!validPrices) {
-          console.warn(
-            `Invalid prices for commodity ${item.commodity?.name || item.commodity} ` +
-            `in mandi ${rate.mandi?.name || rate.mandi}: min=${item.minimum}, max=${item.maximum}`
-          );
-        }
-
         return isValidDate && hasCommodity && validPrices;
       })
-      .map(item => ({
-        mandi: rate.mandi || { name: "Unknown" },
-        state: rate.state || { name: "Unknown" },
-        district: rate.district || "Unknown",
-        commodity: item.commodity || { name: "Unknown" },
-        minimum: (item.minimum && !isNaN(item.minimum) ? item.minimum / 100 : 0).toFixed(2),
-        maximum: (item.maximum && !isNaN(item.maximum) ? item.maximum / 100 : 0).toFixed(2),
-        estimatedArrival: item.estimatedArrival ?? "N/A",
-        updatedAt: item.updatedAt || rate.updatedAt,
-      }));
+      .map(item => {
+        const minPrice = Number(item.minimum) || 0;
+        const maxPrice = Number(item.maximum) || 0;
+
+        return {
+          mandi: rate.mandi || { name: "Unknown" },
+          state: rate.state || { name: "Unknown" },
+          district: rate.district || "Unknown",
+          commodity: item.commodity || { name: "Unknown" },
+          minimum: minPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          maximum: maxPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          estimatedArrival: item.estimatedArrival ?? "N/A",
+          updatedAt: item.updatedAt || rate.updatedAt,
+        };
+      });
   });
 
-  // Sort rates
+  // Sort
   filteredRates.sort((a, b) => {
     const stateA = a.state?.name || "";
     const stateB = b.state?.name || "";
@@ -104,12 +76,8 @@ const getGroupedMandiRates = async (user, queryParams) => {
     const mandiB = b.mandi?.name || "";
     const commA = a.commodity?.name || "";
     const commB = b.commodity?.name || "";
-    return (
-      stateA.localeCompare(stateB) ||
-      distA.localeCompare(distB) ||
-      mandiA.localeCompare(mandiB) ||
-      commA.localeCompare(commB)
-    );
+    return stateA.localeCompare(stateB) || distA.localeCompare(distB) ||
+           mandiA.localeCompare(mandiB) || commA.localeCompare(commB);
   });
 
   const groups = {};
@@ -144,6 +112,7 @@ const getGroupedMandiRates = async (user, queryParams) => {
 
   return { groups, days: days || "All" };
 };
+
 class MandiRateController {
   constructor() {
     this.setupCron();
@@ -874,65 +843,44 @@ editCommodity = async (req, res) => {
  * Export mandi rates as Grouped PDF (same as exportPDF for consistency)
  */
 
- exportGroupedPDF = async (req, res) => {
+/**
+ * Export mandi rates as Grouped PDF (similar to exportPDF but clearly grouped)
+ */
+exportGroupedPDF = async (req, res) => {
   try {
-    const user = req.user;
-    if (!user || !mongoose.isValidObjectId(user.id)) {
-      return res.status(401).json({ error: "Unauthorized user" });
-    }
-
-    const { groups, days } = await getGroupedMandiRates(user, req.query);
+    const { groups, days } = await getGroupedMandiRates(req.query);
 
     const doc = new PDFDocument({ size: "A4", margin: 20 });
     res.header("Content-Type", "application/pdf");
     res.attachment(`grouped_mandi_rates_${days}_days.pdf`);
     doc.pipe(res);
 
-    doc.fontSize(16).text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
-    doc.moveDown();
+    doc.font("Helvetica-Bold").fontSize(16).text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
+    doc.moveDown(1);
 
-    const headers = [
-      "Sl No",
-      "Mandi Name",
-      "Address (State/District/Mandi)",
-      "Commodity",
-      "Min Price",
-      "Max Price",
-      "Est. Qty",
-      "Last Updated",
-    ];
-
-    let globalIndex = 1;
+    const headers = ["Sl No", "Mandi Name", "Address (State/District/Mandi)", "Commodity", "Min Price", "Max Price", "Est. Qty", "Last Updated"];
 
     for (const stateName in groups) {
-      doc.fontSize(14).text(`State: ${stateName}`, { underline: true });
+      doc.font("Helvetica-Bold").fontSize(14).text(`State: ${stateName}`, { underline: true });
       doc.moveDown(0.5);
 
       for (const distName in groups[stateName]) {
-        doc.fontSize(12).text(`District: ${distName}`);
+        doc.font("Helvetica-Oblique").fontSize(12).text(`District: ${distName}`);
         doc.moveDown(0.5);
 
         for (const mandiName in groups[stateName][distName]) {
-          doc.fontSize(10).text(`Mandi: ${mandiName}`);
-          doc.moveDown(0.5);
+          doc.font("Helvetica").fontSize(11).text(`Mandi: ${mandiName}`);
+          doc.moveDown(0.3);
 
           const rows = groups[stateName][distName][mandiName].map(item => [
-            globalIndex++,
+            item.sno,
             item.mandi?.name || "",
-            `${stateName}/${distName}/${item.mandi?.name || ""}`,
-            item.commodity?.name || "",
+            item.address,
+            item.commodityName,
             item.minimum || 0,
             item.maximum || 0,
             item.estimatedArrival ?? "",
-            item.updatedAt
-              ? new Date(item.updatedAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "",
+            item.lastUpdated
           ]);
 
           const table = { headers, rows };
@@ -940,7 +888,7 @@ editCommodity = async (req, res) => {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: () => doc.font("Helvetica").fontSize(8),
             padding: 2,
-            columnWidths: [30, 80, 120, 80, 50, 50, 50, 80],
+            columnsSize: [30, 80, 120, 80, 50, 50, 50, 80]
           });
 
           doc.moveDown(1);
@@ -951,9 +899,10 @@ editCommodity = async (req, res) => {
     doc.end();
   } catch (err) {
     console.error("Error in exportGroupedPDF:", err);
-    res.status(500).json({ error: "Error exporting Grouped PDF" });
+    res.status(500).json({ error: "Error exporting grouped PDF" });
   }
 };
 }
 
 module.exports = new MandiRateController();
+
