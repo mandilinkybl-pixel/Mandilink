@@ -850,12 +850,12 @@ exportGroupedPDF = async (req, res) => {
   try {
     const { groups, days } = await getGroupedMandiRates(req.query);
 
-    const doc = new PDFDocument({ size: "A4", margin: 20, bufferPages: true });
+    const doc = new PDFDocument({ size: "A4", margin: 20 });
     res.header("Content-Type", "application/pdf");
     res.attachment(`grouped_mandi_rates_${days}_days.pdf`);
     doc.pipe(res);
 
-    // PDF Title
+    // Title
     doc.font("Helvetica-Bold")
       .fontSize(16)
       .text(`Grouped Mandi Rates Report (${days} Days)`, { align: "center" });
@@ -864,17 +864,11 @@ exportGroupedPDF = async (req, res) => {
     const headers = ["Sl No", "Mandi Name", "Address (State/District/Mandi)", "Commodity", "Min Price", "Max Price", "Est. Qty", "Last Updated"];
 
     for (const stateName in groups) {
-      doc.font("Helvetica-Bold").fontSize(14).text(`State: ${stateName}`, { underline: true });
+      // Add a small space before new state
       doc.moveDown(0.5);
-
       for (const distName in groups[stateName]) {
-        doc.font("Helvetica-Oblique").fontSize(12).text(`District: ${distName}`);
         doc.moveDown(0.5);
-
         for (const mandiName in groups[stateName][distName]) {
-          doc.font("Helvetica").fontSize(11).text(`Mandi: ${mandiName}`);
-          doc.moveDown(0.3);
-
           const rows = groups[stateName][distName][mandiName].map(item => [
             item.sno,
             item.mandi?.name || "",
@@ -886,22 +880,22 @@ exportGroupedPDF = async (req, res) => {
             item.lastUpdated
           ]);
 
-          const table = { headers, rows };
+          const table = {
+            title: `State: ${stateName} | District: ${distName} | Mandi: ${mandiName}`,
+            headers,
+            rows
+          };
 
-          // This ensures the table splits across multiple pages
+          // Draw the table and allow page breaks
           await doc.table(table, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, i) => doc.font("Helvetica").fontSize(8),
             padding: 2,
             columnsSize: [30, 80, 120, 80, 50, 50, 50, 80],
-            // enable breaking across pages
-            columnSpacing: 5,
-            width: 500,
-            x: doc.page.margins.left,
-            y: doc.y
+            rowPageBreak: true, // important to allow breaking across pages
           });
 
-          doc.moveDown(1);
+          doc.moveDown(0.5);
         }
       }
     }
