@@ -3,6 +3,7 @@ const Notification = require("../models/Notification");
 const LISTING = require("../models/lisingSchema");
 const Company = require("../models/companylisting");
 
+
 // Fake push (replace with FCM / Expo / OneSignal)
 const sendPushNotification = async (users, notification) => {
   for (let user of users) {
