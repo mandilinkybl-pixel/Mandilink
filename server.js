@@ -22,7 +22,7 @@ app.use(
   })
 );
 // setupNotifications.js
-const autoNotify = require("./app/utills/notification.js");
+const autoNotify = require("./app/utills/autoNotify.js");
 const Bid = require("./app/models/bidpost.js");
 const Job = require("./app/models/job.js");
 const Mandi = require("./app/models/mandilistmodel.js");
