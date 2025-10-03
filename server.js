@@ -33,6 +33,8 @@ const BlogPost = require("./app/models/bidpost.js");
 const Commodity = require("./app/models/commodityname.js");
 const PurchasePlan = require("./app/models/purchase.js");
 
+
+
 // Attach auto-notification hooks
 [Bid, Job, Mandi, MandiRate, Listing, Company, BlogPost, Commodity, PurchasePlan].forEach(autoNotify);
 
