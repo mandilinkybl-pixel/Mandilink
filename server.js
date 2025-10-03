@@ -21,6 +21,20 @@ app.use(
     saveUninitialized: true,
   })
 );
+// setupNotifications.js
+const autoNotify = require("./app/utills/notification.js");
+const Bid = require("./app/models/bidpost.js");
+const Job = require("./app/models/job.js");
+const Mandi = require("./app/models/mandilistmodel.js");
+const MandiRate = require("./app/models/dealymandiRateuapdate.js");
+const Listing = require("./app/models/lisingSchema.js");
+const Company = require("./app/models/companylisting.js");
+const BlogPost = require("./app/models/bidpost.js");
+const Commodity = require("./app/models/commodityname.js");
+const PurchasePlan = require("./app/models/purchase.js");
+
+// Attach auto-notification hooks
+[Bid, Job, Mandi, MandiRate, Listing, Company, BlogPost, Commodity, PurchasePlan].forEach(autoNotify);
 
 app.use(flash());
 

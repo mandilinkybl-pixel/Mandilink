@@ -4,17 +4,30 @@ const notificationSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     message: { type: String, required: true },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-    states: [{ type: mongoose.Schema.Types.ObjectId, ref: "State" }],
-    districts: [{ type: String }],
-    mandis: [{ type: String }],
-
-    target: { type: String, enum: ["all", "custom"], default: "custom" },
-
-    sentToUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "LISTING" }],
-    sentToCompanies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Company" }],
+    type: {
+      type: String,
+      enum: [
+        "bid",
+        "job",
+        "mandi",
+        "mandirate",
+        "listing",
+        "company",
+        "blog",
+        "commodity",
+        "purchaseplan",
+        "general",
+      ],
+      default: "general",
+    },
+    relatedId: { type: mongoose.Schema.Types.ObjectId },
+    state: { type: mongoose.Schema.Types.ObjectId, ref: "State" },
+    district: { type: String },
+    isReadBy: [{ type: mongoose.Schema.Types.ObjectId }],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Notification", notificationSchema);
+// 🔹 Prevent OverwriteModelError
+module.exports =
+  mongoose.models.Notification || mongoose.model("Notification", notificationSchema);

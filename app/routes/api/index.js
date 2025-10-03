@@ -15,6 +15,7 @@ app.use("/mandis",require("./mandi"))
 app.use('/categories',require("./categories"))
 app.use("/users",require("./categorywise"))
 app.use("/purchase",require("./purchase"))
+app.use("/notification",require("./nptification"))
 
 module.exports = app;
 
