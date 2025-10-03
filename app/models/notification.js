@@ -28,17 +28,7 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔹 Prevent OverwriteModelError
-module.exports =
-  mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
+// 🔹 Prevent OverwriteModelError by using the exact same name in check and registration
+const Notification = mongoose.models.getnotify || mongoose.model("getnotify", notificationSchema);
 
-
-
-
-
-
-
-
-
-
-  
+module.exports = Notification;
