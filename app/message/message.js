@@ -1,5 +1,5 @@
 // services/notificationService.js
-const Notification = require("../models/Notification");
+const Notification = require("../../app/models/notification");
 const LISTING = require("../models/lisingSchema");
 const Company = require("../models/companylisting");
 

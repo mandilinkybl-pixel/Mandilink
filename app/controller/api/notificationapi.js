@@ -1,5 +1,5 @@
 // controllers/notificationController.js
-const Notification = require("../../models/Notification");
+const Notification = require("../../../app/models/notification");
 const { createNotification } = require("../../message/message");
 
 // Manually trigger notification
