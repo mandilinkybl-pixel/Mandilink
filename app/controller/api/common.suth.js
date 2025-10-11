@@ -7,111 +7,121 @@ const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 const OTP_SECRET ="cbaisbckjbaskcbjkjabsckjbaskc"
 class AuthController {
 
-  async signup(req, res) {
-    try {
-      const {
-        userType,
+// Signup
+async signup(req, res) {
+  try {
+    const {
+      modelType, // 'company' or 'listing'
+      name,
+      email,
+      contactNumber,
+      password,
+      address,
+      state,
+      district,
+      mandi,
+      category,
+      contactPerson,
+      gstNumber,
+      licenseNumber
+    } = req.body;
+
+    if (!modelType || !name || !email || !contactNumber || !password || !state || !district || !category) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Check duplicates in both Company and Listing
+    const existing =
+      (await Company.findOne({ $or: [{ email }, { contactNumber }, { gstNumber }, { licenseNumber }] })) ||
+      (await Listing.findOne({ $or: [{ email }, { contactNumber }] }));
+
+    if (existing) {
+      return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let account;
+
+    if (modelType === "company") {
+      account = new Company({
         name,
         email,
         contactNumber,
-        password,
-        address,
+        passwordHash: hashedPassword,
+        address: address || "",
         state,
         district,
-        mandi,
+        mandi: mandi || "",
         category,
-        contactPerson,
-        gstNumber,
-        licenseNumber
-      } = req.body;
-
-      // Required fields validation
-      if (!userType || !name || !email || !contactNumber || !password || !state || !district || !category) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-
-      // Check duplicates across both User and Company
-      const existing =
-        (await User.findOne({ $or: [{ email }, { contactNumber }] })) ||
-        (await Company.findOne({ $or: [{ email }, { contactNumber }, { gstNumber }, { licenseNumber }] }));
-
-      if (existing) {
-        return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      let account;
-
-      if (userType === "company") {
-        account = new Company({
-          name,
-          email,
-          contactNumber,
-          passwordHash: hashedPassword,
-          address: address || "",
-          state,
-          district,
-          mandi: mandi || "",
-          category,
-          contactPerson: contactPerson || "",
-          gstNumber: gstNumber || "",
-          licenseNumber: licenseNumber || "",
-          isVerified: true,
-          Verifybatch: "batch1",
-          registrationStep: 4,
-        });
-      } else {
-        account = new User({
-          name,
-          email,
-          contactNumber,
-          passwordHash: hashedPassword,
-          address: address || "",
-          state,
-          district,
-          mandi: mandi || "",
-          category,
-          isVerified: true,
-          Verifybatch: "batch1",
-          registrationStep: 3,
-        });
-      }
-
-      await account.save();
-
-      return res.status(201).json({ message: `${userType} registered successfully`, user: account });
-    } catch (err) {
-      console.error("Signup error:", err);
-      res.status(500).json({ message: "Server error" });
+        contactPerson: contactPerson || "",
+        gstNumber: gstNumber || "",
+        licenseNumber: licenseNumber || "",
+        isVerified: true,
+        Verifybatch: "batch1",
+        registrationStep: 4,
+      });
+    } else {
+      account = new Listing({
+        name,
+        email,
+        contactNumber,
+        passwordHash: hashedPassword,
+        address: address || "",
+        state,
+        district,
+        mandi: mandi || "",
+        category,
+        isVerified: true,
+        Verifybatch: "batch1",
+        registrationStep: 3,
+      });
     }
+
+    await account.save();
+
+    return res.status(201).json({
+      message: `${modelType} registered successfully`,
+      user: account,
+      userType: modelType, // Include model type
+    });
+
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).json({ message: "Server error" });
   }
+}
 
+// Login
+async login(req, res) {
+  try {
+    const { identifier, password } = req.body;
+    if (!identifier || !password) return res.status(400).json({ message: "Email/Phone and password required" });
 
+    let account =
+      (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
+      (await Listing.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
 
-  // Login
-  async login(req, res) {
-    try {
-      const { identifier, password } = req.body;
-      if (!identifier || !password) return res.status(400).json({ message: "Email/Phone and password required" });
+    if (!account) return res.status(404).json({ message: "Account not found" });
 
-      let account =
-        (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
-        (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
+    const isMatch = await bcrypt.compare(password, account.passwordHash || "");
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-      if (!account) return res.status(404).json({ message: "Account not found" });
+    const type = account instanceof Company ? "company" : "listing"; // Determine model type
+    const token = jwt.sign({ id: account._id, userType: type }, JWT_SECRET, { expiresIn: "7d" });
 
-      const isMatch = await bcrypt.compare(password, account.passwordHash || "");
-      if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    return res.json({
+      message: "Login successful",
+      token,
+      user: account,
+      userType: type, // Include model type
+    });
 
-      const type = account instanceof Company ? "company" : "user"; // ✅ fix
-      const token = jwt.sign({ id: account._id, userType: type }, JWT_SECRET, { expiresIn: "7d" });
-
-      return res.json({ message: "Login successful", token, user: account });
-    } catch (err) {
-      console.error("Login error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
+}
+
 
   // Forgot Password
  async forgotPassword(req, res) {
