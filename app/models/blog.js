@@ -16,9 +16,6 @@ const LikeSchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-
-
-
 // Share schema: Any user type can share
 const ShareSchema = new Schema({
   user: { type: Schema.Types.ObjectId, required: true },
@@ -48,4 +45,5 @@ BlogPostSchema.virtual('author_doc', {
   justOne: true
 });
 
-module.exports = mongoose.model('BlogPost', BlogPostSchema);
+// ✅ Prevent OverwriteModelError
+module.exports = mongoose.models.BlogPost || mongoose.model('BlogPost', BlogPostSchema);
