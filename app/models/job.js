@@ -1,3 +1,4 @@
+// models/Job.js
 const mongoose = require("mongoose");
 
 const jobSchema = new mongoose.Schema(
@@ -63,6 +64,27 @@ const jobSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add post-save hook for new job notification
+jobSchema.post('save', async function(doc) {
+  if (this.isNew) { // Only on create
+    try {
+      const Notification = require('./notification'); // Adjust path
+      // Notify all admins about new job
+      await Notification.createNotification(
+        null, null, 
+        'new_job_post', 
+        { 
+          title: doc.title, 
+          companyName: doc.companyName 
+        }, 
+        { notifyAdmins: true }
+      );
+    } catch (error) {
+      console.error('❌ Failed to create new job notification:', error);
+    }
+  }
+});
 
 const Job = mongoose.model("Job", jobSchema);
 

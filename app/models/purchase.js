@@ -1,3 +1,4 @@
+// models/Subscription.js
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -104,7 +105,6 @@ const SubscriptionSchema = new Schema(
     toObject: { virtuals: true }
   }
 );
-
 // Composite indexes for performance
 SubscriptionSchema.index({ user: 1, userModel: 1 });
 SubscriptionSchema.index({ razorpaySubscriptionId: 1 });
@@ -309,6 +309,7 @@ SubscriptionSchema.virtual("userType").get(function() {
 // Cascade delete payment methods when subscription is removed
 SubscriptionSchema.pre("deleteOne", { document: true, query: false }, async function(next) {
   try {
+    const PaymentMethod = mongoose.model("PaymentMethod");
     await PaymentMethod.deleteMany({
       user: this.user,
       userModel: this.userModel,
@@ -317,6 +318,45 @@ SubscriptionSchema.pre("deleteOne", { document: true, query: false }, async func
     next();
   } catch (error) {
     next(error);
+  }
+});
+
+// Add post-save hook for subscription renewed or payment failed
+SubscriptionSchema.post('save', async function(doc) {
+  if (this.isNew || this.isModified('subscriptionStatus') || this.isModified('paymentStatus')) {
+    try {
+      const Notification = require('./notification'); // Adjust path
+      if (this.isNew && doc.subscriptionStatus === 'active') {
+        await Notification.createNotification(
+          doc.user, 
+          doc.userModel, 
+          'purchase_plan_status', 
+          { 
+            planName: doc.plan ? doc.plan.name : 'plan',
+            status: 'purchased'
+          }
+        );
+      } else if (doc.subscriptionStatus === 'active' && doc.endDate > new Date()) {
+        await Notification.createNotification(
+          doc.user, 
+          doc.userModel, 
+          'subscription_renewed', 
+          { 
+            planName: doc.plan ? doc.plan.name : 'plan',
+            endDate: doc.endDate.toDateString() 
+          }
+        );
+      } else if (doc.paymentStatus === 'failed') {
+        await Notification.createNotification(
+          doc.user, 
+          doc.userModel, 
+          'payment_failed', 
+          {}
+        );
+      }
+    } catch (error) {
+      console.error('❌ Failed to create subscription notification:', error);
+    }
   }
 });
 

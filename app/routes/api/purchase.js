@@ -12,15 +12,16 @@ const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5,
   message: { success: false, error: "Too many payment attempts" },
-  keyGenerator: (req) => `${req.user?._id || 'anonymous'}-${req.ip}`
+  keyGenerator: (req) => `${req.user?._id || "anonymous"}-${ipKeyGenerator(req)}`, // ✅ Safe for IPv6
 });
 
+// Order limiter
 const orderLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
-  message: { success: false, error: "Too many order attempts" }
+  message: { success: false, error: "Too many order attempts" },
+  keyGenerator: (req) => `${req.user?._id || "anonymous"}-${ipKeyGenerator(req)}`, // ✅ Optional but recommended for consistency
 });
-
 // Validation middleware
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);

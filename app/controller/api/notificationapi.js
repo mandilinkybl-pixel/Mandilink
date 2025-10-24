@@ -1,12 +1,14 @@
+// controllers/UserNotificationController.js (Full with fetch for user)
 const Notification = require("../../models/notification");
 const User = require("../../models/lisingSchema");
 const Company = require("../../models/companylisting");
+const SecureEmployee = require("../../models/adminEmployee");
 
 class UserNotificationController {
-  /**
-   * 🔍 Determine user model dynamically from userId
-   */
   async getUserModelFromId(userId) {
+    const employee = await SecureEmployee.findById(userId);
+    if (employee) return "SecureEmployee";
+
     const user = await User.findById(userId);
     if (user) return "LISTING";
 
@@ -16,10 +18,6 @@ class UserNotificationController {
     throw new Error("User not found");
   }
 
-  /**
-   * 📬 Get paginated notifications
-   * Route: GET /notifications/:userId
-   */
   async getNotifications(req, res) {
     try {
       const { userId } = req.params;
@@ -45,9 +43,14 @@ class UserNotificationController {
         Notification.countDocuments({ user: userId, userModel, isRead: false }),
       ]);
 
+      const formattedNotifications = notifications.map(notif => ({
+        ...notif,
+        daysAgo: Math.floor((new Date() - new Date(notif.createdAt)) / (1000 * 60 * 60 * 24))
+      }));
+
       return res.json({
         success: true,
-        notifications,
+        notifications: formattedNotifications,
         unreadCount,
         pagination: { page: Number(page), limit: Number(limit) },
       });
@@ -57,10 +60,6 @@ class UserNotificationController {
     }
   }
 
-  /**
-   * ✅ Mark a specific notification as read
-   * Route: PATCH /notifications/:userId/:id/read
-   */
   async markAsRead(req, res) {
     try {
       const { userId, id } = req.params;
@@ -78,7 +77,7 @@ class UserNotificationController {
         { _id: id, user: userId, userModel, isRead: false },
         { isRead: true },
         { new: true }
-      );
+      ).lean();
 
       if (!notification) {
         return res.status(404).json({
@@ -98,10 +97,6 @@ class UserNotificationController {
     }
   }
 
-  /**
-   * ✅ Mark all notifications as read for a user
-   * Route: PATCH /notifications/:userId/read-all
-   */
   async markAllAsRead(req, res) {
     try {
       const { userId } = req.params;
@@ -134,10 +129,6 @@ class UserNotificationController {
     }
   }
 
-  /**
-   * 🔢 Get count of unread notifications
-   * Route: GET /notifications/:userId/unread-count
-   */
   async getUnreadCount(req, res) {
     try {
       const { userId } = req.params;

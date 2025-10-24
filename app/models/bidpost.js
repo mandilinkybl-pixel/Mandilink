@@ -1,3 +1,4 @@
+// models/Bid.js
 const mongoose = require("mongoose");
 
 const BidSchema = new mongoose.Schema(
@@ -68,6 +69,28 @@ BidSchema.pre("save", function (next) {
 // Virtual property
 BidSchema.virtual("isExpired").get(function () {
   return this.endTime && new Date() > this.endTime;
+});
+
+// Post-save hook for new bid post notification
+BidSchema.post('save', async function(doc) {
+  if (this.isNew) { // Only on create
+    try {
+      const Notification = require('./notification'); // Adjust path
+      // Notify all admins about new bid post
+      await Notification.createNotification(
+        null, null, 
+        'new_bid_post', 
+        { 
+          commodityName: doc.commodityName, 
+          startingPrice: doc.startingPrice,
+          createdBy: doc.createdByModel 
+        }, 
+        { notifyAdmins: true }
+      );
+    } catch (error) {
+      console.error('❌ Failed to create new bid post notification:', error);
+    }
+  }
 });
 
 module.exports = mongoose.model("Bid", BidSchema);

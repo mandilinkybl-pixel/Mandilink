@@ -1,3 +1,4 @@
+// models/BlogPost.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
@@ -43,6 +44,27 @@ BlogPostSchema.virtual('author_doc', {
   localField: 'author',
   foreignField: '_id',
   justOne: true
+});
+
+// Post-save hook for new blog post notification
+BlogPostSchema.post('save', async function(doc) {
+  if (this.isNew) { // Only on create
+    try {
+      const Notification = require('./notification'); // Adjust path
+      // Notify all admins or all users about new blog post
+      await Notification.createNotification(
+        null, null, 
+        'new_blog_post', 
+        { 
+          title: doc.title, 
+          category: doc.category 
+        }, 
+        { notifyAdmins: true }
+      );
+    } catch (error) {
+      console.error('❌ Failed to create new blog post notification:', error);
+    }
+  }
 });
 
 // ✅ Prevent OverwriteModelError
