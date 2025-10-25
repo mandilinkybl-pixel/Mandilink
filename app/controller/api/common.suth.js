@@ -33,7 +33,7 @@ async signup(req, res) {
     // Check duplicates in both Company and Listing
     const existing =
       (await Company.findOne({ $or: [{ email }, { contactNumber }, { gstNumber }, { licenseNumber }] })) ||
-      (await Listing.findOne({ $or: [{ email }, { contactNumber }] }));
+      (await User.findOne({ $or: [{ email }, { contactNumber }] }));
 
     if (existing) {
       return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
@@ -99,7 +99,7 @@ async login(req, res) {
 
     let account =
       (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
-      (await Listing.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
+      (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
 
     if (!account) return res.status(404).json({ message: "Account not found" });
 
