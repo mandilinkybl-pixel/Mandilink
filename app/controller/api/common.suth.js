@@ -11,7 +11,7 @@ class AuthController {
 async signup(req, res) {
   try {
     const {
-      userType, // 'company' or 'listing'
+      userType,
       name,
       email,
       contactNumber,
@@ -26,16 +26,15 @@ async signup(req, res) {
       licenseNumber
     } = req.body;
 
-    // ✅ Step 1: Validate required fields
-    if (!userType || !["company", "listing"].includes(userType)) {
-      return res.status(400).json({ message: "Invalid or missing userType (company/listing required)" });
-    }
-
+    // ✅ Step 1: Basic required fields
     if (!name || !contactNumber || !password || !state || !district || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Step 2: Check duplicates safely (ignore null/undefined GST/license)
+    // ✅ Step 2: Normalize userType → default to 'listing'
+    const type = userType?.toLowerCase() === "company" ? "company" : "listing";
+
+    // ✅ Step 3: Check duplicates (email, phone, GST, license)
     const companyQuery = [
       { email },
       { contactNumber },
@@ -51,12 +50,12 @@ async signup(req, res) {
       return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
     }
 
-    // ✅ Step 3: Hash password
+    // ✅ Step 4: Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Step 4: Create new user/company
+    // ✅ Step 5: Create new account (based on type)
     let account;
-    if (userType === "company") {
+    if (type === "company") {
       account = new Company({
         name,
         email: email || "",
@@ -72,7 +71,7 @@ async signup(req, res) {
         licenseNumber: licenseNumber || "",
         isVerified: true,
         Verifybatch: "batch1",
-        registrationStep: 4,
+        registrationStep: 4
       });
     } else {
       account = new Listing({
@@ -87,20 +86,22 @@ async signup(req, res) {
         category,
         isVerified: true,
         Verifybatch: "batch1",
-        registrationStep: 3,
+        registrationStep: 3
       });
     }
 
-    // ✅ Step 5: Save record
+    // ✅ Step 6: Save record
     await account.save();
 
-    // ✅ Step 6: Return clean JSON (avoid sending passwordHash)
+    // ✅ Step 7: Clean response (remove passwordHash)
     const userObj = account.toObject();
     delete userObj.passwordHash;
 
+    // ✅ Step 8: Response
     return res.status(201).json({
-      message: `${userType} registered successfully`,
-      userType,
+      message: `${type === "company" ? "Company" : "Listing"} registered successfully`,
+      collection: type === "company" ? "Company" : "Listing",
+      userType: type,
       user: userObj
     });
 
