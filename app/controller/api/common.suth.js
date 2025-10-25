@@ -11,7 +11,7 @@ class AuthController {
 async signup(req, res) {
   try {
     const {
-      modelType, // 'company' or 'listing'
+      userType, // 'company' or 'listing'
       name,
       email,
       contactNumber,
@@ -26,7 +26,7 @@ async signup(req, res) {
       licenseNumber
     } = req.body;
 
-    if (!modelType || !name || !email || !contactNumber || !password || !state || !district || !category) {
+    if (!userType || !name || !email || !contactNumber || !password || !state || !district || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -42,7 +42,7 @@ async signup(req, res) {
     const hashedPassword = await bcrypt.hash(password, 10);
     let account;
 
-    if (modelType === "company") {
+    if (userType === "company") {
       account = new Company({
         name,
         email,
@@ -80,9 +80,9 @@ async signup(req, res) {
     await account.save();
 
     return res.status(201).json({
-      message: `${modelType} registered successfully`,
+      message: `${userType} registered successfully`,
       user: account,
-      userType: modelType, // Include model type
+      userType: userType, // Include model type
     });
 
   } catch (err) {
