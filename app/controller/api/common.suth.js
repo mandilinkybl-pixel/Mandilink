@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../../models/lisingSchema"); // your user model
+const Listing = require("../../models/lisingSchema"); // your user model
 const Company = require("../../models/companylisting");   // ✅ fixed import
 const crypto = require("crypto");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
@@ -26,26 +26,40 @@ async signup(req, res) {
       licenseNumber
     } = req.body;
 
-    if (!userType || !name || !email || !contactNumber || !password || !state || !district || !category) {
+    // ✅ Step 1: Validate required fields
+    if (!userType || !["company", "listing"].includes(userType)) {
+      return res.status(400).json({ message: "Invalid or missing userType (company/listing required)" });
+    }
+
+    if (!name || !contactNumber || !password || !state || !district || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Check duplicates in both Company and Listing
+    // ✅ Step 2: Check duplicates safely (ignore null/undefined GST/license)
+    const companyQuery = [
+      { email },
+      { contactNumber },
+      ...(gstNumber ? [{ gstNumber }] : []),
+      ...(licenseNumber ? [{ licenseNumber }] : [])
+    ];
+
     const existing =
-      (await Company.findOne({ $or: [{ email }, { contactNumber }, { gstNumber }, { licenseNumber }] })) ||
-      (await User.findOne({ $or: [{ email }, { contactNumber }] }));
+      (await Company.findOne({ $or: companyQuery })) ||
+      (await Listing.findOne({ $or: [{ email }, { contactNumber }] }));
 
     if (existing) {
       return res.status(400).json({ message: "Email, phone, GST, or license number already exists" });
     }
 
+    // ✅ Step 3: Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    let account;
 
+    // ✅ Step 4: Create new user/company
+    let account;
     if (userType === "company") {
       account = new Company({
         name,
-        email,
+        email: email || "",
         contactNumber,
         passwordHash: hashedPassword,
         address: address || "",
@@ -63,7 +77,7 @@ async signup(req, res) {
     } else {
       account = new Listing({
         name,
-        email,
+        email: email || "",
         contactNumber,
         passwordHash: hashedPassword,
         address: address || "",
@@ -77,19 +91,28 @@ async signup(req, res) {
       });
     }
 
+    // ✅ Step 5: Save record
     await account.save();
+
+    // ✅ Step 6: Return clean JSON (avoid sending passwordHash)
+    const userObj = account.toObject();
+    delete userObj.passwordHash;
 
     return res.status(201).json({
       message: `${userType} registered successfully`,
-      user: account,
-      userType: userType, // Include model type
+      userType,
+      user: userObj
     });
 
   } catch (err) {
     console.error("Signup error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message
+    });
   }
 }
+
 
 // Login
 async login(req, res) {
@@ -99,7 +122,7 @@ async login(req, res) {
 
     let account =
       (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
-      (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
+      (await Listing.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
 
     if (!account) return res.status(404).json({ message: "Account not found" });
 
