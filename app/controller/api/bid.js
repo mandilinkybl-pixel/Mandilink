@@ -16,9 +16,8 @@ class BidController {
         duration,
         createdBy,
         createdByModel,
-        image
       } = req.body;
-
+const image = req.file ? req.file.path : null;
       if (!commodityName || !harvestTiming || !quality || !quantityAmount || !quantityUnit || !startingPrice || !duration || !createdBy || !createdByModel) {
         return res.status(400).json({ success: false, error: "Missing required fields" });
       }
@@ -33,7 +32,7 @@ class BidController {
         duration,
         createdBy,
         createdByModel,
-        image
+        image: image,
       });
 
       const savedBid = await bid.save();
