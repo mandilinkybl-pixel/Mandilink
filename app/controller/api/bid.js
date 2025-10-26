@@ -1,5 +1,7 @@
 const Bid = require("../../models/bidpost");
 
+const path = require("path");
+
 class BidController {
   // ----------------------
   // Create a new auction/bid
