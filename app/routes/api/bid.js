@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const bidController = require("../../controller/api/bid");
+const { convertToWebp, uploadbid } = require("../../multer/bid.multer");
 
 // Create a new auction
-router.post("/create", bidController.createBid);
+router.post("/create", uploadbid.single("image"), convertToWebp, bidController.createBid);
 
 // Place a bid on an auction
 router.post("/bid/:bidId", bidController.placeBid);
