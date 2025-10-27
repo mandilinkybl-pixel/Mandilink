@@ -5,6 +5,60 @@ const Company = require("../../models/companylisting");   // ✅ fixed import
 const crypto = require("crypto");
 const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 const OTP_SECRET ="cbaisbckjbaskcbjkjabsckjbaskc"
+const nodemailer = require("nodemailer");
+const path = require("path");
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// ✅ Check connection to Gmail SMTP
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("❌ Email config error: ", error);
+  } else {
+    console.log("✅ Email server is ready to send emails");
+  }
+});
+function otpMailTemplate(name, otp) {
+  return `
+  <div style="max-width:600px;margin:auto;padding:20px;background:#f6f7fb;font-family:Arial;border-radius:10px;">
+    
+    <div style="text-align:center;">
+      <img src="cid:mandilinklogo" alt="MandiLink" style="width:120px;margin-bottom:10px;">
+      <h2 style="color:#0d6efd;margin-bottom:0">MandiLink Security Verification</h2>
+    </div>
+
+    <p style="font-size:16px;color:#333;">
+      Hi <b>${name}</b>,
+    </p>
+
+    <p style="font-size:16px;color:#333;">
+      Use the following OTP to verify your identity for resetting your password:
+    </p>
+
+    <div style="background:#fff;border:1px dashed #0d6efd;text-align:center;padding:15px;font-size:28px;color:#0d6efd;border-radius:8px;">
+      <b>${otp}</b>
+    </div>
+
+    <p style="font-size:14px;color:red;margin-top:10px;">
+      ⚠️ This OTP will expire in 5 minutes.
+    </p>
+
+    <p style="font-size:16px;color:#333;">
+      If you didn't request this password reset, please ignore this email.
+    </p>
+
+    <br>
+    <p style="text-align:center;color:#777;font-size:12px;">
+      © ${new Date().getFullYear()} MandiLink | All Rights Reserved.
+    </p>
+  </div>`;
+}
+
 class AuthController {
 
 // Signup
@@ -148,70 +202,68 @@ async login(req, res) {
 
 
   // Forgot Password
- async forgotPassword(req, res) {
-    try {
-      const { identifier } = req.body;
+async forgotPassword(req, res) {
+  try {
+    const { identifier } = req.body;
 
-      const account =
-        (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
-        (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
+    const account = await Listing.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })
+      || await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] });
 
-      if (!account) return res.status(404).json({ message: "Account not found" });
+    if (!account) return res.status(404).json({ message: "Account not found" });
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expire = Date.now() + 5 * 60 * 1000; // 5 minutes
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expire = Date.now() + 5 * 60 * 1000;
 
-      // Create HMAC token: otp + expiry
-      const token = crypto
-        .createHmac("sha256", OTP_SECRET)
-        .update(otp + expire)
-        .digest("hex");
+    const token = crypto.createHmac("sha256", OTP_SECRET).update(otp + expire).digest("hex");
 
-      // For testing, send OTP + token to client
-      // In production, send OTP via SMS/email and token to client
-      res.json({ message: "OTP generated", otp, token, expire });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
-    }
+    // ✅ Send Email
+    await transporter.sendMail({
+      from: `"MandiLink" <${process.env.EMAIL_USER}>`,
+      to: account.email,
+      subject: "Password Reset OTP - MandiLink",
+      html: otpMailTemplate(account.name, otp),
+      attachments: [{
+        filename: "logo.png",
+        path: "./uploads/logo.png", // correct path
+        cid: "mandilinklogo" // matches the cid in HTML
+      }]
+    });
+
+    res.json({
+      message: "OTP sent successfully",
+      token,
+      expire
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
+}
 
-  // 2️⃣ Reset Password with OTP + token
-  async resetPassword(req, res) {
-    try {
-      const { identifier, otp, token, newPassword, expire } = req.body;
+async resetPassword(req, res) {
+  try {
+    const { identifier, otp, token, newPassword, expire } = req.body;
 
-      const account =
-        (await User.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })) ||
-        (await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] }));
+    const account = await Listing.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] })
+      || await Company.findOne({ $or: [{ email: identifier }, { contactNumber: identifier }] });
 
-      if (!account) return res.status(404).json({ message: "Account not found" });
+    if (!account) return res.status(404).json({ message: "Account not found" });
+    if (Date.now() > expire) return res.status(400).json({ message: "OTP expired" });
 
-      // Verify OTP and expiry
-      if (Date.now() > expire) {
-        return res.status(400).json({ message: "OTP expired" });
-      }
+    const hash = crypto.createHmac("sha256", OTP_SECRET).update(otp + expire).digest("hex");
+    if (hash !== token) return res.status(400).json({ message: "Invalid OTP" });
 
-      const hash = crypto
-        .createHmac("sha256", OTP_SECRET)
-        .update(otp + expire)
-        .digest("hex");
+    account.passwordHash = await bcrypt.hash(newPassword, 10);
+    await account.save();
 
-      if (hash !== token) {
-        return res.status(400).json({ message: "Invalid OTP" });
-      }
+    res.json({ message: "Password reset successful" });
 
-      // OTP valid → reset password
-      account.passwordHash = await bcrypt.hash(newPassword, 10);
-      await account.save();
-
-      res.json({ message: "Password reset successful" });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
-    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-
+}
   // Logout
   async logout(req, res) {
     return res.json({ message: "Logout successful (discard token client-side)" });
