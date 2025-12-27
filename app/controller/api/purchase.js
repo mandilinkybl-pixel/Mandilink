@@ -121,24 +121,49 @@ static async createUserOrder(req, res) {
     }
 
     /* ---------------- RAZORPAY CUSTOMER ---------------- */
-    let razorpayCustomerId = req.user.razorpayCustomerId;
+   let razorpayCustomerId = req.user.razorpayCustomerId;
 
-    if (!razorpayCustomerId) {
-      const customer = await razorpay.customers.create({
-        name: req.user.name || req.user.contactPerson || "User",
+if (!razorpayCustomerId) {
+  try {
+    const customer = await razorpay.customers.create({
+      name: req.user.name || req.user.contactPerson || "User",
+      email: req.user.email,
+      contact: req.user.contactNumber
+    });
+
+    razorpayCustomerId = customer.id;
+
+    await mongoose.model(userModel).updateOne(
+      { _id: userId },
+      { razorpayCustomerId },
+      { session }
+    );
+
+  } catch (err) {
+    // 👇 HANDLE "already exists" SAFELY
+    if (err?.error?.description?.includes("already exists")) {
+      const customers = await razorpay.customers.all({
         email: req.user.email,
-        contact: req.user.contactNumber
+        count: 1
       });
 
-      razorpayCustomerId = customer.id;
+      if (!customers.items.length) {
+        throw err;
+      }
 
-      // save once in user model
+      razorpayCustomerId = customers.items[0].id;
+
       await mongoose.model(userModel).updateOne(
         { _id: userId },
         { razorpayCustomerId },
         { session }
       );
+    } else {
+      throw err;
     }
+  }
+}
+
 
     /* ---------------- PAYMENT METHOD (CARD ONLY) ---------------- */
     let paymentMethodDoc = null;
