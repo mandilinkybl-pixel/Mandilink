@@ -95,44 +95,62 @@ class PurchasePlanController {
   }
 
   // Create order
-  static async createUserOrder(req, res) {
-    let session;
-    try {
-      const { planId, billingCycle = "monthly", cardToken, paymentMethodId, useExistingCard } = req.body;
-      const userId = req.user._id;
-      const userModel = req.user.contactPerson ? "Company" : "LISTING";
+ static async createUserOrder(req, res) {
+  let session;
+  try {
+    const {
+      planId,
+      billingCycle = "monthly",
+      cardToken,
+      paymentMethodId,
+      useExistingCard,
+      paymentType = "upi" // 👈 default UPI
+    } = req.body;
 
-      session = await mongoose.startSession();
-      session.startTransaction();
+    const userId = req.user._id;
+    const userModel = req.user.contactPerson ? "Company" : "LISTING";
 
-      // Validate plan
-      const plan = await Plan.findOne({ _id: planId, isActive: true }).session(session);
-      if (!plan) {
-        throw new Error("Invalid plan");
-      }
+    session = await mongoose.startSession();
+    session.startTransaction();
 
-      // Sync Razorpay customer
-      let razorpayCustomerId;
+    // ✅ Validate plan
+    const plan = await Plan.findOne({ _id: planId, isActive: true }).session(session);
+    if (!plan) throw new Error("Invalid plan");
+
+    // ✅ Create / Fetch Razorpay Customer
+    let razorpayCustomerId = req.user.razorpayCustomerId;
+
+    if (!razorpayCustomerId) {
       try {
         const customer = await razorpay.customers.create({
-          name: req.user.name || req.user.contactPerson,
+          name: req.user.name || req.user.contactPerson || "User",
           email: req.user.email,
-          contact: req.user.contactNumber
+          contact: req.user.contactNumber || ""
         });
         razorpayCustomerId = customer.id;
-      } catch (error) {
-        console.error("Customer creation error:", error);
-        razorpayCustomerId = req.user.razorpayCustomerId; // Use existing if available
+      } catch (err) {
+        console.error("Razorpay customer error:", err);
       }
+    }
 
-      let paymentMethodDoc;
+    // ===============================
+    // 💳 CARD PAYMENT LOGIC (ONLY IF CARD)
+    // ===============================
+    let paymentMethodDoc = null;
+
+    if (paymentType === "card") {
       if (useExistingCard && paymentMethodId) {
         paymentMethodDoc = await PaymentMethod.findOne({
           _id: paymentMethodId,
           user: userId
         }).session(session);
-      } else if (cardToken) {
-        // Create new payment method
+
+        if (!paymentMethodDoc) {
+          throw new Error("Saved card not found");
+        }
+      }
+
+      if (!paymentMethodDoc && cardToken) {
         const pmResponse = await razorpay.paymentMethods.create({
           type: "card",
           card: { token: cardToken }
@@ -147,57 +165,76 @@ class PurchasePlanController {
           network: pmResponse.card.network,
           type: pmResponse.card.type
         });
+
         await paymentMethodDoc.save({ session });
       }
 
       if (!paymentMethodDoc) {
-        throw new Error("Payment method required");
+        throw new Error("Card payment method required");
       }
-
-      // Create Razorpay order
-      const order = await razorpay.orders.create({
-        amount: Math.round(plan.price * 100),
-        currency: "INR",
-        receipt: `order_${userId}_${Date.now()}`,
-        notes: { userId: userId.toString(), planId },
-        payment_capture: 1
-      });
-
-      // Create purchase record
-      const purchase = new Purchase({
-        user: userId,
-        userModel,
-        plan: planId,
-        billingCycle,
-        razorpayCustomerId,
-        razorpayPaymentMethodId: paymentMethodDoc.razorpayPaymentMethodId,
-        razorpayOrderId: order.id,
-        amount: plan.price,
-        paymentStatus: "pending"
-      });
-
-      await purchase.save({ session });
-      await session.commitTransaction();
-
-      res.json({
-        success: true,
-        orderId: order.id,
-        amount: order.amount / 100,
-        purchaseId: purchase._id,
-        razorpayKey: process.env.RAZOPAY_KEY_ID
-      });
-
-    } catch (error) {
-      if (session) await session.abortTransaction();
-      console.error("Create order error:", error);
-      res.status(400).json({ 
-        success: false, 
-        error: error.message 
-      });
-    } finally {
-      if (session) session.endSession();
     }
+
+    // ===============================
+    // 🧾 CREATE RAZORPAY ORDER
+    // ===============================
+    const order = await razorpay.orders.create({
+      amount: Math.round(plan.price * 100),
+      currency: "INR",
+      receipt: `order_${userId}_${Date.now()}`,
+      notes: {
+        userId: userId.toString(),
+        planId,
+        paymentType
+      },
+      payment_capture: 1
+    });
+
+    // ===============================
+    // 🗂 SAVE PURCHASE
+    // ===============================
+    const purchase = new Purchase({
+      user: userId,
+      userModel,
+      plan: planId,
+      billingCycle,
+      paymentType, // "upi" | "card"
+      razorpayCustomerId,
+      razorpayPaymentMethodId: paymentMethodDoc
+        ? paymentMethodDoc.razorpayPaymentMethodId
+        : null,
+      razorpayOrderId: order.id,
+      amount: plan.price,
+      paymentStatus: "pending",
+      subscriptionStatus: "inactive"
+    });
+
+    await purchase.save({ session });
+    await session.commitTransaction();
+
+    // ===============================
+    // ✅ RESPONSE
+    // ===============================
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount: plan.price,
+      purchaseId: purchase._id,
+      razorpayKey: process.env.RAZOPAY_KEY_ID
+    });
+
+  } catch (error) {
+    if (session) await session.abortTransaction();
+    console.error("Create order error:", error);
+
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  } finally {
+    if (session) session.endSession();
   }
+}
+
 
   // Verify payment
   static async verifyUserPayment(req, res) {
