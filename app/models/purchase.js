@@ -60,7 +60,7 @@ const SubscriptionSchema = new Schema(
     },
     subscriptionStatus: {
       type: String,
-      enum: ["trial", "active", "paused", "cancelled", "expired", "failed"],
+      enum: ["trial", "active", "paused", "cancelled", "expired", "failed","pending"],
       default: "created"
     },
     autoRenew: { type: Boolean, default: true },
