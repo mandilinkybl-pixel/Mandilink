@@ -95,16 +95,17 @@ class PurchasePlanController {
   }
 
   // Create order
- static async createUserOrder(req, res) {
+static async createUserOrder(req, res) {
   let session;
+
   try {
     const {
       planId,
       billingCycle = "monthly",
+      paymentType = "upi", // "upi" | "card"
       cardToken,
       paymentMethodId,
-      useExistingCard,
-      paymentType = "upi" // 👈 default UPI
+      useExistingCard
     } = req.body;
 
     const userId = req.user._id;
@@ -113,29 +114,33 @@ class PurchasePlanController {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    // ✅ Validate plan
+    /* ---------------- PLAN VALIDATION ---------------- */
     const plan = await Plan.findOne({ _id: planId, isActive: true }).session(session);
-    if (!plan) throw new Error("Invalid plan");
+    if (!plan) {
+      throw new Error("Invalid plan");
+    }
 
-    // ✅ Create / Fetch Razorpay Customer
+    /* ---------------- RAZORPAY CUSTOMER ---------------- */
     let razorpayCustomerId = req.user.razorpayCustomerId;
 
     if (!razorpayCustomerId) {
-      try {
-        const customer = await razorpay.customers.create({
-          name: req.user.name || req.user.contactPerson || "User",
-          email: req.user.email,
-          contact: req.user.contactNumber || ""
-        });
-        razorpayCustomerId = customer.id;
-      } catch (err) {
-        console.error("Razorpay customer error:", err);
-      }
+      const customer = await razorpay.customers.create({
+        name: req.user.name || req.user.contactPerson || "User",
+        email: req.user.email,
+        contact: req.user.contactNumber
+      });
+
+      razorpayCustomerId = customer.id;
+
+      // save once in user model
+      await mongoose.model(userModel).updateOne(
+        { _id: userId },
+        { razorpayCustomerId },
+        { session }
+      );
     }
 
-    // ===============================
-    // 💳 CARD PAYMENT LOGIC (ONLY IF CARD)
-    // ===============================
+    /* ---------------- PAYMENT METHOD (CARD ONLY) ---------------- */
     let paymentMethodDoc = null;
 
     if (paymentType === "card") {
@@ -144,13 +149,7 @@ class PurchasePlanController {
           _id: paymentMethodId,
           user: userId
         }).session(session);
-
-        if (!paymentMethodDoc) {
-          throw new Error("Saved card not found");
-        }
-      }
-
-      if (!paymentMethodDoc && cardToken) {
+      } else if (cardToken) {
         const pmResponse = await razorpay.paymentMethods.create({
           type: "card",
           card: { token: cardToken }
@@ -174,30 +173,28 @@ class PurchasePlanController {
       }
     }
 
-    // ===============================
-    // 🧾 CREATE RAZORPAY ORDER
-    // ===============================
+    /* ---------------- CREATE RAZORPAY ORDER ---------------- */
+    const receipt = `ord_${Date.now().toString().slice(-8)}`; // ✅ < 40 chars
+
     const order = await razorpay.orders.create({
       amount: Math.round(plan.price * 100),
       currency: "INR",
-      receipt: `order_${userId}_${Date.now()}`,
+      receipt,
       notes: {
         userId: userId.toString(),
-        planId,
+        planId: planId,
         paymentType
       },
       payment_capture: 1
     });
 
-    // ===============================
-    // 🗂 SAVE PURCHASE
-    // ===============================
+    /* ---------------- CREATE PURCHASE ---------------- */
     const purchase = new Purchase({
       user: userId,
       userModel,
       plan: planId,
       billingCycle,
-      paymentType, // "upi" | "card"
+      paymentType,
       razorpayCustomerId,
       razorpayPaymentMethodId: paymentMethodDoc
         ? paymentMethodDoc.razorpayPaymentMethodId
@@ -205,35 +202,35 @@ class PurchasePlanController {
       razorpayOrderId: order.id,
       amount: plan.price,
       paymentStatus: "pending",
-      subscriptionStatus: "inactive"
+      subscriptionStatus: "pending"
     });
 
     await purchase.save({ session });
     await session.commitTransaction();
 
-    // ===============================
-    // ✅ RESPONSE
-    // ===============================
+    /* ---------------- RESPONSE ---------------- */
     res.json({
       success: true,
       orderId: order.id,
-      amount: plan.price,
+      amount: order.amount / 100,
       purchaseId: purchase._id,
-      razorpayKey: process.env.RAZOPAY_KEY_ID
+      razorpayKey: process.env.RAZORPAY_KEY_ID
     });
 
   } catch (error) {
     if (session) await session.abortTransaction();
+
     console.error("Create order error:", error);
 
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message || "Failed to create order"
     });
   } finally {
     if (session) session.endSession();
   }
 }
+
 
 
   // Verify payment
