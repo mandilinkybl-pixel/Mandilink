@@ -55,7 +55,11 @@ app.use('/uploads', express.static('uploads')); // Serve uploaded files
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
+app.get('/', (req, res) => {
+  res.render('index', {
+   
+  });
+});
 // Routes
 app.use('/admin', require('./app/routes/admin/index.js'));
 app.use('/employees', require('./app/routes/employees/index.js'));
