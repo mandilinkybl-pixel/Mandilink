@@ -1,1 +1,56 @@
-mandilink -->  
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
+coverage/
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads / public files (optional)
+uploads/
+tmp/
+
+# Database backups
+*.dump
+*.bak
+*.sql
+
+# PM2
+pm2.log
+
+# Next.js (if used)
+.next/
+out/
+
+# EJS cache
+.ejs-cache

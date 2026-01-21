@@ -3,16 +3,21 @@ const router = express.Router();
 const authMiddleware = require("../../middleware/userauth"); // Your auth middleware
 const PurchasePlanController = require("../../controller/api/purchase");
 const { body, validationResult } = require("express-validator");
-const rateLimit = require("express-rate-limit");
+// const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
 const logger = require("../../utills/logger");
 
 // Rate limiting
+const rateLimit = require('express-rate-limit');
+
 const paymentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
-  message: { success: false, error: "Too many payment attempts" },
-  keyGenerator: (req) => `${req.user?._id || "anonymous"}-${ipKeyGenerator(req)}`, // ✅ Safe for IPv6
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  // FIX: Explicitly define the key generator function here
+  keyGenerator: (req, res) => {
+    return req.ip; 
+  },
+  message: { success: false, error: "Too many requests, please try again later." }
 });
 
 // Order limiter
