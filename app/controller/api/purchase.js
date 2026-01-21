@@ -9,6 +9,17 @@ const Listing = require("../../models/lisingSchema");
 const Company = require("../../models/companylisting");
 const logger = require("../../utills/logger");
 
+
+const rateLimit = require('express-rate-limit');
+const purchaseLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  // If you meant to use a custom generator, define it:
+  keyGenerator: (req, res) => {
+    return req.ip; // Standard IP-based limiting
+  },
+  // OR if you were using a variable named ipKeyGenerator, ensure it exists above this line
+});
 // Create email transporter
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
