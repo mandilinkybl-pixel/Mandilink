@@ -9,17 +9,6 @@ const Listing = require("../../models/lisingSchema");
 const Company = require("../../models/companylisting");
 const logger = require("../../utills/logger");
 
-
-const rateLimit = require('express-rate-limit');
-const purchaseLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  // If you meant to use a custom generator, define it:
-  keyGenerator: (req, res) => {
-    return req.ip; // Standard IP-based limiting
-  },
-  // OR if you were using a variable named ipKeyGenerator, ensure it exists above this line
-});
 // Create email transporter
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
@@ -270,180 +259,79 @@ if (!razorpayCustomerId) {
 
 
   // Verify payment
-  // static async verifyUserPayment(req, res) {
-  //   try {
-  //     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, purchaseId } = req.body;
-  //     const userId = req.user._id;
+  static async verifyUserPayment(req, res) {
+    try {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature, purchaseId } = req.body;
+      const userId = req.user._id;
 
-  //     // Verify signature
-  //     const expectedSignature = crypto
-  //       .createHmac("sha256", process.env.RAZOPAY_KEY_SECRET)
-  //       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-  //       .digest("hex");
+      // Verify signature
+      const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZOPAY_KEY_SECRET)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest("hex");
 
-  //     if (expectedSignature !== razorpaySignature) {
-  //       return res.status(400).json({ 
-  //         success: false, 
-  //         error: "Invalid signature" 
-  //       });
-  //     }
+      if (expectedSignature !== razorpaySignature) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid signature" 
+        });
+      }
 
-  //     const order = await razorpay.orders.fetch(razorpayOrderId);
-  //     if (order.status !== "paid") {
-  //       return res.status(400).json({ 
-  //         success: false, 
-  //         error: "Payment failed" 
-  //       });
-  //     }
+      const order = await razorpay.orders.fetch(razorpayOrderId);
+      if (order.status !== "paid") {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Payment failed" 
+        });
+      }
 
-  //     const purchase = await Purchase.findOne({
-  //       _id: purchaseId,
-  //       user: userId,
-  //       razorpayOrderId
-  //     });
+      const purchase = await Purchase.findOne({
+        _id: purchaseId,
+        user: userId,
+        razorpayOrderId
+      });
 
-  //     if (!purchase) {
-  //       return res.status(404).json({ 
-  //         success: false, 
-  //         error: "Purchase not found" 
-  //       });
-  //     }
+      if (!purchase) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Purchase not found" 
+        });
+      }
 
-  //     // Activate purchase
-  //     purchase.razorpayPaymentId = razorpayPaymentId;
-  //     purchase.paymentStatus = "active";
-  //     purchase.subscriptionStatus = "active";
-  //     purchase.startDate = new Date();
+      // Activate purchase
+      purchase.razorpayPaymentId = razorpayPaymentId;
+      purchase.paymentStatus = "active";
+      purchase.subscriptionStatus = "active";
+      purchase.startDate = new Date();
 
-  //     // Set end date
-  //     const months = { monthly: 1, quarterly: 3, yearly: 12 }[purchase.billingCycle] || 1;
-  //     purchase.endDate = new Date(purchase.startDate);
-  //     purchase.endDate.setMonth(purchase.endDate.getMonth() + months);
+      // Set end date
+      const months = { monthly: 1, quarterly: 3, yearly: 12 }[purchase.billingCycle] || 1;
+      purchase.endDate = new Date(purchase.startDate);
+      purchase.endDate.setMonth(purchase.endDate.getMonth() + months);
 
-  //     await purchase.save();
+      await purchase.save();
 
-  //     // Send confirmation email
-  //     await transporter.sendMail({
-  //       to: req.user.email,
-  //       subject: "Purchase Confirmed",
-  //       html: `<h2>Purchase Confirmed!</h2><p>Plan activated successfully.</p>`
-  //     });
-
-  //     res.json({
-  //       success: true,
-  //       message: "Payment verified successfully",
-  //       purchaseId: purchase._id
-  //     });
-
-  //   } catch (error) {
-  //     console.error("Verify payment error:", error);
-  //     res.status(500).json({ 
-  //       success: false, 
-  //       error: "Verification failed" 
-  //     });
-  //   }
-  // }
-
-  // Inside your PurchasePlanController class
-
-static async verifyUserPayment(req, res) {
-  try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, purchaseId } = req.body;
-    const userId = req.user._id;
-
-    // 1. Signature Verification
-    // Note: Ensure the secret key variable name matches your .env (RAZORPAY_KEY_SECRET)
-    const secret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZOPAY_KEY_SECRET;
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest("hex");
-
-    if (expectedSignature !== razorpaySignature) {
-      return res.status(400).json({ success: false, error: "Invalid payment signature" });
-    }
-
-    // 2. Fetch Purchase and Populate Plan details
-    const purchase = await Purchase.findOne({
-      _id: purchaseId,
-      user: userId,
-      razorpayOrderId
-    }).populate("plan");
-
-    if (!purchase) {
-      return res.status(404).json({ success: false, error: "Purchase record not found" });
-    }
-
-    // 3. Update Purchase Record
-    purchase.razorpayPaymentId = razorpayPaymentId;
-    purchase.paymentStatus = "active";
-    purchase.subscriptionStatus = "active";
-    purchase.startDate = new Date();
-
-    // Calculate Expiry Date based on billing cycle
-    const months = { monthly: 1, quarterly: 3, yearly: 12 }[purchase.billingCycle] || 1;
-    const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + months);
-    purchase.endDate = expiryDate;
-
-    await purchase.save();
-
-    /* ---------------- UPDATING USER MODEL (LISTING OR COMPANY) ---------------- */
-    
-    // purchase.userModel contains either "LISTING" or "Company"
-    const UserCollection = mongoose.model(purchase.userModel);
-
-    const updateData = {
-      currentPlan: purchase.plan._id,      // Updates the ref ID
-      currentPlanName: purchase.plan.name, // Updates the Plan Name string
-      subscriptionExpiry: expiryDate,     // Updates the Expiry Date
-      isVerified: true                    // Optional: mark verified after payment
-    };
-
-    const updatedUser = await UserCollection.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { new: true }
-    );
-
-    /* -------------------------------------------------------------------------- */
-
-    // 4. Send Confirmation Email
-    if (updatedUser && updatedUser.email) {
+      // Send confirmation email
       await transporter.sendMail({
-        to: updatedUser.email,
-        subject: `Plan Activated: ${purchase.plan.name}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; border: 1px solid #eee; padding: 20px;">
-            <h2 style="color: #2e7d32;">Payment Successful!</h2>
-            <p>Hello <b>${updatedUser.name}</b>,</p>
-            <p>Your subscription to the <b>${purchase.plan.name}</b> has been activated.</p>
-            <hr />
-            <p><b>Order ID:</b> ${razorpayOrderId}</p>
-            <p><b>Plan Valid Until:</b> ${expiryDate.toDateString()}</p>
-            <p>Thank you for choosing our Mandi service!</p>
-          </div>
-        `
+        to: req.user.email,
+        subject: "Purchase Confirmed",
+        html: `<h2>Purchase Confirmed!</h2><p>Plan activated successfully.</p>`
+      });
+
+      res.json({
+        success: true,
+        message: "Payment verified successfully",
+        purchaseId: purchase._id
+      });
+
+    } catch (error) {
+      console.error("Verify payment error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Verification failed" 
       });
     }
-
-    return res.json({
-      success: true,
-      message: "Payment verified. Profile updated successfully.",
-      data: {
-        plan: purchase.plan.name,
-        expiry: expiryDate
-      }
-    });
-
-  } catch (error) {
-    console.error("Verification Error:", error);
-    return res.status(500).json({ 
-      success: false, 
-      error: "Internal server error during verification" 
-    });
   }
-}
 
   // Additional methods
   static async getActivePurchase(req, res) {
