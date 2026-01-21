@@ -5,7 +5,7 @@ const { razorpay } = require("../../config/razorpay");
 const Purchase = require("../../models/purchase");
 const PaymentMethod = require("../../models/PaymentMethod");
 const Plan = require("../../models/plan");
-const Listing = require("../../models/lisingSchema");
+const Listing = require("../../models/listingSchema");
 const Company = require("../../models/companylisting");
 const logger = require("../../utills/logger");
 
@@ -47,146 +47,8 @@ class PurchasePlanController {
   }
 
   // Helper: get Mongoose model object by model name string
- // Replace these two methods in your PurchasePlanController class
-
-  // Helper: get Mongoose model object by model name string (improved and deterministic)
   getUserModelByName(modelName) {
-    // Accept common variants (case-insensitive)
-    const nm = (modelName || '').toString();
-    if (/^listing$/i.test(nm) || /^LISTING$/i.test(nm)) return Listing;
-    if (/^company$/i.test(nm) || /^Company$/i.test(nm)) return Company;
-    // fallback to Listing to avoid crashes
-    return Listing;
-  }
-
-  // Helper: update user's current plan id, name and subscriptionExpiry (with logging and returned result)
-  async updateUserCurrentPlan(userId, userModelName, planDoc, expiryDate, session = null) {
-    try {
-      const UserModel = this.getUserModelByName(userModelName);
-
-      const update = {
-        currentPlan: planDoc ? planDoc._id : null,
-        currentPlanName: planDoc ? (planDoc.name || null) : null,
-        subscriptionExpiry: expiryDate || null
-      };
-
-      const options = { new: true }; // return the updated doc
-      if (session) options.session = session;
-
-      // Log what's about to be updated
-      console.log(`Updating user current plan for model=${userModelName} userId=${userId} update=`, update);
-
-      const updated = await UserModel.findByIdAndUpdate(userId, update, options).lean();
-
-      if (!updated) {
-        console.warn(`updateUserCurrentPlan: no document found for id ${userId} in model ${userModelName}`);
-        return null;
-      }
-
-      console.log(`updateUserCurrentPlan: update successful for ${userId} in ${userModelName}`);
-      return updated;
-    } catch (err) {
-      console.error('updateUserCurrentPlan error:', err);
-      throw err;
-    }
-  }
-
-  // Verify payment (improved: explicitly updates user's currentPlan/currentPlanName and logs results)
-  static async verifyUserPayment(req, res) {
-    try {
-      const { razorpayOrderId, razorpayPaymentId, razorpaySignature, purchaseId } = req.body;
-      const userId = req.user._id;
-
-      // Verify signature
-      const expectedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest("hex");
-
-      if (expectedSignature !== razorpaySignature) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid signature"
-        });
-      }
-
-      const order = await razorpay.orders.fetch(razorpayOrderId);
-      if (order.status !== "paid") {
-        return res.status(400).json({
-          success: false,
-          error: "Payment failed"
-        });
-      }
-
-      const purchase = await Purchase.findOne({
-        _id: purchaseId,
-        user: userId,
-        razorpayOrderId
-      });
-
-      if (!purchase) {
-        return res.status(404).json({
-          success: false,
-          error: "Purchase not found"
-        });
-      }
-
-      // Activate purchase
-      purchase.razorpayPaymentId = razorpayPaymentId;
-      purchase.paymentStatus = "active";
-      purchase.subscriptionStatus = "active";
-      purchase.startDate = new Date();
-
-      // Compute end date based on billingCycle
-      const months = { monthly: 1, quarterly: 3, yearly: 12 }[purchase.billingCycle] || 1;
-      const endDate = new Date(purchase.startDate);
-      endDate.setMonth(endDate.getMonth() + months);
-      purchase.endDate = endDate;
-
-      await purchase.save();
-
-      // Update user's currentPlan, currentPlanName and subscriptionExpiry on the appropriate model
-      const planDoc = await Plan.findById(purchase.plan);
-      const userModelName = purchase.userModel || (req.user && req.user.contactPerson ? "Company" : "LISTING");
-
-      // Use controller instance to call instance helper (so getUserModelByName works)
-      const controller = new PurchasePlanController();
-      try {
-        const updatedUser = await controller.updateUserCurrentPlan(purchase.user, userModelName, planDoc, purchase.endDate);
-        if (!updatedUser) {
-          console.warn('verifyUserPayment: user update returned null - check if the user id and model are correct');
-        }
-      } catch (updateErr) {
-        // Log but proceed — purchase is active; surface update failure
-        console.error('verifyUserPayment: failed to update user currentPlan:', updateErr);
-      }
-
-      // Send confirmation email
-      try {
-        if (req.user && req.user.email) {
-          await transporter.sendMail({
-            to: req.user.email,
-            subject: "Purchase Confirmed",
-            html: `<h2>Purchase Confirmed!</h2><p>Your plan <strong>${planDoc ? planDoc.name : "Plan"}</strong> is activated and will expire on ${purchase.endDate.toDateString()}.</p>`
-          });
-        }
-      } catch (emailErr) {
-        console.error("Failed to send confirmation email:", emailErr);
-      }
-
-      res.json({
-        success: true,
-        message: "Payment verified successfully",
-        purchaseId: purchase._id
-      });
-
-    } catch (error) {
-      console.error("Verify payment error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Verification failed"
-      });
-    }
+    return this.userModels[modelName] || Listing;
   }
 
   // Helper: update user's current plan id, name and subscriptionExpiry
