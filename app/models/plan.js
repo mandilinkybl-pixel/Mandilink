@@ -34,6 +34,11 @@ const PlanSchema = new Schema(
       delay: { type: Number, default: 5 }, // seconds delay between responses
       credits: { type: Number, default: 100 }, // number of chatbot interactions per month
     },
+    batch: {
+      type: String,
+      enum: ["basic", "standard", "premium"],
+      default: "basic",
+    },
 
     // 🔹 Multiple categories per plan
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],

@@ -21,8 +21,15 @@ const listingSchema = new mongoose.Schema({
   contactNumber: { type: String, required: true, trim: true, index: { unique: true, partialFilterExpression: { contactNumber: { $exists: true, $ne: "" } } } },
   
   // Subscription fields
+  
   razorpayCustomerId: { type: String },
   currentPlan: { type: mongoose.Schema.Types.ObjectId, ref: "Plan" },
+  // Add to both listingSchema and companySchema
+currentPlanName: {
+  type: String,
+  trim: true,
+  default: null
+},
   subscriptionExpiry: { type: Date },
   subscriptionPreferences: {
     autoRenew: { type: Boolean, default: true },

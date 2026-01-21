@@ -24,6 +24,12 @@ const companySchema = new mongoose.Schema({
   // Subscription fields
   razorpayCustomerId: { type: String },
   currentPlan: { type: mongoose.Schema.Types.ObjectId, ref: "Plan" },
+  // Add to both listingSchema and companySchema
+currentPlanName: {
+  type: String,
+  trim: true,
+  default: null
+},
   subscriptionExpiry: { type: Date },
   subscriptionPreferences: {
     autoRenew: { type: Boolean, default: true },
