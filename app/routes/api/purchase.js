@@ -3,19 +3,33 @@ const router = express.Router();
 const authMiddleware = require("../../middleware/userauth"); // Your auth middleware
 const PurchasePlanController = require("../../controller/api/purchase");
 const { body, validationResult } = require("express-validator");
-// const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
 const logger = require("../../utills/logger");
 
 // Rate limiting
 const rateLimit = require('express-rate-limit');
 
+// Helper: get client IP (supports proxies via X-Forwarded-For)
+const getClientIp = (req) => {
+  try {
+    const xff = req.headers['x-forwarded-for'] || req.headers['X-Forwarded-For'];
+    if (xff) {
+      // x-forwarded-for can be a comma-separated list; take the first one
+      return xff.split(',')[0].trim();
+    }
+    // fallback to req.ip or connection remote address
+    return req.ip || req.connection?.remoteAddress || 'unknown';
+  } catch (e) {
+    return 'unknown';
+  }
+};
+
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  // FIX: Explicitly define the key generator function here
+  // Explicitly define the key generator function here
   keyGenerator: (req, res) => {
-    return req.ip; 
+    return req.ip || getClientIp(req);
   },
   message: { success: false, error: "Too many requests, please try again later." }
 });
@@ -25,8 +39,10 @@ const orderLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { success: false, error: "Too many order attempts" },
-  keyGenerator: (req) => `${req.user?._id || "anonymous"}-${ipKeyGenerator(req)}`, // ✅ Optional but recommended for consistency
+  // Use user id (if logged in) + client IP for more granular limits
+  keyGenerator: (req, res) => `${req.user?._id || "anonymous"}-${getClientIp(req)}`,
 });
+
 // Validation middleware
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);

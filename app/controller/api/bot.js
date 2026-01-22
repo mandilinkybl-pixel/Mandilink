@@ -114,3 +114,4 @@ class BotController {
 }
 
 module.exports = new BotController();
+
