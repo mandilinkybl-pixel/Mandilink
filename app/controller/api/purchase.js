@@ -355,28 +355,50 @@ static async verifyUserPayment(req, res) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    // Verify signature
+    // Read secret (support common typo fallback)
+    const secretKey = process.env.RAZORPAY_KEY_SECRET || process.env.RAZOPAY_KEY_SECRET || process.env.RAZORPAY_KEY;
+    if (!secretKey) {
+      // Log a clear message for ops/devs
+      console.error('Verify payment error: missing Razorpay secret. Set RAZORPAY_KEY_SECRET env var.');
+      return res.status(500).json({
+        success: false,
+        error: 'Server misconfiguration: payment secret not set'
+      });
+    }
+
+    // Compute expected signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZOPAY_KEY_SECRET)
+      .createHmac('sha256', secretKey)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
       .digest('hex');
 
-    if (expectedSignature !== razorpaySignature) {
-      return res.status(400).json({ success: false, error: 'Invalid signature' });
+    // Use timingSafeEqual for safe comparison
+    const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+    const receivedBuf = Buffer.from(String(razorpaySignature), 'utf8');
+
+    let signaturesMatch = false;
+    if (expectedBuf.length === receivedBuf.length) {
+      signaturesMatch = crypto.timingSafeEqual(expectedBuf, receivedBuf);
     }
 
-    // Verify order status from Razorpay (defensive: check razorpay client)
+    if (!signaturesMatch) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid signature'
+      });
+    }
+
+    // Fetch order status from Razorpay if client available
     let order;
     try {
-      if (!global.razorpay && typeof razorpay === 'undefined') {
-        console.warn('razorpay client not found in scope; skipping remote order fetch');
-      } else {
+      if (global.razorpay || typeof razorpay !== 'undefined') {
         const rp = global.razorpay || razorpay;
         order = await rp.orders.fetch(razorpayOrderId);
+      } else {
+        console.warn('razorpay client not available; skipping remote order fetch');
       }
     } catch (e) {
       console.warn('Failed to fetch razorpay order:', e.message);
-      // Proceed — we'll still validate locally
     }
 
     if (order && order.status !== 'paid') {
@@ -438,12 +460,10 @@ static async verifyUserPayment(req, res) {
         }
       };
 
-      // Update preferred billing cycle if available
       if (purchase.billingCycle) {
         update.$set['subscriptionPreferences.preferredBillingCycle'] = purchase.billingCycle;
       }
 
-      // Try Company first if user indicates company, else try Listing first
       let updated = null;
       if (req.user && req.user.contactPerson) {
         updated = await Company.findOneAndUpdate(filter, update, { new: true });
@@ -464,7 +484,6 @@ static async verifyUserPayment(req, res) {
       }
     } catch (updateErr) {
       console.error('Error updating Listing/Company subscription fields:', updateErr);
-      // don't fail the whole flow if update fails
     }
 
     // Send confirmation email (defensive)
@@ -482,8 +501,8 @@ static async verifyUserPayment(req, res) {
       console.error('Failed to send purchase confirmation email:', mailErr);
     }
 
-    // Return success
-    return res.json({
+    // Final response
+    res.json({
       success: true,
       message: 'Payment verified successfully',
       purchaseId: purchase._id
@@ -491,7 +510,10 @@ static async verifyUserPayment(req, res) {
 
   } catch (error) {
     console.error('Verify payment error:', error);
-    return res.status(500).json({ success: false, error: 'Verification failed' });
+    res.status(500).json({
+      success: false,
+      error: 'Verification failed'
+    });
   }
 }
 
