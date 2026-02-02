@@ -20,10 +20,11 @@ The system also provides an **Admin Panel** built with **EJS templates** and Boo
 ## 🛠️ Tech Stack
 - **Backend**: Node.js, Express.js
 - **Frontend**: EJS, Bootstrap 5, FontAwesome
-- **Database**: MongoDB + Mongoose
+- **Database**: MongoDB + Mongoose + GraphQl
 - **Other**: dotenv, body-parser, express-session
 
 ---
+
 
 
 
