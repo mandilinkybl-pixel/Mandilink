@@ -61,7 +61,7 @@ app.get('/', (req, res) => {
   });
 });
 app.get('/privacy', (req, res) => {
-  res.render('index', {
+  res.render('privecy', {
    
   });
 });
