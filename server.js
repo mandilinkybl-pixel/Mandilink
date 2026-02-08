@@ -60,6 +60,11 @@ app.get('/', (req, res) => {
    
   });
 });
+app.get('/privacy', (req, res) => {
+  res.render('index', {
+   
+  });
+});
 // Routes
 app.use('/admin', require('./app/routes/admin/index.js'));
 app.use('/employees', require('./app/routes/employees/index.js'));

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy - Mandilink Services. Learn how we collect, use, and protect your information.">
+    <title>Privacy Policy - Mandilink Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS Reset & Base Styles ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: #374151;
+            background-color: #f9fafb;
+        }
+
+        /* ===== Typography ===== */
+        h1, h2, h3 {
+            color: #111827;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #059669;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2 .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #4b5563;
+        }
+
+        a {
+            color: #059669;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #047857;
+            text-decoration: underline;
+        }
+
+        /* ===== Navigation ===== */
+        nav {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #059669;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo:hover {
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: #059669;
+            background: #ecfdf5;
+            text-decoration: none;
+        }
+
+        /* ===== Layout ===== */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ===== Header Section ===== */
+        .page-header {
+            background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%);
+            color: #fff;
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .page-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header h1 {
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .page-header .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        .last-updated {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ===== Main Content ===== */
+        main {
+            padding: 3rem 0 4rem;
+        }
+
+        .policy-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .intro-text {
+            font-size: 1.05rem;
+            color: #4b5563;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 1rem;
+        }
+
+        .intro-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left: 4px solid #059669;
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: #065f46;
+            font-size: 0.95rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: #92400e;
+            font-size: 0.95rem;
+        }
+
+        /* ===== Lists ===== */
+        ul {
+            margin: 1rem 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            padding-left: 1.75rem;
+            position: relative;
+            color: #4b5563;
+        }
+
+        li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        /* ===== Contact Card ===== */
+        .contact-card {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .contact-card h3 {
+            margin-top: 0;
+            color: #059669;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+            margin-top: 0.5rem;
+        }
+
+        .contact-email:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.35);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        /* ===== Business Info Table ===== */
+        .business-table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+
+        .business-table tr {
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .business-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .business-table td {
+            padding: 0.75rem 0;
+            vertical-align: top;
+        }
+
+        .business-table td:first-child {
+            font-weight: 600;
+            color: #374151;
+            width: 40%;
+        }
+
+        .business-table td:last-child {
+            color: #6b7280;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            color: #fff;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .footer-logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: #10b981;
+            text-decoration: none;
+        }
+
+        /* ===== Responsive Design ===== */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .policy-card {
+                padding: 2rem;
+            }
+
+            .page-header {
+                padding: 3rem 0;
+            }
+
+            nav .container {
+                justify-content: center;
+            }
+
+            .business-table td:first-child {
+                width: 45%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1.25rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .policy-card {
+                padding: 1.5rem;
+            }
+
+            h2 .section-number {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+
+            .business-table td {
+                display: block;
+                width: 100%;
+                padding: 0.25rem 0;
+            }
+
+            .business-table td:first-child {
+                padding-top: 0.75rem;
+                width: 100%;
+            }
+
+            .business-table td:last-child {
+                padding-bottom: 0.75rem;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== Navigation ===== -->
+    <nav>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🌾</span>
+                Mandilink
+            </a>
+            <a href="index.html" class="back-link">
+                ← Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <!-- ===== Page Header ===== -->
+    <header class="page-header">
+        <div class="container">
+            <h1>Privacy Policy</h1>
+            <p class="subtitle">How we collect, use, and protect your information</p>
+            <div class="last-updated">
+                📅 Last updated: February 2026
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== Main Content ===== -->
+    <main>
+        <div class="container">
+            <div class="policy-card">
+
+                <!-- Introduction -->
+                <div class="intro-text">
+                    <p>
+                        Mandilink ("we", "our", "us") is operated by <strong>Mandilink Services</strong>, 
+                        a sole proprietorship owned by <strong>Keshav Dubey</strong>, India.
+                    </p>
+                    <p>
+                        This Privacy Policy explains how we collect, use, and protect user information 
+                        when you use the Mandilink mobile application and related services.
+                    </p>
+                    <div class="highlight-box">
+                        <p>
+                            <strong>By using the Mandilink app, you agree to the practices described in this Privacy Policy.</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section 1 -->
+                <h2>
+                    <span class="section-number">1</span>
+                    Information We Collect
+                </h2>
+                <p>We may collect the following types of information when you use our application:</p>
+                <ul>
+                    <li>Personal information such as name, email address, and phone number</li>
+                    <li>Location information (if enabled by the user) to provide mandi rate–related features</li>
+                    <li>Subscription and payment status information</li>
+                    <li>App usage data for improving performance and user experience</li>
+                </ul>
+                <div class="highlight-box">
+                    <p><strong>We do not collect unnecessary personal data.</strong></p>
+                </div>
+
+                <!-- Section 2 -->
+                <h2>
+                    <span class="section-number">2</span>
+                    How We Use Your Information
+                </h2>
+                <p>The information we collect is used for the following purposes:</p>
+                <ul>
+                    <li>To provide core app features such as crop bidding and mandi rate information</li>
+                    <li>To manage user accounts and subscriptions</li>
+                    <li>To communicate important updates related to the app or services</li>
+                    <li>To improve app functionality, reliability, and security</li>
+                </ul>
+                <div class="highlight-box">
+                    <p><strong>We do not use your data for misleading or unauthorized purposes.</strong></p>
+                </div>
+
+                <!-- Section 3 -->
+                <h2>
+                    <span class="section-number">3</span>
+                    Payments and Subscriptions
+                </h2>
+                <p>
+                    Mandilink offers subscription-based services. All payments are processed 
+                    securely through <strong>Google Play Billing</strong>.
+                </p>
+                <ul>
+                    <li>We do not collect or store credit card, debit card, or UPI details</li>
+                    <li>Payment processing is handled directly by Google</li>
+                </ul>
+
+                <!-- Section 4 -->
+                <h2>
+                    <span class="section-number">4</span>
+                    Data Sharing and Disclosure
+                </h2>
+                <p><strong>We respect your privacy and do not sell, rent, or trade user data.</strong></p>
+                <p>We may share information only in the following cases:</p>
+                <ul>
+                    <li>When required by law or legal process</li>
+                    <li>With trusted service providers strictly for app operations (such as hosting or analytics), if applicable</li>
+                </ul>
+
+                <!-- Section 5 -->
+                <h2>
+                    <span class="section-number">5</span>
+                    Data Security
+                </h2>
+                <p>
+                    We take reasonable technical and organizational measures to protect user information 
+                    from unauthorized access, loss, or misuse.
+                </p>
+                <div class="warning-box">
+                    <p>
+                        <strong>Note:</strong> No method of electronic storage or transmission over the 
+                        internet is 100% secure.
+                    </p>
+                </div>
+
+                <!-- Section 6 -->
+                <h2>
+                    <span class="section-number">6</span>
+                    User Rights
+                </h2>
+                <p>Users have the right to:</p>
+                <ul>
+                    <li>Access their personal information</li>
+                    <li>Request correction of inaccurate data</li>
+                    <li>Request deletion of their personal data</li>
+                </ul>
+                <p>
+                    To exercise these rights, users may contact us using the email provided below.
+                </p>
+
+                <!-- Section 7 -->
+                <h2>
+                    <span class="section-number">7</span>
+                    Children's Privacy
+                </h2>
+                <p>
+                    Mandilink is <strong>not intended for children under the age of 13</strong>. 
+                    We do not knowingly collect personal data from children.
+                </p>
+                <p>
+                    If you believe a child has provided us with personal information, please contact 
+                    us so we can remove it.
+                </p>
+
+                <!-- Section 8 -->
+                <h2>
+                    <span class="section-number">8</span>
+                    Changes to This Privacy Policy
+                </h2>
+                <p>
+                    We may update this Privacy Policy from time to time. Any changes will be posted 
+                    on this page with an updated revision date.
+                </p>
+                <p>
+                    <strong>Continued use of the app after changes indicates acceptance of the updated policy.</strong>
+                </p>
+
+                <!-- Section 9 -->
+                <h2>
+                    <span class="section-number">9</span>
+                    Contact Information
+                </h2>
+                <p>
+                    If you have any questions, concerns, or requests regarding this Privacy Policy 
+                    or data practices, you may contact us at:
+                </p>
+                <div class="contact-card">
+                    <h3>📧 Get in Touch</h3>
+                    <p>We're here to help with any privacy-related questions or concerns.</p>
+                    <a href="mailto:mandilink.ybl@gmail.com" class="contact-email">
+                        ✉️ mandilink.ybl@gmail.com
+                    </a>
+                </div>
+
+                <!-- Section 10 -->
+                <h2>
+                    <span class="section-number">10</span>
+                    Business Information
+                </h2>
+                <table class="business-table">
+                    <tr>
+                        <td>App Name</td>
+                        <td>Mandilink</td>
+                    </tr>
+                    <tr>
+                        <td>Operated by</td>
+                        <td>Mandilink Services</td>
+                    </tr>
+                    <tr>
+                        <td>Business Type</td>
+                        <td>Sole Proprietorship</td>
+                    </tr>
+                    <tr>
+                        <td>Owner</td>
+                        <td>Keshav Dubey</td>
+                    </tr>
+                    <tr>
+                        <td>Operating Region</td>
+                        <td>India</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="footer-logo-icon">🌾</span>
+                    Mandilink
+                </div>
+                <p>&copy; 2026 Mandilink Services. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="index.html">Home</a>
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="mailto:mandilink.ybl@gmail.com">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

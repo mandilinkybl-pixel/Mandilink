@@ -1,202 +1,1249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Privacy Policy – Mandilink</title>
-  <meta name="description" content="Mandilink Privacy Policy – How we collect, use, and protect your data."/>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #f8fafc;
-      color: #1f2937;
-      line-height: 1.7;
-    }
-    .container {
-      max-width: 800px;
-    }
-    h1 {
-      color: #1e40af;
-    }
-    h2 {
-      color: #1e40af;
-      border-bottom: 2px solid #e5e7eb;
-      padding-bottom: 0.5rem;
-    }
-    .section {
-      margin-bottom: 3rem;
-    }
-    .contact {
-      background-color: #eff6ff;
-      border-left: 4px solid #3b82f6;
-      padding: 1.25rem;
-      border-radius: 0.5rem;
-    }
-    .warning {
-      color: #b45309;
-      font-weight: 500;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mandilink - Digital Crop Bidding & Mandi Rate Platform for farmers, traders, and buyers in India.">
+    <title>Mandilink Services - Digital Crop Bidding & Mandi Rate Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS Reset & Base Styles ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.7;
+            color: #374151;
+            background-color: #fff;
+        }
+
+        /* ===== Typography ===== */
+        h1, h2, h3 {
+            color: #111827;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            display: inline-block;
+            position: relative;
+        }
+
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #059669, #10b981);
+            border-radius: 2px;
+        }
+
+        .section-subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 1.5rem auto 0;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #4b5563;
+        }
+
+        a {
+            color: #059669;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #047857;
+        }
+
+        /* ===== Layout ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 6rem 0;
+        }
+
+        .alt-bg {
+            background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+
+        /* ===== Navigation ===== */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #059669;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: #059669;
+            background: #ecfdf5;
+        }
+
+        /* ===== Hero Section ===== */
+        #hero {
+            background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%);
+            color: #fff;
+            padding: 8rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        #hero .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #34d399;
+            border-radius: 50%;
+        }
+
+        #hero h1 {
+            color: #fff;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .hero-description {
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.125rem;
+            line-height: 1.8;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ===== About Section ===== */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-content h2 {
+            text-align: left;
+        }
+
+        .about-content h2::after {
+            left: 0;
+            transform: none;
+        }
+
+        .about-features {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .about-feature {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .about-feature-icon {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .about-feature-text h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .about-feature-text p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            color: #6b7280;
+        }
+
+        .about-image {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 24px;
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .about-image-content {
+            text-align: center;
+        }
+
+        .about-image-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-image-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .disclaimer-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin-top: 2rem;
+        }
+
+        .disclaimer-box p {
+            margin: 0;
+            color: #92400e;
+            font-size: 0.9rem;
+        }
+
+        .disclaimer-box strong {
+            color: #78350f;
+        }
+
+        /* ===== Services Section ===== */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .service-card {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #059669, #10b981);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: #d1fae5;
+        }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            margin-bottom: 0.75rem;
+            color: #111827;
+        }
+
+        .service-card p {
+            margin-bottom: 0;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* ===== Users Section ===== */
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .user-card {
+            background: #fff;
+            padding: 2rem 1.5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+            border-color: #d1fae5;
+        }
+
+        .user-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.25rem;
+        }
+
+        .user-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .user-card p {
+            font-size: 0.875rem;
+            margin-bottom: 0;
+            color: #6b7280;
+        }
+
+        /* ===== Business Info Section ===== */
+        .business-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .business-info {
+            background: #fff;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .business-info h3 {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .business-info h3 span {
+            font-size: 1.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f3f4f6;
+            align-items: center;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-row:first-of-type {
+            padding-top: 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+            min-width: 160px;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        /* ===== Contact Section ===== */
+        .contact-box {
+            background: #fff;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .contact-box h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .contact-box h3 span {
+            font-size: 1.5rem;
+        }
+
+        .contact-box p {
+            margin-bottom: 1.5rem;
+            color: #6b7280;
+        }
+
+        .email-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+        }
+
+        .email-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.35);
+            color: #fff;
+        }
+
+        /* ===== Policy Sections ===== */
+        .policy-content {
+            background: #fff;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .policy-content > p:first-of-type {
+            font-size: 1.05rem;
+            color: #4b5563;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 1.5rem;
+        }
+
+        .policy-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .policy-content h3:first-of-type {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .policy-content ul {
+            margin-left: 0;
+            margin-bottom: 1rem;
+            color: #4b5563;
+            list-style: none;
+        }
+
+        .policy-content li {
+            margin-bottom: 0.75rem;
+            padding-left: 1.75rem;
+            position: relative;
+        }
+
+        .policy-content li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .policy-content em {
+            display: block;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f3f4f6;
+            color: #9ca3af;
+            font-size: 0.875rem;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            color: #fff;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: #10b981;
+        }
+
+        /* ===== Responsive Design ===== */
+        @media (max-width: 1024px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .about-image {
+                order: -1;
+                min-height: 300px;
+            }
+
+            .users-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .business-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            .tagline {
+                font-size: 1.25rem;
+            }
+
+            nav .container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                justify-content: center;
+                gap: 0.25rem;
+            }
+
+            section {
+                padding: 4rem 0;
+            }
+
+            #hero {
+                padding: 5rem 0;
+            }
+
+            .hero-stats {
+                gap: 2rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .info-row {
+                flex-direction: column;
+                gap: 0.25rem;
+                align-items: flex-start;
+            }
+
+            .info-label {
+                min-width: auto;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .users-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .policy-content {
+                padding: 2rem;
+            }
+
+            .about-content h2,
+            .about-content h2::after {
+                text-align: center;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1.25rem;
+            }
+
+            .nav-links a {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .policy-content,
+            .business-info,
+            .contact-box {
+                padding: 1.5rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 0.75rem;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-  <header class="bg-white shadow-sm">
-    <div class="container mx-auto px-6 py-6">
-      <h1 class="text-3xl font-bold">Privacy Policy</h1>
-      <p class="mt-2 text-gray-600">
-        Last updated: January 12, 2026
-      </p>
-    </div>
-  </header>
+    <!-- ===== Navigation ===== -->
+    <nav>
+        <div class="container">
+            <a href="#hero" class="logo">
+                <span class="logo-icon">🌾</span>
+                Mandilink
+            </a>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#users">Users</a></li>
+                <li><a href="#business">Business</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="privacy-policy.html">Privacy</a></li>
+                <li><a href="#terms">Terms</a></li>
+            </ul>
+        </div>
+    </nav>
 
-  <main class="container mx-auto px-6 py-10">
+    <!-- ===== Hero Section ===== -->
+    <section id="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Trusted AgriTech Platform
+            </div>
+            <h1>Mandilink</h1>
+            <p class="tagline">Digital Crop Bidding & Mandi Rate Platform</p>
+            <p class="hero-description">
+                Mandilink is a digital agriculture platform that connects farmers, traders, and buyers 
+                through crop bidding and real-time mandi market rate information. Access agricultural 
+                services through our subscription-based mobile application.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">100+</span>
+                    <span class="stat-label">Crops Listed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">Pan India</span>
+                    <span class="stat-label">Coverage</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Market Access</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="prose prose-blue max-w-none">
+    <!-- ===== About Section ===== -->
+    <section id="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-content">
+                    <div class="section-header" style="text-align: left;">
+                        <h2>About the Platform</h2>
+                    </div>
+                    <p>
+                        Mandilink is a digital marketplace platform designed to serve the agricultural 
+                        community in India. Our platform provides a space where farmers, traders, and 
+                        buyers can participate in crop bidding and access mandi (market) rate information.
+                    </p>
+                    <p>
+                        The platform focuses on market transparency and digital price discovery by 
+                        aggregating and displaying agricultural commodity prices from various markets. 
+                        Users can access premium features through subscription-based services.
+                    </p>
+                    
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <div class="about-feature-icon">📊</div>
+                            <div class="about-feature-text">
+                                <h4>Market Transparency</h4>
+                                <p>Access real-time pricing information from multiple mandis</p>
+                            </div>
+                        </div>
+                        <div class="about-feature">
+                            <div class="about-feature-icon">🔒</div>
+                            <div class="about-feature-text">
+                                <h4>Secure Platform</h4>
+                                <p>Your data and transactions are protected with industry standards</p>
+                            </div>
+                        </div>
+                        <div class="about-feature">
+                            <div class="about-feature-icon">📱</div>
+                            <div class="about-feature-text">
+                                <h4>Mobile First</h4>
+                                <p>Designed for easy access on Android devices</p>
+                            </div>
+                        </div>
+                    </div>
 
-      <p class="lead text-lg mb-10">
-        This Privacy Policy describes how <strong>Mandilink</strong> (“we”, “our”, or “us”) collects, uses, stores, and protects user information when you use our mobile application (the “App”).
-      </p>
+                    <div class="disclaimer-box">
+                        <p>
+                            <strong>Please Note:</strong> Mandilink is an independent digital platform. 
+                            We are not affiliated with any government body or official mandi authority. 
+                            The platform does not provide financial advice and does not guarantee any 
+                            specific outcomes or profits from trading activities.
+                        </p>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <div class="about-image-content">
+                        <div class="about-image-icon">🌾</div>
+                        <div class="about-image-text">Empowering Indian Agriculture</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-      <p class="mb-8">
-        By using this App, you agree to the collection and use of information in accordance with this policy.
-      </p>
+    <!-- ===== Services Section ===== -->
+    <section id="services" class="alt-bg">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Services</h2>
+                <p class="section-subtitle">Comprehensive digital solutions for the agricultural community</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">🏷️</div>
+                    <h3>Crop Bidding Platform</h3>
+                    <p>
+                        Participate in digital crop bidding where farmers can list their produce 
+                        and buyers can place bids. A transparent process for agricultural trading.
+                    </p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">📈</div>
+                    <h3>Mandi Rate Information</h3>
+                    <p>
+                        Access market rate information for various agricultural commodities. 
+                        View price trends to make informed decisions about your produce.
+                    </p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">⭐</div>
+                    <h3>Subscription Services</h3>
+                    <p>
+                        Premium subscription plans provide access to enhanced features, 
+                        detailed market analytics, and priority support services.
+                    </p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">📲</div>
+                    <h3>Mobile Application</h3>
+                    <p>
+                        Access all platform features through our Android mobile application, 
+                        designed with a mobile-first approach for ease of use.
+                    </p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🛡️</div>
+                    <h3>Secure Digital Marketplace</h3>
+                    <p>
+                        A secure platform for agricultural transactions with user verification 
+                        and data protection measures in place.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-      <div class="section">
-        <h2>1. Information We Collect</h2>
-        <p>We collect the following types of information to provide and improve our services:</p>
+    <!-- ===== Who Can Use Section ===== -->
+    <section id="users">
+        <div class="container">
+            <div class="section-header">
+                <h2>Who Can Use the Platform</h2>
+                <p class="section-subtitle">Designed for everyone in the agricultural value chain</p>
+            </div>
+            <div class="users-grid">
+                <div class="user-card">
+                    <div class="user-icon">👨‍🌾</div>
+                    <h3>Farmers</h3>
+                    <p>List crops for bidding and access market rate information for better price discovery.</p>
+                </div>
+                <div class="user-card">
+                    <div class="user-icon">🤝</div>
+                    <h3>Traders & Buyers</h3>
+                    <p>Participate in crop bidding and connect with farmers for agricultural procurement.</p>
+                </div>
+                <div class="user-card">
+                    <div class="user-icon">🏪</div>
+                    <h3>Agricultural Service Users</h3>
+                    <p>Access various agricultural services and information through our platform.</p>
+                </div>
+                <div class="user-card">
+                    <div class="user-icon">📊</div>
+                    <h3>Market Observers</h3>
+                    <p>Track mandi price trends and access agricultural market data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <h3 class="mt-6 mb-3 text-xl font-semibold">a) Personal Information</h3>
-        <p>Collected during account creation and verification:</p>
-        <ul class="list-disc pl-6 mb-4">
-          <li>Full name</li>
-          <li>Email address</li>
-          <li>Phone number</li>
-          <li>Profile details</li>
-        </ul>
+    <!-- ===== Business Information Section ===== -->
+    <section id="business" class="alt-bg">
+        <div class="container">
+            <div class="section-header">
+                <h2>Business & Contact</h2>
+                <p class="section-subtitle">Official business information and support channels</p>
+            </div>
+            <div class="business-wrapper">
+                <div class="business-info">
+                    <h3><span>🏢</span> Business Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Business Name</span>
+                        <span class="info-value">Mandilink Services</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Business Type</span>
+                        <span class="info-value">Sole Proprietorship</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Operating Region</span>
+                        <span class="info-value">India</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Industry</span>
+                        <span class="info-value">Agriculture Technology (AgriTech)</span>
+                    </div>
+                </div>
 
-        <h3 class="mt-6 mb-3 text-xl font-semibold">b) Location Information</h3>
-        <p>Approximate or precise location (depending on device permission)</p>
-        <p class="text-sm text-gray-600">Used for service availability, verification, and better user experience</p>
+                <!-- ===== Contact Section ===== -->
+                <div class="contact-box" id="contact">
+                    <h3><span>✉️</span> Contact Us</h3>
+                    <p>
+                        For support inquiries, feedback, or any questions regarding our platform 
+                        and services, please reach out to us via email. Our support team will 
+                        respond to your query as soon as possible.
+                    </p>
+                    <a href="mailto:mandilink.ybl@gmail.com" class="email-link">
+                        📧 mandilink.ybl@gmail.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <h3 class="mt-6 mb-3 text-xl font-semibold">c) Subscription & Payment Information</h3>
-        <ul class="list-disc pl-6 mb-2">
-          <li>Subscription status (active / inactive)</li>
-          <li>Transaction reference IDs</li>
-        </ul>
-        <p class="warning text-sm">⚠️ We do not store card, UPI, or banking details on our servers. Payments are handled securely by third-party payment gateways.</p>
+    <!-- ===== Privacy Policy Section ===== -->
+    <section id="privacy">
+        <div class="container">
+            <div class="section-header">
+                <h2>Privacy Policy</h2>
+                <p class="section-subtitle">How we collect, use, and protect your information</p>
+            </div>
+            <div class="policy-content">
+                <p>
+                    Mandilink Services ("we," "our," or "us") is committed to protecting your privacy. 
+                    This Privacy Policy explains how we collect, use, and safeguard your personal 
+                    information when you use our platform and services.
+                </p>
 
-        <h3 class="mt-6 mb-3 text-xl font-semibold">d) Device & App Information</h3>
-        <ul class="list-disc pl-6">
-          <li>Device type</li>
-          <li>Operating system version</li>
-          <li>App usage data (for performance and security)</li>
-        </ul>
-      </div>
+                <h3>📋 Information We Collect</h3>
+                <p>We may collect the following types of information:</p>
+                <ul>
+                    <li><strong>Account Information:</strong> Name, email address, phone number, and location when you register on our platform.</li>
+                    <li><strong>Profile Information:</strong> Business details, user type (farmer, trader, buyer), and preferences.</li>
+                    <li><strong>Transaction Data:</strong> Information related to bids, listings, and subscription purchases.</li>
+                    <li><strong>Device Information:</strong> Device type, operating system, and app version for service optimization.</li>
+                    <li><strong>Usage Data:</strong> How you interact with our platform to improve user experience.</li>
+                </ul>
 
-      <div class="section">
-        <h2>2. How We Use Your Information</h2>
-        <p>We use the collected information for:</p>
-        <ul class="list-disc pl-6">
-          <li>Creating and managing user accounts</li>
-          <li>Identity verification</li>
-          <li>Providing subscription-based services</li>
-          <li>Improving app functionality and user experience</li>
-          <li>Customer support</li>
-          <li>Security and fraud prevention</li>
-          <li>Legal and compliance purposes</li>
-        </ul>
-      </div>
+                <h3>🎯 Purpose of Data Collection</h3>
+                <p>We use your information for the following purposes:</p>
+                <ul>
+                    <li>To provide and maintain our platform services</li>
+                    <li>To process transactions and manage subscriptions</li>
+                    <li>To communicate important updates and support responses</li>
+                    <li>To improve and personalize user experience</li>
+                    <li>To ensure platform security and prevent fraud</li>
+                    <li>To comply with legal obligations</li>
+                </ul>
 
-      <div class="section">
-        <h2>3. Data Storage & Security</h2>
-        <ul class="list-disc pl-6">
-          <li>All user data is securely stored on our MongoDB database</li>
-          <li>We apply appropriate security measures to prevent unauthorized access, misuse, or disclosure</li>
-          <li>Data is accessed only by authorized personnel</li>
-        </ul>
-        <p class="mt-4">
-          Despite best practices, no method of transmission or storage is 100% secure. We strive to protect your data using industry-standard security practices.
-        </p>
-      </div>
+                <h3>🔒 Data Protection Practices</h3>
+                <p>We implement appropriate security measures to protect your personal information:</p>
+                <ul>
+                    <li>Secure data transmission using encryption protocols</li>
+                    <li>Access controls to limit data access to authorized personnel</li>
+                    <li>Regular security assessments and updates</li>
+                    <li>Secure storage of personal and transaction data</li>
+                </ul>
 
-      <div class="section">
-        <h2>4. Data Sharing & Disclosure</h2>
-        <p>We do not sell or rent user data.</p>
-        <p>We may share information only:</p>
-        <ul class="list-disc pl-6">
-          <li>With trusted third-party services required to operate the app (e.g., payment providers)</li>
-          <li>When required by law or legal process</li>
-          <li>To protect the rights, safety, or security of users or the public</li>
-        </ul>
-      </div>
+                <h3>⚖️ Your Rights</h3>
+                <p>As a user, you have the following rights regarding your personal data:</p>
+                <ul>
+                    <li><strong>Access:</strong> Request access to your personal information we hold.</li>
+                    <li><strong>Correction:</strong> Request correction of inaccurate or incomplete data.</li>
+                    <li><strong>Deletion:</strong> Request deletion of your account and associated data.</li>
+                    <li><strong>Opt-out:</strong> Opt out of promotional communications at any time.</li>
+                </ul>
 
-      <div class="section">
-        <h2>5. User Rights & Choices</h2>
-        <p>You have the right to:</p>
-        <ul class="list-disc pl-6">
-          <li>Access your personal data</li>
-          <li>Update or correct your profile information</li>
-          <li>Request deletion of your account and data</li>
-        </ul>
-        <p class="mt-4">
-          To request data deletion or changes, contact us at:<br>
-          <strong>📧 mandilink.ybl@gmail.com</strong>
-        </p>
-      </div>
+                <h3>🤝 Data Sharing</h3>
+                <p>
+                    We do not sell your personal information to third parties. We may share data 
+                    with service providers who assist in operating our platform, subject to 
+                    confidentiality agreements. We may also disclose information when required by law.
+                </p>
 
-      <div class="section">
-        <h2>6. Data Retention</h2>
-        <p>We retain user data only:</p>
-        <ul class="list-disc pl-6">
-          <li>As long as the account remains active</li>
-          <li>As required to comply with legal, accounting, or regulatory obligations</li>
-        </ul>
-        <p class="mt-4">
-          Upon account deletion, your data will be removed from our systems within a reasonable timeframe.
-        </p>
-      </div>
+                <h3>📧 Contact for Privacy Concerns</h3>
+                <p>
+                    For any privacy-related questions, concerns, or to exercise your rights, 
+                    please contact us at: <a href="mailto:mandilink.ybl@gmail.com">mandilink.ybl@gmail.com</a>
+                </p>
 
-      <div class="section">
-        <h2>7. Permissions Usage</h2>
-        <p>The app may request the following permissions:</p>
-        <ul class="list-disc pl-6">
-          <li><strong>Location</strong> – to provide location-based services</li>
-          <li><strong>Internet access</strong> – to communicate with servers</li>
-          <li><strong>Storage</strong> (if applicable) – for profile or app-related data</li>
-        </ul>
-        <p class="mt-4">Permissions are requested only when necessary.</p>
-      </div>
+                <em>Last updated: February 2026</em>
+            </div>
+        </div>
+    </section>
 
-      <div class="section">
-        <h2>8. Children’s Privacy</h2>
-        <p>This app is not intended for children under 13 years of age.</p>
-        <p>We do not knowingly collect personal data from children.</p>
-      </div>
+    <!-- ===== Terms & Conditions Section ===== -->
+    <section id="terms" class="alt-bg">
+        <div class="container">
+            <div class="section-header">
+                <h2>Terms & Conditions</h2>
+                <p class="section-subtitle">Please read these terms carefully before using our platform</p>
+            </div>
+            <div class="policy-content">
+                <p>
+                    Please read these Terms and Conditions ("Terms") carefully before using the 
+                    Mandilink platform operated by Mandilink Services. By accessing or using our 
+                    platform, you agree to be bound by these Terms.
+                </p>
 
-      <div class="section">
-        <h2>9. Changes to This Privacy Policy</h2>
-        <p>We may update this Privacy Policy from time to time.</p>
-        <p>Changes will be posted on this page, and the “Last updated” date at the top will be revised.</p>
-      </div>
+                <h3>📱 Platform Usage</h3>
+                <ul>
+                    <li>The platform is intended for users aged 18 years and above.</li>
+                    <li>You must provide accurate and complete information during registration.</li>
+                    <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+                    <li>The platform is to be used only for lawful agricultural trading and information purposes.</li>
+                    <li>Any misuse of the platform may result in account suspension or termination.</li>
+                </ul>
 
-      <div class="section contact">
-        <h2>10. Contact Us</h2>
-        <p>If you have any questions or concerns about this Privacy Policy or our data handling practices, please contact us at:</p>
-        <p class="text-xl font-medium mt-4">
-          📧 <a href="mailto:mandilink.ybl@gmail.com" class="text-blue-600 hover:underline">mandilink.ybl@gmail.com</a>
-        </p>
-      </div>
+                <h3>💳 Subscription Terms</h3>
+                <ul>
+                    <li>Premium features are accessible through paid subscription plans.</li>
+                    <li>Subscription fees are as displayed on the platform at the time of purchase.</li>
+                    <li>Subscriptions are billed according to the plan selected (monthly/annually).</li>
+                    <li>Refunds are subject to our refund policy and applicable laws.</li>
+                    <li>We reserve the right to modify subscription pricing with prior notice.</li>
+                </ul>
 
-    </div>
+                <h3>👤 User Responsibilities</h3>
+                <ul>
+                    <li>Users must ensure the accuracy of crop listings and bid information.</li>
+                    <li>Users are responsible for their own trading decisions and transactions.</li>
+                    <li>Users must not engage in fraudulent or deceptive practices.</li>
+                    <li>Users must comply with all applicable local and national laws.</li>
+                    <li>Users must not attempt to manipulate market information or bidding processes.</li>
+                </ul>
 
-  </main>
+                <h3>⚠️ Disclaimer</h3>
+                <p>
+                    <strong>No Guarantee of Outcomes:</strong> Mandilink is a digital marketplace 
+                    platform that facilitates connections between agricultural market participants. 
+                    We do not guarantee any specific outcomes, profits, or successful transactions. 
+                    Market prices are subject to various factors beyond our control.
+                </p>
+                <p>
+                    <strong>Information Accuracy:</strong> While we strive to provide accurate 
+                    market information, we do not warrant the completeness or accuracy of mandi 
+                    rates or other market data. Users should verify information independently 
+                    before making decisions.
+                </p>
+                <p>
+                    <strong>No Government Affiliation:</strong> Mandilink is a private platform 
+                    and is not affiliated with, endorsed by, or connected to any government 
+                    body, official mandi board, or regulatory authority.
+                </p>
 
-  <footer class="bg-gray-800 text-gray-300 py-6 mt-12">
-    <div class="container mx-auto px-6 text-center">
-      <p>© 2026 Mandilink. All rights reserved.</p>
-    </div>
-  </footer>
+                <h3>🛡️ Limitation of Liability</h3>
+                <p>
+                    To the maximum extent permitted by law, Mandilink Services shall not be 
+                    liable for any indirect, incidental, special, or consequential damages 
+                    arising from your use of the platform or any transactions conducted through it.
+                </p>
+
+                <h3>📝 Modifications to Terms</h3>
+                <p>
+                    We reserve the right to modify these Terms at any time. Changes will be 
+                    effective upon posting on the platform. Continued use of the platform 
+                    after changes constitutes acceptance of the modified Terms.
+                </p>
+
+                <h3>⚖️ Governing Law</h3>
+                <p>
+                    These Terms shall be governed by and construed in accordance with the 
+                    laws of India. Any disputes arising from these Terms or use of the 
+                    platform shall be subject to the exclusive jurisdiction of the courts in India.
+                </p>
+
+                <h3>📧 Contact</h3>
+                <p>
+                    For questions about these Terms, please contact us at: 
+                    <a href="mailto:mandilink.ybl@gmail.com">mandilink.ybl@gmail.com</a>
+                </p>
+
+                <em>Last updated: February 2026</em>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="footer-logo-icon">🌾</span>
+                    Mandilink
+                </div>
+                <p>&copy; 2026 Mandilink Services. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="privacy-policy.html">Privacy Policy</a>
+                    <a href="#terms">Terms & Conditions</a>
+                    <a href="mailto:mandilink.ybl@gmail.com">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
 </body>
 </html>
